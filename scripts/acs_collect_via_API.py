@@ -42,7 +42,7 @@ def main():
                  'B03002_007E', 'B03002_008E', 'B03002_009E', 'B03002_012E',
                  #'B15003_025E', 'B15003_024E', 'B15003_023E', 'B15003_022E',
                  #'B15003_021E', 'B15003_020E', 'B15003_019E', 'B15003_018E',
-                 'B15003_017E',
+                 #'B15003_017E',
                  ]
 
     save_data('zip code tabulation area', col_names, ','.join(var_names), 'msa_raw.csv')
