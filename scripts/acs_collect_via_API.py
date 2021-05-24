@@ -69,7 +69,7 @@ def save_data(region, headings, cols, file):
 
     data = get_data(region, headings, cols)
 
-    os.chdir("data")
+    os.chdir("../data")
     
     with open(file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
