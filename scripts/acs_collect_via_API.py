@@ -25,8 +25,8 @@ def main():
                  'pop_hispanic_m_15-17', 'pop_hispanic_m_18-19', 'pop_hispanic_f_15-17', 'pop_hispanic_f_18-19',
                  'pop_white', 'pop_black', 'pop_amerindian', 'pop_asian',
                  'pop_nativehawaii', 'pop_otherrace', 'pop_tworaces', 'pop_hispanic',
-                 'pop_edu_attain_doct', 'pop_edu_attain_prof', 'pop_edu_attain_master', 'pop_edu_attain_bach',
-                 'pop_edu_attain_assoc', 'pop_edu_somecollege_1plusyrs', 'pop_edu_somecollege_under1yr', 'pop_edu_GED', 'pop_edu_hs',
+                 #'pop_edu_attain_doct', 'pop_edu_attain_prof', 'pop_edu_attain_master', 'pop_edu_attain_bach',
+                 #'pop_edu_attain_assoc', 'pop_edu_somecollege_1plusyrs', 'pop_edu_somecollege_under1yr', 'pop_edu_GED', 'pop_edu_hs',
                  'zipcode']  # last by default
 
     var_names = ['NAME', 'B01003_001E', 'B15003_001E', 'B19013_001E',
@@ -40,8 +40,9 @@ def main():
                  'B01001I_006E', 'B01001I_007E', 'B01001I_021E', 'B01001I_022E',
                  'B03002_003E', 'B03002_004E', 'B03002_005E', 'B03002_006E',
                  'B03002_007E', 'B03002_008E', 'B03002_009E', 'B03002_012E',
-                 'B15003_025E', 'B15003_024E', 'B15003_023E', 'B15003_022E',
-                 'B15003_021E', 'B15003_020E', 'B15003_019E', 'B15003_018E', 'B15003_017E',
+                 #'B15003_025E', 'B15003_024E', 'B15003_023E', 'B15003_022E',
+                 #'B15003_021E', 'B15003_020E', 'B15003_019E', 'B15003_018E',
+                 'B15003_017E',
                  ]
 
     save_data('zip code tabulation area', col_names, ','.join(var_names), 'msa_raw.csv')
