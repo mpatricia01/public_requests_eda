@@ -27,7 +27,7 @@ def main():
                  'pop_nativehawaii', 'pop_otherrace', 'pop_tworaces', 'pop_hispanic',
                  #'pop_edu_attain_doct', 'pop_edu_attain_prof', 'pop_edu_attain_master', 'pop_edu_attain_bach',
                  #'pop_edu_attain_assoc', 'pop_edu_somecollege_1plusyrs', 'pop_edu_somecollege_under1yr', 'pop_edu_GED', 'pop_edu_hs',
-                 'zipcode']  # last by default
+                 'state_fips_code', 'zipcode']  # last by default
 
     var_names = ['NAME', 'B01003_001E', 'B15003_001E', 'B19013_001E',
                  'B01001H_006E', 'B01001H_007E', 'B01001H_021E', 'B01001H_022E',
