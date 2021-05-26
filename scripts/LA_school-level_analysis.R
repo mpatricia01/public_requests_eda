@@ -128,4 +128,6 @@ library(stringr)
     df_sl_CA %>% count(is.na(CDSCode))
     
     df_sl_CA %>% filter(is.na(CDSCode)) %>% group_by(ncessch) %>% count() %>% print(n=400)
-    
+
+    #save csv file
+    #write_csv(df_sl_CA, "data/145637_list_ca.csv")
