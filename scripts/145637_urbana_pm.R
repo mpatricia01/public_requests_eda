@@ -1233,6 +1233,78 @@ View(anti_merge %>% filter(!is.na(ncessch) & !is.na(CDS)) %>% group_by(ncessch, 
 
     # I guess for now, can just move on?
 
+
 # RUN SOME CHECKS
 #-----------------------------------------------------------------------
+# student list + CA DOE + nces uniquely identified by Ref (student ID)
+df_sl_hs_sat_CA %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
 
+# check how many unique ncessch values
+length(unique(df_sl_hs_sat_CA$ncessch)) #910
+#names(df_sl_hs_sat_CA)
+
+# check missing by column
+sapply(df_sl_hs_sat_CA, function(x) sum(is.na(x)))
+
+
+# EDA for all CA schools purchased from Urbana
+#-----------------------------------------------------------------------
+# what are the schools with the most students purchased from Urbana and how do they perform on the exams?
+View(df_sl_hs_sat_CA %>%
+  group_by(ncessch) %>%
+  filter(row_number(ncessch) == 1, !is.na(CDS)) %>%
+  select(ncessch, SName, n_stu_hs, Enroll12, NumTSTTakr12, NumERWBenchmark12, PctERWBenchmark12, NumMathBenchmark12, PctMathBenchmark12) %>% 
+  arrange(-n_stu_hs)) 
+
+# compare the race/ethnicity of students from purchased lists to that of the high school race/ethnicity composition
+View(df_sl_hs_sat_CA %>% 
+  group_by(Race) %>%
+  summarise(n_per_grp = n())) 
+
+# get count of hispanic
+df_sl_hs_sat_CA %>%
+  count(Hispanic)
+
+# crosstab of hispanic & other race/ethnicities
+View(df_sl_hs_sat_CA %>%
+  group_by(Race) %>%
+    filter(Hispanic == "Yes") %>%
+    count(Hispanic))
+
+
+df_sl_race <- df_sl_hs_sat_CA %>%
+  group_by(ncessch) %>%
+  filter(!is.na(ncessch), !is.na(CDS)) %>%
+  mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0),
+         nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         nat_am = ifelse(Race == "American Indian or Alaska Native" &
+                           (is.na(Hispanic) | Hispanic == "No"),1,0),
+         none = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
+         stu_pct_black = mean(black, na.rm=TRUE)*100,
+         stu_pct_asian = mean(asian, na.rm=TRUE)*100,
+         stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
+         stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
+         stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
+         stu_pct_none = mean(none, na.rm=TRUE)*100,
+         stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_none)
+
+
+View(df_sl_race %>%
+       group_by(ncessch) %>%
+       filter(row_number(ncessch) == 1) %>%
+       arrange(-n_stu_hs) %>%
+       select(Ref, ncessch, SName, stu_pct_white, pct_white, stu_pct_black, pct_black ,stu_pct_asian, pct_asian ,stu_pct_latinx, pct_hispanic, stu_pct_natam, pct_amerindian, n_stu_hs, total_students))
+
+# check that percent race/ethnicity for a school match up
+df_sl_hs_sat_CA %>%
+  filter(ncessch == "063942006576") %>%
+  group_by(Race) %>%
+  count(Hispanic)
