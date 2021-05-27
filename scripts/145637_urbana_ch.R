@@ -3,12 +3,12 @@ library(rgdal)
 library(raster)
 library(formattable)
 library(tidyverse)
+library(readxl)
 library(lubridate)
 library(htmlwidgets)
 
 
 # Directory paths
-output_dir <- file.path('.', 'outputs')
 data_dir <- file.path('.', 'data')
 
 
@@ -17,8 +17,8 @@ data_dir <- file.path('.', 'data')
 # ----------
 
 # Read in data
-lists_df <- read_csv(file.path(output_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
-orders_df <- read_csv(file.path(output_dir, '145637_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c'))
+lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
+orders_df <- read_csv(file.path(data_dir, '145637_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c'))
 
 # Checks
 str_detect(lists_df$Source, '^(?:\\w+ \\d+, \\d{4} [SACT]{3} Search \\d+;?\\s*)+$') %>% table()
@@ -108,7 +108,11 @@ hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master
   mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
 univ_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/meta_university.csv'), col_types = c('univ_id' = 'c', 'fips_state_code' = 'c', 'fips_county_code' = 'c')) %>% 
   select(-X1)
-ceeb_nces <- read_csv(file.path(data_dir, 'ceeb_nces_crosswalk', 'ceeb_nces_crosswalk.csv'))
+ceeb_nces <- read_csv(file.path(data_dir, 'ceeb_nces_crosswalk.csv'))
+cds_nces <- read_csv(file.path(data_dir, 'cds_nces_crosswalk.csv')) %>% 
+  mutate(ncessch = str_c(NCESDist, NCESSchool)) %>% 
+  select(ncessch, CDSCode)
+sat20 <- read_excel(file.path(data_dir, 'sat20.xlsx'))
 
 # Load shape files: https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
 cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
@@ -474,3 +478,48 @@ View(OOS_eng_orders %>% select(gender, sat_score_min, sat_score_max, psat_score_
 
 # Fewer female students purchased
 View(OOS_eng_orders %>% group_by(gender) %>% summarise(num_orders = n(), total_cost = sum(order_cost), total_students = sum(num_students)))
+
+
+# -----------
+# CA DOE EDA
+# -----------
+
+la_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '31080'))$zip_code
+
+# Look at just College Board LA students
+lists_df_sat_la <- lists_df_sat %>%
+  select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders
+  mutate(
+    zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'),
+    ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left'),
+    is_white = as.integer(str_detect(Race, 'White')),
+  ) %>% 
+  filter(zip_code %in% la_zip_codes)
+
+length(unique(lists_df_sat_la$zip_code))  # 307 zip codes
+length(unique(lists_df_sat_la$ceeb))  # 348 HS
+
+ceeb_nces %>%  # some ceeb may be mapped to multiple ncessch due to crosswalk coming from multiple sources & ncessch changing over the years
+  filter(ceeb %in% lists_df_sat_la$ceeb) %>% 
+  group_by(ceeb) %>% 
+  summarise(count = n()) %>% 
+  arrange(-count) %>% 
+  View()
+
+lists_df_sat_la_hs <- lists_df_sat_la %>%
+  group_by(ceeb) %>% 
+  summarise(count = n(), pct_white_purchased = mean(is_white, na.rm = T) * 100) %>% 
+  arrange(-count) %>%
+  left_join(ceeb_nces, by = 'ceeb') %>% 
+  left_join(cds_nces, by = 'ncessch') %>% 
+  left_join(hs_data %>% select(ncessch, total_students, pct_white), by = 'ncessch') %>% 
+  left_join(sat20, by = c('CDSCode' = 'CDS'))
+
+dupe_ceeb <- (lists_df_sat_la_hs %>% 
+  group_by(ceeb) %>% 
+  summarise(count = n()) %>% 
+  filter(count > 1))$ceeb
+
+lists_df_sat_la_hs %>%  # if ceeb mapped to multiple ncessch, at most 1 of those ncessch is valid
+  filter(ceeb %in% dupe_ceeb) %>%
+  View()
