@@ -1091,3 +1091,148 @@ OOS_msa_30024_zip <- OOS_msa_top_5_zip %>%
 
 OOS_msa_30024_zip
 
+#============================================================================
+#Student lists investigations of CA specific high schools
+#============================================================================
+# library
+library(readxl)
+
+# LOAD DATA
+#-----------------------------------------------------------------------
+
+# read in student list df of CA student purchases
+df_sl_ca <- read_csv("data/145637_list_ca.csv")
+
+# check that student list data is uniquely identified by Ref # given to each student
+df_sl_ca %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+# read in ca DOE data on sat
+df_sat_ca <- read_xlsx("data/sat20.xlsx")
+
+# check that DOE data on sat is uniquely identified by school or CDS code
+df_sat_ca %>%
+  group_by(CDS) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+# read in acs, zip-code-level data
+acs_race_zipcode <- read_csv("data/acs_race_zipcode.csv")
+
+# check that acs zip-code-level data is uniquely identified by zip-code
+acs_race_zipcode %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+# keep only CA zip-codes
+acs_race_zipcode %>%
+  count(state_fips_code) 
+
+acs_race_ca_zipcode <- acs_race_zipcode %>%
+  filter(state_fips_code == 6)
+
+# read in nces high school data
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>% 
+  mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
+
+# check that nces data is uniquely identified by high school (ncessch)
+hs_data %>%
+  group_by(ncessch) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+# keep only schools in CA
+hs_data %>%
+  filter(state_code == "CA") %>%
+  count()
+
+hs_data %>%
+  filter(state_code != "CA") %>%
+  count()
+
+hs_ca_data <- hs_data %>%
+  filter(state_code == "CA")
+
+# CHECK HIGH SCHOOLS IN DFS
+#-----------------------------------------------------------------------
+
+df_sl_ca %>%
+  group_by(ncessch) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+#check unique schools
+length(unique(df_sl_ca$ceeb)) #1034
+length(unique(df_sl_ca$CDSCode)) #595
+length(unique(df_sl_ca$ncessch)) #910
+
+
+# create var for number of students purchased by highschool
+df_sl_ca <- df_sl_ca %>%
+  group_by(ncessch) %>%
+  mutate(n_stu_hs = n()) %>%
+  ungroup()
+
+# check to see how many schools from ca DOE match with student list
+df_sl_ca %>%
+  filter(CDSCode %in% df_sat_ca$CDS) #45,150
+
+df_sl_ca %>%
+  filter(is.na(CDSCode)) #7,616 NA
+
+# MERGE DATA
+#-----------------------------------------------------------------------
+
+# merge DOE to CA student list data
+df_sl_sat_CA <- df_sl_ca %>% rename(CDS=CDSCode) %>% left_join(df_sat_ca, by = "CDS")
+
+# check obs that did not merge; PM comments: most are missing for CDS code
+anti_merge <- df_sl_ca %>% rename(CDS=CDSCode) %>% anti_join(df_sat_ca, by = "CDS")
+
+View(anti_merge %>% filter(!is.na(CDS)) %>% select(ncessch, CDS, City, State) %>% arrange(CDS))
+
+    # 28662660128314, school closed https://napavalleyregister.com/community/eagle/news/local/school-board-approves-closure-of-legacy-high-school-in-american-canyon/article_6eadeed7-66cc-5444-a7fa-8c1a97a3fb7b.html
+    # 30736503030467, school serves 40 students in grades K-12 https://www.publicschoolreview.com/alternative-education-san-joaquin-high-school-profile
+    # 31668450121418, couldn't find school in CA DOE website https://www.cde.ca.gov/SchoolDirectory/districtschool?allSearch=31668450121418&simpleSearch=Y
+    # 38684780128876, school closed https://www.cde.ca.gov/SchoolDirectory/details?cdscode=38684780128876
+    # 39686500128215, school serves 30 students in grades 9-12 https://www.publicschoolreview.com/harvest-high-school-profile
+
+# check to see how many schools from nces data match with student list
+df_sl_sat_CA %>%
+  filter(ncessch %in% hs_ca_data$ncessch) #49,969
+
+df_sl_sat_CA %>%
+  filter(is.na(ncessch)) #421
+
+# merge NCES to CA student list & DOE data
+df_sl_hs_sat_CA <- df_sl_sat_CA %>% left_join(hs_ca_data, by = "ncessch")
+
+# check merge
+anti_merge <- df_sl_sat_CA %>% anti_join(hs_ca_data, by = "ncessch")
+
+anti_merge %>% filter(is.na(ncessch)) #421
+
+View(anti_merge %>% filter(!is.na(ncessch)) %>% group_by(ncessch, CDS, City, State) %>% summarize(n_per_grp = n()))
+
+anti_merge %>% filter(is.na(CDS)) #2080
+
+View(anti_merge %>% filter(!is.na(ncessch) & !is.na(CDS)) %>% group_by(ncessch, CDS, City, State) %>% summarize(n_per_grp = n()))
+
+    # 061062001176, Davis Senior High (regular)
+    # 062271008887, Los Angeles Center for Enriched Studies (other/alternative)
+    # 063441001276, Asawa (Ruth) SF Sch of the Arts A Public School (other/alternative)
+    # 060141013692, Mountain House High (regular)
+
+    # I guess for now, can just move on?
+
+# RUN SOME CHECKS
+#-----------------------------------------------------------------------
+
