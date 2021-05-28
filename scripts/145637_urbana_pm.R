@@ -1111,10 +1111,17 @@ df_sl_ca %>%
   count(n_per_grp)
 
 # read in ca DOE data on sat
-df_sat_ca <- read_xlsx("data/sat20.xlsx")
+df_sat_ca_20 <- read_xlsx("data/sat20.xlsx")  
+df_sat_ca_19 <- read_xlsx("data/sat19.xlsx", skip = 5)
 
 # check that DOE data on sat is uniquely identified by school or CDS code
-df_sat_ca %>%
+df_sat_ca_20 %>%
+  group_by(CDS) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+df_sat_ca_19 %>%
   group_by(CDS) %>%
   summarise(n_per_grp = n()) %>%
   ungroup() %>%
@@ -1178,12 +1185,15 @@ length(unique(df_sl_ca$ncessch)) #910
 # create var for number of students purchased by highschool
 df_sl_ca <- df_sl_ca %>%
   group_by(ncessch) %>%
-  mutate(n_stu_hs = n()) %>%
-  ungroup()
+  mutate(n_stu_nces = n()) %>%
+  ungroup() 
 
 # check to see how many schools from ca DOE match with student list
 df_sl_ca %>%
-  filter(CDSCode %in% df_sat_ca$CDS) #45,150
+  filter(CDSCode %in% df_sat_ca_20$CDS) #45,150
+
+df_sl_ca %>%
+  filter(CDSCode %in% df_sat_ca_19$CDS) #45,153
 
 df_sl_ca %>%
   filter(is.na(CDSCode)) #7,616 NA
@@ -1192,10 +1202,10 @@ df_sl_ca %>%
 #-----------------------------------------------------------------------
 
 # merge DOE to CA student list data
-df_sl_sat_CA <- df_sl_ca %>% rename(CDS=CDSCode) %>% left_join(df_sat_ca, by = "CDS")
+df_sl_sat_CA <- df_sl_ca %>% rename(CDS=CDSCode) %>% left_join(df_sat_ca_19, by = "CDS")
 
 # check obs that did not merge; PM comments: most are missing for CDS code
-anti_merge <- df_sl_ca %>% rename(CDS=CDSCode) %>% anti_join(df_sat_ca, by = "CDS")
+anti_merge <- df_sl_ca %>% rename(CDS=CDSCode) %>% anti_join(df_sat_ca_19, by = "CDS")
 
 View(anti_merge %>% filter(!is.na(CDS)) %>% select(ncessch, CDS, City, State) %>% arrange(CDS))
 
@@ -1253,30 +1263,35 @@ sapply(df_sl_hs_sat_CA, function(x) sum(is.na(x)))
 
 # EDA for all CA schools purchased from Urbana
 #-----------------------------------------------------------------------
+
+# Subset to LA county schools only
+df_la_county <- df_sl_hs_sat_CA %>% filter(CName == "Los Angeles")
+
 # what are the schools with the most students purchased from Urbana and how do they perform on the exams?
-View(df_sl_hs_sat_CA %>%
+View(df_la_county %>%
   group_by(ncessch) %>%
   filter(row_number(ncessch) == 1, !is.na(CDS)) %>%
-  select(ncessch, SName, n_stu_hs, Enroll12, NumTSTTakr12, NumERWBenchmark12, PctERWBenchmark12, NumMathBenchmark12, PctMathBenchmark12) %>% 
-  arrange(-n_stu_hs)) 
+  select(ncessch, SName, n_stu_nces, Enroll12, NumTSTTakr12, NumERWBenchmark12, PctERWBenchmark12, NumMathBenchmark12, PctMathBenchmark12,
+         Enroll12, NumTSTTakr11, NumERWBenchmark11, PctERWBenchmark11, NumMathBenchmark11, PctMathBenchmark11) %>% 
+  arrange(-n_stu_nces)) 
 
 # compare the race/ethnicity of students from purchased lists to that of the high school race/ethnicity composition
-View(df_sl_hs_sat_CA %>% 
+View(df_la_county %>% 
   group_by(Race) %>%
   summarise(n_per_grp = n())) 
 
 # get count of hispanic
-df_sl_hs_sat_CA %>%
+df_la_county %>%
   count(Hispanic)
 
 # crosstab of hispanic & other race/ethnicities
-View(df_sl_hs_sat_CA %>%
+View(df_la_county %>%
   group_by(Race) %>%
     filter(Hispanic == "Yes") %>%
     count(Hispanic))
 
 
-df_sl_race <- df_sl_hs_sat_CA %>%
+df_sl_la_race <- df_la_county %>%
   group_by(ncessch) %>%
   filter(!is.na(ncessch), !is.na(CDS)) %>%
   mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
@@ -1286,25 +1301,34 @@ df_sl_race <- df_sl_hs_sat_CA %>%
          nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
          nat_am = ifelse(Race == "American Indian or Alaska Native" &
                            (is.na(Hispanic) | Hispanic == "No"),1,0),
-         none = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0),
          stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
          stu_pct_black = mean(black, na.rm=TRUE)*100,
          stu_pct_asian = mean(asian, na.rm=TRUE)*100,
          stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
          stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
          stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
-         stu_pct_none = mean(none, na.rm=TRUE)*100,
-         stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_none)
+         stu_pct_other = mean(other, na.rm=TRUE)*100,
+         stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other)
 
 
-View(df_sl_race %>%
+View(df_sl_la_race %>%
        group_by(ncessch) %>%
        filter(row_number(ncessch) == 1) %>%
-       arrange(-n_stu_hs) %>%
-       select(Ref, ncessch, SName, stu_pct_white, pct_white, stu_pct_black, pct_black ,stu_pct_asian, pct_asian ,stu_pct_latinx, pct_hispanic, stu_pct_natam, pct_amerindian, n_stu_hs, total_students))
+       arrange(-n_stu_nces) %>%
+       select(ncessch, n_stu_nces, SName, stu_pct_white, pct_white, stu_pct_black, pct_black ,stu_pct_asian, pct_asian ,stu_pct_latinx, pct_hispanic, stu_pct_natam, pct_amerindian, stu_pct_other, pct_other))
 
 # check that percent race/ethnicity for a school match up
 df_sl_hs_sat_CA %>%
-  filter(ncessch == "063942006576") %>%
+  filter(ncessch == "064128007894") %>%
   group_by(Race) %>%
   count(Hispanic)
+
+# get a count by graduating high school class
+# could we filter sl data by one year?
+# capture SAT data from test takers from CA DOE (e.g., orders made in 2017 & CA DOE data from 2019-2020)
+    # maybe go back 1-2 years from CA DOE (e.g., 2018-2019)
+    # seniors in 2019, juniors in 2020
+# compare sat ranges they purchased vs. how students in the high school perform
+# avg enrollment at this school from 11-12 graders 
+# look at order summary
