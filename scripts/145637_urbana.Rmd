@@ -18,10 +18,11 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 options(tibble.width = Inf, width = 10000, scipen = 999)
 
 library(tidyverse)
+library(readxl)
 library(lubridate)
 library(leaflet)
 library(rgdal)
-library(raster)
+# library(raster)
 library(formattable)
 library(scales)
 library(htmlwidgets)
@@ -36,11 +37,41 @@ pre code, pre, code {
 }
 </style>
 
+```{r}
+# Load data
+
+zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+
+ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
+cds_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv')) %>% 
+  mutate(ncessch = str_c(NCESDist, NCESSchool))
+
+load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/145637_orders.RData'))
+# Contains: IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
+#           lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19
+
+# Add 11 + 12 columns for the SAT test takers datasets
+add_testtakers_cols <- function(sat_df) {
+  sat_df %>% mutate(
+    Enroll1112 = as.numeric(Enroll12) + as.numeric(Enroll11),
+    NumTSTTakr1112 = NumTSTTakr11 + NumTSTTakr12,
+    NumERWBenchmark1112 = as.numeric(NumERWBenchmark11) + as.numeric(NumERWBenchmark12),
+    PctERWBenchmark1112 = as.numeric(PctERWBenchmark11) + as.numeric(PctERWBenchmark12),
+    NumMathBenchmark1112 = as.numeric(NumMathBenchmark11) + as.numeric(NumMathBenchmark12),
+    PctMathBenchmark1112 = as.numeric(PctMathBenchmark11) + as.numeric(PctMathBenchmark12),
+    TotNumBothBenchmark1112 = as.numeric(TotNumBothBenchmark11) + as.numeric(TotNumBothBenchmark12),
+    PctBothBenchmark1112 = as.numeric(PctBothBenchmark11) + as.numeric(PctBothBenchmark12)
+  )
+}
+
+df_sat_ca_20 <- add_testtakers_cols(df_sat_ca_20)
+df_sat_ca_19 <- add_testtakers_cols(df_sat_ca_19)
+```
+
 # Illinois purchases (51 orders)
 
 ```{r}
-load(url('https://github.com/cyouh95/recruiting-chapter/raw/master/data/145637_orders.RData'))
-
 IL_orders
 ```
 
@@ -203,10 +234,10 @@ OOS_msa_stu %>%
 #============================================================================
 #Student lists investigations of MSA specific orders
 #============================================================================
-View(OOS_msa_stu %>%
-       filter(Ref %in% c(058607977, 	
-	058918440, 313230561, 964290266)) %>%
-  dplyr::select(Ref:SchoolCode, order_num)) #not all are showing up?
+# View(OOS_msa_stu %>%
+#        filter(Ref %in% c(058607977, 	
+# 	058918440, 313230561, 964290266)) %>%
+#   dplyr::select(Ref:SchoolCode, order_num)) #not all are showing up?
 
 #check how many schools are purchased more than once
 OOS_msa_stu %>%
@@ -506,3 +537,67 @@ intl_orders %>% dplyr::select(order_title, order_num, num_students, sat_score_mi
 ```
 
 
+# CA HS SAT EDA
+
+```{r}
+la_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '31080'))$zip_code
+
+# Look at just College Board LA students
+lists_df_sat_la <- lists_df_sat %>%
+  select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders
+  mutate(
+    zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'),
+    ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left'),
+    is_white = as.integer(str_detect(Race, 'White')),
+  ) %>% 
+  filter(zip_code %in% la_zip_codes)
+```
+
+```{r}
+length(unique(lists_df_sat_la$zip_code))  # 307 zip codes in LA
+length(unique(lists_df_sat_la$ceeb))  # 348 HS in LA
+
+# Group by HS
+lists_df_sat_la_hs <- lists_df_sat_la %>%
+  group_by(ceeb) %>% 
+  summarise(total_students_purchased = n(), pct_white_purchased = mean(is_white, na.rm = T) * 100) %>% 
+  arrange(-total_students_purchased) %>%
+  left_join(ceeb_nces, by = 'ceeb') %>% 
+  left_join(cds_nces %>% select(ncessch, CDSCode), by = 'ncessch') %>% 
+  left_join(hs_data %>% select(ncessch, total_students, pct_white), by = 'ncessch') %>% 
+  left_join(df_sat_ca_20, by = c('CDSCode' = 'CDS'))
+
+lists_df_sat_la_hs
+```
+
+**Available variables**:
+
+- **Student lists**
+  - `total_students_purchased`
+  - `pct_white_purchased`
+- **NCES HS data**
+  - `total_students`
+  - `pct_white`
+- **CA DOE data**
+  - 12th graders: `Enroll12` (_enrolled_), `NumTSTTakr12` (_# of testtakers_), `NumERWBenchmark12` (_# met english benchmark_), `NumMathBenchmark12` (_# met math benchmark_)
+  - 11th graders: `Enroll11`, `NumTSTTakr11`, `NumERWBenchmark11`, `NumMathBenchmark11`
+  - 12th + 11th graders: `Enroll1112`, `NumTSTTakr1112`, `NumERWBenchmark1112`, `NumMathBenchmark1112`
+
+**Possible analysis**:
+
+- Compare high school's racial composition & test readiness against actual purchased students
+- Ideally, we'd be able to isolate purchased students by grad year/grade to match with secondary data for the same class of students
+  - We weren't able to do it for Urbana because some orders filtered for multiple graduating classes and there's no grad_class column in the student-level data - that could be something we can try to request for
+  - We'll also need to update NCES data (e.g., different year's data, use race variables by grade level) and check crosswalk
+
+**Potential questions/concerns**:
+
+- If the characteristics of purchased students (e.g., racial composition, test readiness) do indeed differ from that of the high school for the same cohort/class of students, what are we able to conclude about why that is?
+  - We will need to look at the order summary criteria to see what filters were being used
+  - In the case of Urbana, the out-of-state orders filtered by geography (state, MSA, segment analysis), SAT/PSAT score ranges, and HS GPA (and sometimes separate orders for gender but both male/female were purchased)
+  - In theory, all students who took the SAT who met the test score/GPA criteria and attended a HS that falls within the purchased geography/segment should be on the list
+  - If a student from a purchased HS is not on the list, they either did not take the SAT/opt in or did not meet the test/GPA criteria
+- In other words, Urbana could not specifically pick students from the high school (apart from the filter criteria used), but they are specifically picking high schools to purchase through the segment analysis filter
+  - It would be ideal to know the characteristics of the EN/HS clusters being purchased as compared to the clusters not purchased
+  - We could try to look at purchased student-level data to infer characteristics of purchased EN/HS clusters, but without knowing the nonpurchased students, it would be hard to make comparisons/draw conclusions
+  - Ideally we would be able to request the segment analysis info from the University

@@ -112,8 +112,8 @@ ceeb_nces <- read_csv(file.path(data_dir, 'ceeb_nces_crosswalk.csv'))
 cds_nces <- read_csv(file.path(data_dir, 'cds_nces_crosswalk.csv')) %>% 
   mutate(ncessch = str_c(NCESDist, NCESSchool)) %>% 
   select(ncessch, CDSCode)
-df_sat_ca_20 <- read_excel(file.path(data_dir, 'sat20.xlsx'))
-df_sat_ca_19 <- read_excel(file.path(data_dir, 'sat19.xlsx'), skip = 5)
+df_sat_ca_20 <- read_excel(file.path(data_dir, 'sat20.xlsx'), na = c('N/A', '*'))
+df_sat_ca_19 <- read_excel(file.path(data_dir, 'sat19.xlsx'), na = c('N/A', '*'), skip = 5)
 
 # Load shape files: https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
 cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
@@ -122,7 +122,7 @@ zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zc
 
 save(IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
      lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19,
-     file = file.path(data_dir, '145637_orders.RData'))
+     file = file.path(data_dir, '145637_data.RData'))
 
 # ----------
 # IL orders
