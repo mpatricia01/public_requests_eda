@@ -580,9 +580,9 @@ lists_df_sat_la_hs
   - `total_students`
   - `pct_white`
 - **CA DOE data**
-  - 12th graders: `Enroll12` (_enrolled_), `NumTSTTakr12` (_# of testtakers_), `NumERWBenchmark12` (_# met english benchmark_), `NumMathBenchmark12` (_# met math benchmark_)
-  - 11th graders: `Enroll11`, `NumTSTTakr11`, `NumERWBenchmark11`, `NumMathBenchmark11`
-  - 12th + 11th graders: `Enroll1112`, `NumTSTTakr1112`, `NumERWBenchmark1112`, `NumMathBenchmark1112`
+  - 12th graders: `Enroll12` (_enrolled_), `NumTSTTakr12` (_# of testtakers_), `NumERWBenchmark12` (_# met english benchmark_), `NumMathBenchmark12` (_# met math benchmark_), `TotNumBothBenchmark12` (_# met both benchmarks_)
+  - 11th graders: `Enroll11`, `NumTSTTakr11`, `NumERWBenchmark11`, `NumMathBenchmark11`, `TotNumBothBenchmark11`
+  - 12th + 11th graders: `Enroll1112`, `NumTSTTakr1112`, `NumERWBenchmark1112`, `NumMathBenchmark1112`, `TotNumBothBenchmark1112`
 
 **Possible analysis**:
 
