@@ -112,7 +112,8 @@ ceeb_nces <- read_csv(file.path(data_dir, 'ceeb_nces_crosswalk.csv'))
 cds_nces <- read_csv(file.path(data_dir, 'cds_nces_crosswalk.csv')) %>% 
   mutate(ncessch = str_c(NCESDist, NCESSchool)) %>% 
   select(ncessch, CDSCode)
-sat20 <- read_excel(file.path(data_dir, 'sat20.xlsx'))
+df_sat_ca_20 <- read_excel(file.path(data_dir, 'sat20.xlsx'))
+df_sat_ca_19 <- read_excel(file.path(data_dir, 'sat19.xlsx'), skip = 5)
 
 # Load shape files: https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
 cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
@@ -120,7 +121,7 @@ state_shp <- readOGR(file.path(data_dir, 'cb_2018_us_state_500k', 'cb_2018_us_st
 zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
 
 save(IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
-     lists_df_pivot, lists_df_sat, lists_df_act,
+     lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19,
      file = file.path(data_dir, '145637_orders.RData'))
 
 # ----------
@@ -516,7 +517,7 @@ lists_df_sat_la_hs <- lists_df_sat_la %>%
   left_join(ceeb_nces, by = 'ceeb') %>% 
   left_join(cds_nces, by = 'ncessch') %>% 
   left_join(hs_data %>% select(ncessch, total_students, pct_white), by = 'ncessch') %>% 
-  left_join(sat20, by = c('CDSCode' = 'CDS'))
+  left_join(df_sat_ca_20, by = c('CDSCode' = 'CDS'))
 
 dupe_ceeb <- (lists_df_sat_la_hs %>% 
   group_by(ceeb) %>% 
