@@ -57,11 +57,11 @@ add_testtakers_cols <- function(sat_df) {
     Enroll1112 = as.numeric(Enroll12) + as.numeric(Enroll11),
     NumTSTTakr1112 = NumTSTTakr11 + NumTSTTakr12,
     NumERWBenchmark1112 = as.numeric(NumERWBenchmark11) + as.numeric(NumERWBenchmark12),
-    PctERWBenchmark1112 = as.numeric(PctERWBenchmark11) + as.numeric(PctERWBenchmark12),
+    PctERWBenchmark1112 = as.numeric(NumERWBenchmark1112) / as.numeric(NumTSTTakr1112),
     NumMathBenchmark1112 = as.numeric(NumMathBenchmark11) + as.numeric(NumMathBenchmark12),
-    PctMathBenchmark1112 = as.numeric(PctMathBenchmark11) + as.numeric(PctMathBenchmark12),
+    PctMathBenchmark1112 = as.numeric(NumMathBenchmark1112) / as.numeric(NumTSTTakr1112),
     TotNumBothBenchmark1112 = as.numeric(TotNumBothBenchmark11) + as.numeric(TotNumBothBenchmark12),
-    PctBothBenchmark1112 = as.numeric(PctBothBenchmark11) + as.numeric(PctBothBenchmark12)
+    PctBothBenchmark1112 = as.numeric(TotNumBothBenchmark1112) / as.numeric(NumTSTTakr1112)
   )
 }
 
@@ -548,7 +548,7 @@ lists_df_sat_la <- lists_df_sat %>%
   mutate(
     zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'),
     ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left'),
-    is_white = as.integer(str_detect(Race, 'White')),
+    is_white = as.integer(str_detect(Race, 'White'))
   ) %>% 
   filter(zip_code %in% la_zip_codes)
 ```
@@ -569,6 +569,7 @@ lists_df_sat_la_hs <- lists_df_sat_la %>%
 
 lists_df_sat_la_hs
 ```
+
 
 **Available variables**:
 
@@ -601,3 +602,103 @@ lists_df_sat_la_hs
   - It would be ideal to know the characteristics of the EN/HS clusters being purchased as compared to the clusters not purchased
   - We could try to look at purchased student-level data to infer characteristics of purchased EN/HS clusters, but without knowing the nonpurchased students, it would be hard to make comparisons/draw conclusions
   - Ideally we would be able to request the segment analysis info from the University
+
+
+```{r include=FALSE}
+# read in student list df of CA student purchases
+df_sl_ca <- read_csv("../data/145637_list_ca.csv")
+
+# read in 2018-2019 & 2019-2020 CA DOE data
+df_sat_ca_20 <- read_xlsx("../data/sat20.xlsx", na = c('N/A', '*'))  
+df_sat_ca_19 <- read_xlsx("../data/sat19.xlsx", na = c('N/A', '*'), skip = 5)
+
+# read in acs race variables for ages 15-19
+acs_race_zipcode <- read_csv("../data/acs_race_zipcode.csv")
+
+#subset to only california zipcodes
+acs_race_ca_zipcode <- acs_race_zipcode %>%
+  filter(state_fips_code == 6)
+
+#read in nces hs data
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>% 
+  mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
+
+hs_ca_data <- hs_data %>%
+  filter(state_code == "CA")
+
+df_sl_ca <- df_sl_ca %>%
+  group_by(ncessch) %>%
+  mutate(n_stu_nces = n()) %>%
+  ungroup() 
+
+# merge DOE to CA student list data
+df_sl_sat_CA <- df_sl_ca %>% rename(CDS=CDSCode) %>% left_join(df_sat_ca_19, by = "CDS")
+
+# merge NCES to CA student list & DOE data
+df_sl_hs_sat_CA <- df_sl_sat_CA %>% left_join(hs_ca_data, by = "ncessch")
+
+# Subset to LA county schools only
+df_la_county <- df_sl_hs_sat_CA %>% filter(CName == "Los Angeles")
+
+#df_la_county
+```
+
+```{r include=FALSE}
+df_la_county <- add_testtakers_cols(df_la_county)
+
+df_sl_la_race <- df_la_county %>%
+  group_by(ncessch) %>%
+  filter(!is.na(ncessch), !is.na(CDS)) %>%
+  mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0),
+         nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         nat_am = ifelse(Race == "American Indian or Alaska Native" &
+                           (is.na(Hispanic) | Hispanic == "No"),1,0),
+         other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
+         stu_pct_black = mean(black, na.rm=TRUE)*100,
+         stu_pct_asian = mean(asian, na.rm=TRUE)*100,
+         stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
+         stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
+         stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
+         stu_pct_other = mean(other, na.rm=TRUE)*100,
+         stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other)
+
+```
+
+<br>
+
+**The table below compares the number of student's purchased for each high school (according to ncessch ID) and the racial/ethnic identities of those students to the racial/ethnic makeup of the school.**
+```{r}
+df_la_race <- df_sl_la_race %>%
+       group_by(ncessch) %>%
+       filter(row_number(ncessch) == 1) %>%
+       arrange(-n_stu_nces) %>%
+       select(ncessch, n_stu_nces, SName, stu_pct_white, pct_white, stu_pct_black, pct_black ,stu_pct_asian, pct_asian ,stu_pct_latinx, pct_hispanic, stu_pct_natam, pct_amerindian, stu_pct_other, pct_other)
+
+df_la_race
+```
+
+**The table below sorts in descending order the number of students purchased by high school (according to ncessch ID) and shows the number of 11th and 12th graders enrolled (2018-2019 academic year), number of 11th & 12th grade test takers, and the number and percentage of test takers that met the benchmakrs for ERW and Math for the SAT.**  
+
+- 11th graders in 2018-2019 are graduating class of 2020
+- 12th graders in 2018-2019 are graduating class of 2019
+- SAT benchmark for ERW is score of 480 and benchmark for Math is score of 530.
+- For 11th graders benchmark for ERW is 460 and benchmark for Math is 510.
+```{r}
+df_la_county_per <- df_la_county %>%
+  group_by(ncessch) %>%
+  filter(row_number(ncessch) == 1, !is.na(CDS)) %>%
+  select(ncessch, SName, n_stu_nces, Enroll1112, NumTSTTakr1112, NumERWBenchmark1112, PctERWBenchmark1112, NumMathBenchmark1112, PctMathBenchmark1112, TotNumBothBenchmark11, PctBothBenchmark1112) %>% 
+  arrange(-n_stu_nces)
+
+df_la_county_per
+```
+
+**Comments**
+
+- The CA Department of Education separates SAT scores for ERW and Math, while order summaries combine both to filter for total SAT score.
+- Might be tricky to identify what SAT ranges universities' filter for since we are comparing at the high school-level and separate orders could filter for different SAT ranges (e.g., students purchased from same high school may come from separate orders.)
+    - Could perhaps identify a range for SAT filter a university uses since that usually doesn't vary much.
