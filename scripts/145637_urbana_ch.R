@@ -119,6 +119,9 @@ cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa
 state_shp <- readOGR(file.path(data_dir, 'cb_2018_us_state_500k', 'cb_2018_us_state_500k.shp'))
 zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
 
+save(IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
+     lists_df_pivot, lists_df_sat, lists_df_act,
+     file = file.path(data_dir, '145637_orders.RData'))
 
 # ----------
 # IL orders
