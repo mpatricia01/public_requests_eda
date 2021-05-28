@@ -9,8 +9,7 @@ lists_df <- read_csv(file.path(data_dir, '148654_lists.csv'), col_types = cols(.
 orders_df <- read_csv(file.path(data_dir, '148654_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c', 'hs_grad_class' = 'c'))
 markets_df <- read_csv(file.path(data_dir, '148654_markets.csv'))
 
-# Inspect data
-View(lists_df %>% count(`Segment Description`))
+# Inspect orders
 unique(orders_df$zip_code_file)
 unique(orders_df$zip_code)
 
@@ -39,4 +38,26 @@ rest_of_IL_orders <- orders_df %>% filter(market == 'rest_of_IL') %>% remove_NA_
 secondary_orders <- orders_df %>% filter(market == 'secondary') %>% remove_NA_cols()
 other_orders <- orders_df %>% filter(is.na(market)) %>% remove_NA_cols()
 
-save(primary_orders, chicagoland_orders, rest_of_IL_orders, secondary_orders, other_orders, file = file.path(data_dir, '148654_uis_orders.RData'))
+# save(primary_orders, chicagoland_orders, rest_of_IL_orders, secondary_orders, other_orders, file = file.path(data_dir, '148654_uis_orders.RData'))
+
+# Inspect lists
+View(lists_df %>% count(`Segment Description`))
+
+lists_df <- lists_df %>%  # IL purchases from 4 markets above
+  mutate(
+    market = str_extract(`Segment Description`, 'primary|chicagoland|rest of il|secondary'),
+    grade_level = str_extract(`Segment Description`, 'seniors|juniors|sophomores'),
+    test_type = case_when(
+      str_detect(`Segment Description`, '[^\\d]+\\d{3}') ~ 'sat',
+      str_detect(`Segment Description`, '[^\\d]+\\d{2}') ~ 'act'
+    )
+  )
+
+View(lists_df %>% select(`Segment Description`, market, grade_level, test_type) %>% distinct())
+
+View(lists_df %>% filter(State == 'CA'))  # CA purchases mostly come from '2019 application - pre names from client' or '2019 application - inquiry pool d1', etc. - unknown source + race/ethnicity unknown for those
+
+# Known SAT students
+lists_df_sat <- lists_df %>% filter(test_type == 'sat')
+
+View(lists_df_sat %>% count(State) %>% arrange(-n))  # should all be from the 4 IL/surrounding markets, but not always
