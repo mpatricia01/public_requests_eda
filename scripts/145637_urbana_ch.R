@@ -496,7 +496,7 @@ lists_df_sat_la <- lists_df_sat %>%
   mutate(
     zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'),
     ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left'),
-    is_white = as.integer(str_detect(Race, 'White')),
+    is_white = as.integer(str_detect(Race, 'White'))
   ) %>% 
   filter(zip_code %in% la_zip_codes)
 
@@ -527,3 +527,135 @@ dupe_ceeb <- (lists_df_sat_la_hs %>%
 lists_df_sat_la_hs %>%  # if ceeb mapped to multiple ncessch, at most 1 of those ncessch is valid
   filter(ceeb %in% dupe_ceeb) %>%
   View()
+
+
+# ------------------------------------------------
+# HS CHARACTERISTICS AGGREGATED TO ZIP-CODE LEVEL
+# ------------------------------------------------
+
+lists_df_all <- lists_df_pivot %>%  # 434120 unique students
+  filter(Country == 'United States') %>% 
+  select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders
+  mutate(
+    ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left')
+  )
+
+ceeb_hs <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
+
+# 46 ceeb mapped to multiple ncessch w/ existing ccd data
+nrow(ceeb_hs)  # 20084
+length(unique(ceeb_hs$ceeb))  # 20038
+
+ceeb_hs %>% group_by(ceeb) %>% summarise(count = n()) %>% View()
+
+dupe_ceeb <- (ceeb_hs %>% 
+                group_by(ceeb) %>% 
+                summarise(count = n()) %>%
+                filter(count > 1))$ceeb
+
+dupe_ncessch <- (ceeb_hs %>% 
+                   group_by(ncessch) %>% 
+                   summarise(count = n()) %>% 
+                   filter(count > 1))$ncessch
+
+ceeb_hs %>% filter(ceeb == '030617') %>% View()  # Should be Arete Prep not Mesa HS
+ceeb_hs %>% filter(ncessch == '040497000404') %>% View()  # There is a correct entry for Mesa HS in the crosswalk too
+ceeb_hs %>% filter(ncessch == '040075702820') %>% View()  # Whereas Arete Prep only has the one entry
+
+ceeb_hs %>% filter(ceeb == '051727') %>% View()  # Should be Milken Community School not Foxcroft School
+ceeb_hs %>% filter(ncessch == '01433805') %>% View()  # There is a correct entry for Foxcroft School in the crosswalk too
+ceeb_hs %>% filter(ncessch == 'A9101492') %>% View()  # Whereas Milken Community School only has the one entry
+
+ceeb_hs %>% filter(ceeb == '051792') %>% View()  # School seems to have 2 entries in NCES DB (BB120057 & BB944617)
+# https://nces.ed.gov/globallocator/sch_info_popup.asp?Type=Private&ID=BB120057
+# https://nces.ed.gov/globallocator/sch_info_popup.asp?Type=Private&ID=BB944617
+
+ambiguous_ceeb <- (ceeb_hs %>% filter(!(ceeb %in% dupe_ceeb & ncessch %in% dupe_ncessch)) %>% group_by(ceeb) %>% summarise(count = n()) %>% filter(count > 1))$ceeb
+
+intersect(ambiguous_ceeb, lists_df_all$ceeb)
+
+# Most look like duplicate entries in NCES
+ceeb_hs %>% filter(ceeb %in% ambiguous_ceeb) %>% View()
+
+lists_df_all_hs <- lists_df_all %>% left_join(ceeb_hs, by = 'ceeb')  # 476 repeated rows (matched to one of the 46 ceeb that had multiple ncessch entries in crosswalk)
+
+# 322211 (80.7%) from public HS, 47544 (11.9%) from private HS, 29525 (7.4%) either no entry in crosswalk or no available NCES data
+table(lists_df_all_hs$school_type, useNA = 'always')
+
+lists_df_all_zip <- lists_df_all %>% right_join(ceeb_hs, by = 'ceeb')
+# dropping NA students who did not match to available NCES data
+# this also dropped HS whose ncessch did not exist in crosswalk (no chance of it merging w/ purchased students if there were any)
+
+lists_df_all_zip %>% count(is.na(Ref))  # 369755 purchased students
+length(unique(lists_df_all_zip$ncessch))  # 19986 HS
+
+# Group by HS's zip code
+lists_df_all_zip_agg <- lists_df_all_zip %>%
+  mutate(
+    ncessch_purchased = if_else(is.na(Ref), NA_character_, ncessch)
+  ) %>% 
+  group_by(zip_code, state_code) %>%
+  summarise(
+    num_hs = n_distinct(ncessch, na.rm = T),
+    num_hs_purchased = n_distinct(ncessch_purchased, na.rm = T),
+    num_students_purchased = sum(as.numeric(!is.na(Ref)))
+  )
+
+sum(lists_df_all_zip_agg$num_students_purchased)  # 369755 purchased students
+sum(lists_df_all_zip_agg$num_hs)  # 19986 HS
+sum(lists_df_all_zip_agg$num_hs_purchased)  # 6299 purchased HS
+
+# Filter for just LA zip codes
+lists_df_all_la <- lists_df_all %>%
+  mutate(
+    zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left')
+  ) %>% 
+  filter(zip_code %in% la_zip_codes)
+
+# Unmerged CEEB based on student's home zip code being in LA
+unmerged_la_ceeb <- (lists_df_all_la %>% anti_join(ceeb_hs, by = 'ceeb'))$ceeb %>% unique()
+
+lists_df_all_la_zip_agg <- lists_df_all_la %>%  # may include students whose home zip code is LA but attended school not in LA
+  select(-zip_code) %>% 
+  right_join(ceeb_hs, by = 'ceeb') %>%
+  mutate(
+    ncessch_purchased = if_else(is.na(Ref), NA_character_, ncessch)
+  ) %>% 
+  group_by(zip_code, state_code) %>%
+  summarise(
+    num_hs = n_distinct(ncessch, na.rm = T),
+    num_hs_purchased = n_distinct(ncessch_purchased, na.rm = T),
+    num_students_purchased = sum(as.numeric(!is.na(Ref)))
+  )
+
+# We would ideally know the HS/EN clusters to differentiate between HS that weren't purchased vs. HS that were purchased but no students met other criteria
+
+# Only look at LA schools that's in crosswalk and the students that were merged to those (259 HS)
+View(lists_df_all_zip_agg %>% filter(zip_code %in% la_zip_codes) %>% arrange(desc(num_students_purchased)))
+
+lists_df_all_la_zip <- lists_df_all_zip %>% filter(zip_code %in% la_zip_codes)
+
+lists_df_all_la_zip %>% count(is.na(Ref))  # 18470 purchased students
+length(unique(lists_df_all_la_zip$ncessch))  # 506 HS
+
+lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
+  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc) %>% 
+  summarise(
+    num_students_purchased = sum(!is.na(Ref))
+  ) %>% 
+  mutate(is_hs_purchased = num_students_purchased > 0) %>%
+  group_by(zip_code, state_code, is_hs_purchased) %>%
+  summarise(
+    num_hs = n(),
+    num_students_purchased = sum(num_students_purchased),
+    avg_hs_size = mean(total_students),
+    avg_pct_white = mean(pct_white),
+    avg_pct_poc = mean(pct_poc),
+    avg_pct_white_weighted = sum(total_students / sum(total_students) * pct_white),
+    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc)
+  ) %>% 
+  arrange(zip_code, desc(is_hs_purchased))
+
+sum(lists_df_all_la_zip_by_purchase$num_students_purchased)  # 18470 purchased students
+sum(lists_df_all_la_zip_by_purchase$num_hs)  # 506 HS
+lists_df_all_la_zip_by_purchase %>% group_by(is_hs_purchased) %>% summarise(count = sum(num_hs))  # 230 HS purchased (276 HS not purchased)

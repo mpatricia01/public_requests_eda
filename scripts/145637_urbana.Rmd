@@ -10,7 +10,7 @@ output:
     fig_caption: true
     highlight: tango
     theme: default
-    df_print: default
+    df_print: paged
 ---
 
 ```{r setup, include=FALSE}
@@ -702,3 +702,90 @@ df_la_county_per
 - The CA Department of Education separates SAT scores for ERW and Math, while order summaries combine both to filter for total SAT score.
 - Might be tricky to identify what SAT ranges universities' filter for since we are comparing at the high school-level and separate orders could filter for different SAT ranges (e.g., students purchased from same high school may come from separate orders.)
     - Could perhaps identify a range for SAT filter a university uses since that usually doesn't vary much.
+
+
+# Zip code level analysis
+
+## By zip code
+
+
+## By HS aggregated to zip code level
+
+```{r}
+lists_df_all <- lists_df_pivot %>%  # 434120 unique students
+  filter(Country == 'United States') %>% 
+  select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders
+  mutate(
+    ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left')
+  )
+
+ceeb_hs <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
+
+lists_df_all_hs <- lists_df_all %>% left_join(ceeb_hs, by = 'ceeb')  # 476 repeated rows (matched to one of the 46 ceeb that had multiple ncessch entries in crosswalk)
+
+# 322211 (80.7%) from public HS, 47544 (11.9%) from private HS, 29525 (7.4%) either no entry in crosswalk or no available NCES data
+table(lists_df_all_hs$school_type, useNA = 'always')
+
+lists_df_all_zip <- lists_df_all %>% right_join(ceeb_hs, by = 'ceeb')
+# dropping NA students who did not match to available NCES data
+# this also dropped HS whose ncessch did not exist in crosswalk (no chance of it merging w/ purchased students if there were any)
+
+lists_df_all_zip %>% count(is.na(Ref))  # 369755 purchased students
+length(unique(lists_df_all_zip$ncessch))  # 19986 HS
+
+# Group by HS's zip code
+lists_df_all_zip_agg <- lists_df_all_zip %>%
+  mutate(
+    ncessch_purchased = if_else(is.na(Ref), NA_character_, ncessch)
+  ) %>% 
+  group_by(zip_code, state_code) %>%
+  summarise(
+    num_hs = n_distinct(ncessch, na.rm = T),
+    num_hs_purchased = n_distinct(ncessch_purchased, na.rm = T),
+    num_students_purchased = sum(as.numeric(!is.na(Ref)))
+  ) %>%
+  arrange(desc(num_students_purchased))
+
+lists_df_all_zip_agg
+
+sum(lists_df_all_zip_agg$num_students_purchased)  # 369755 purchased students
+sum(lists_df_all_zip_agg$num_hs)  # 19986 HS
+sum(lists_df_all_zip_agg$num_hs_purchased)  # 6299 purchased HS
+
+# Filter for just schools (that's in crosswalk file) in LA zip codes (506 HS)
+lists_df_all_zip_agg %>%filter(zip_code %in% la_zip_codes)
+
+lists_df_all_la_zip <- lists_df_all_zip %>% filter(zip_code %in% la_zip_codes)
+
+lists_df_all_la_zip %>% count(is.na(Ref))  # 18470 purchased students
+length(unique(lists_df_all_la_zip$ncessch))  # 506 HS
+
+lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
+  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc) %>% 
+  summarise(
+    num_students_purchased = sum(!is.na(Ref))
+  ) %>% 
+  mutate(is_hs_purchased = num_students_purchased > 0) %>%
+  group_by(zip_code, state_code, is_hs_purchased) %>%
+  summarise(
+    num_hs = n(),
+    num_students_purchased = sum(num_students_purchased),
+    avg_hs_size = mean(total_students),
+    avg_pct_white = mean(pct_white),
+    avg_pct_poc = mean(pct_poc),
+    avg_pct_white_weighted = sum(total_students / sum(total_students) * pct_white),
+    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc)
+  ) %>% 
+  arrange(zip_code, desc(is_hs_purchased))
+
+lists_df_all_la_zip_by_purchase
+
+sum(lists_df_all_la_zip_by_purchase$num_students_purchased)  # 18470 purchased students
+sum(lists_df_all_la_zip_by_purchase$num_hs)  # 506 HS
+lists_df_all_la_zip_by_purchase %>% group_by(is_hs_purchased) %>% summarise(count = sum(num_hs))  # 230 HS purchased (276 HS not purchased)
+```
+
+**Notes**: 
+
+- We would ideally know the HS/EN clusters to differentiate between HS that weren't purchased vs. HS that were purchased but no students met other criteria
+- CEEB/NCES crosswalk
