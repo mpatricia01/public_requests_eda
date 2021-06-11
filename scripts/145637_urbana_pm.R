@@ -1222,6 +1222,24 @@ df_sl_sat_CA %>%
 df_sl_sat_CA %>%
   filter(is.na(ncessch)) #421
 
+# create var for number of students purchased by CDS code
+# removing all missing for nces and CDS: have to go back and check
+df_sl_sat_CA <- df_sl_sat_CA %>%
+  filter(!is.na(ncessch) & !is.na(CDS)) %>%
+  group_by(CDS) %>%
+  mutate(n_stu_cds = n()) %>%
+  ungroup()
+
+# compare nces and cds
+df_sl_sat_CA %>%
+  dplyr::select(n_stu_nces, n_stu_cds)
+
+
+# check those that are not similar
+df_sl_sat_CA %>%
+  filter(n_stu_nces != n_stu_cds) %>%
+  dplyr::select(n_stu_nces, n_stu_cds)
+
 # merge NCES to CA student list & DOE data
 df_sl_hs_sat_CA <- df_sl_sat_CA %>% left_join(hs_ca_data, by = "ncessch")
 
@@ -1236,7 +1254,7 @@ anti_merge %>% filter(is.na(CDS)) #2080
 
 View(anti_merge %>% filter(!is.na(ncessch) & !is.na(CDS)) %>% group_by(ncessch, CDS, City, State) %>% summarize(n_per_grp = n()))
 
-    # 061062001176, Davis Senior High (regular)
+    # 061062001176, multiple schools with same nces and CDS id?
     # 062271008887, Los Angeles Center for Enriched Studies (other/alternative)
     # 063441001276, Asawa (Ruth) SF Sch of the Arts A Public School (other/alternative)
     # 060141013692, Mountain House High (regular)
@@ -1254,7 +1272,9 @@ df_sl_hs_sat_CA %>%
   count(n_per_grp)
 
 # check how many unique ncessch values
-length(unique(df_sl_hs_sat_CA$ncessch)) #910
+length(unique(df_sl_hs_sat_CA$ncessch)) #594
+# check how many unique CDS values
+length(unique(df_sl_hs_sat_CA$CDS)) #594
 #names(df_sl_hs_sat_CA)
 
 # check missing by column
@@ -1271,7 +1291,7 @@ df_la_county <- df_sl_hs_sat_CA %>% filter(CName == "Los Angeles")
 View(df_la_county %>%
   group_by(ncessch) %>%
   filter(row_number(ncessch) == 1, !is.na(CDS)) %>%
-  select(ncessch, SName, n_stu_nces, Enroll12, NumTSTTakr12, NumERWBenchmark12, PctERWBenchmark12, NumMathBenchmark12, PctMathBenchmark12,
+  dplyr::select(ncessch, SName, n_stu_nces, Enroll12, NumTSTTakr12, NumERWBenchmark12, PctERWBenchmark12, NumMathBenchmark12, PctMathBenchmark12,
          Enroll12, NumTSTTakr11, NumERWBenchmark11, PctERWBenchmark11, NumMathBenchmark11, PctMathBenchmark11) %>% 
   arrange(-n_stu_nces)) 
 
@@ -1332,3 +1352,178 @@ df_sl_hs_sat_CA %>%
 # compare sat ranges they purchased vs. how students in the high school perform
 # avg enrollment at this school from 11-12 graders 
 # look at order summary
+
+# Aggregate high schools to the zip-code level 
+#-----------------------------------------------------------------------
+# data frame for schools in LA county
+df_la_zipcode <- df_la_county %>%
+  group_by(zip_code) %>%
+  summarise(n_per_grp = n()) 
+
+
+
+# Compare characteristics of zipcodes purchased to those that were not purchased for 
+# the LA msa area 
+#-----------------------------------------------------------------------
+
+# use student list data
+df_sl_ca <- read_csv("data/145637_list_ca.csv")
+
+#uniquely identified by student Ref ID
+df_sl_ca %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+# read in acs, zip-code-level data
+acs_race_zipcode <- read_csv("data/acs_race_zipcode.csv")
+
+# uniquely identified by zip code
+acs_race_zipcode %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+
+# zip cbsa data
+zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+
+# grab zip codes in LA msa
+la_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '31080'))$zip_code
+
+# create a new 5-digit zip code and filter to LA msa for student list purchases
+df_sl_la <- df_sl_ca %>%
+  mutate(zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left')) %>%
+  filter(zipcode %in% la_zip_codes)
+
+# check
+df_sl_la %>%
+  group_by(Ref) %>%
+  summarize(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+# first subset df and then merge in census data to student list data
+
+# get rid of SAT/ACT test scores for now
+df_sl_la <- df_sl_la %>% dplyr::select(-contains("sat"), -contains("act"), -(Source:CDSCode))
+length(unique(df_sl_la$zipcode)) #313 zip codes, according to google there are 378 zip codes in LA metro area
+
+df_sl_la %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+# create df to check work
+stu_zip <- df_sl_la %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  arrange(-n_per_grp)
+
+# create 0/1 variable of race/ethnicity
+View(df_sl_la %>% 
+       group_by(Race) %>%
+       summarise(n_per_grp = n())) 
+
+# get count of hispanic
+df_sl_la %>%
+  count(Hispanic)
+
+# crosstab of hispanic & other race/ethnicities
+View(df_sl_la %>%
+       group_by(Race) %>%
+       filter(Hispanic == "Yes") %>%
+       count(Hispanic))
+
+df_sl_la_race <- df_sl_la %>%
+  mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0),
+         nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         nat_am = ifelse(Race == "American Indian or Alaska Native" &
+                           (is.na(Hispanic) | Hispanic == "No"),1,0),
+         other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0)) 
+
+# aggregate to the zip code level
+df_sl_la_race <- df_sl_la_race %>%
+  group_by(zipcode) %>%
+  summarise(n_stu_zip = n(), #not accurate because doesn't account for all race/ethnicities of students
+            tot_white = sum(white, na.rm = TRUE),
+            stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
+            tot_black = sum(black, na.rm = TRUE),
+            stu_pct_black = mean(black, na.rm=TRUE)*100,
+            tot_asian = sum(asian, na.rm = TRUE),
+            stu_pct_asian = mean(asian, na.rm=TRUE)*100,
+            tot_latinx = sum(latinx, na.rm = TRUE),
+            stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
+            tot_nhpi = sum(nhpi, na.rm = TRUE),
+            stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
+            tot_natam = sum(nat_am,na.rm = TRUE),
+            stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
+            tot_other = sum(other, na.rm = TRUE),
+            stu_pct_other = mean(other, na.rm=TRUE)*100,
+            stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) %>%
+  arrange(-n_stu_zip)
+
+
+# keep only LA msa zip codes from acs data
+acs_race_la_zipcode <- acs_race_zipcode %>%
+  filter(zipcode %in% la_zip_codes) # 378 zip codes in LA msa
+
+typeof(acs_race_la_zipcode$zipcode) #double
+typeof(df_sl_la$zipcode) #character
+
+# change to character
+acs_race_la_zipcode$zipcode <- as.character(acs_race_la_zipcode$zipcode)
+
+df_sl_la_acs <- df_sl_la_race %>% right_join(acs_race_la_zipcode, by = "zipcode")
+
+length(unique(df_sl_la_acs$zipcode)) #378 
+
+# check
+anti_merge <- acs_race_la_zipcode %>% anti_join(df_sl_la_race, by = "zipcode")
+
+length(unique(anti_merge$zipcode)) 
+
+
+# check zipcodes that were not purchased
+#----------------------------------------------------------------------------------------------
+df_zip_non_purchase <- df_sl_la_acs %>%
+  filter(zipcode %in% anti_merge$zipcode) %>%
+  dplyr::select(zipcode, median_household_income, contains("15_19_pct")) %>%
+  arrange(-median_household_income)
+
+
+# Comments
+# 90743 is zip code for Seal Beach, in Orange County
+# 92678 is zip code for Trabuco Canyon in Orange County (small unincorporated community)
+# 90713 is zip code for Lakewood close to Cerritos and Long Beach
+# 90746 is zip code for Carson, CA (interesting because 55% of 15-19 year olds are Black)
+# 90305 is zip code for Inglewood, CA (80K median income & 74% Black students)
+# 91722 is zip code for Covina, CA (80K median income & large Hispanic population of 15-19 year olds)
+
+# General observations
+# Some zipcodes with relatively higher income and higher percent of POCs are not getting purchased
+# As you go further down, zipcodes with lower median income tend to have more POCs and not likely to get visited
+
+# check zipcodes that were purchased
+#----------------------------------------------------------------------------------------------
+df_zip_purchase <- df_sl_la_acs %>%
+  filter(!is.na(n_stu_zip)) %>%
+  dplyr::select(zipcode, n_stu_zip, -contains("tot_"), median_household_income, contains("stu_pct"), contains("15_19_pct"))
+  
+# Most students purchased in a zip code identify as asian. Higher percent of students purchased that identify as asian
+  # compared to the percent of asain people between the ages of 15-19
+# 90056 zip code for Windsor Hills (Ladera Heights), median income of 93k, about 75% Black and only one student purchased
+# Seems to be more mixed for Latinx students, for example, zip codes with large percent of latinx students tend to have more
+  # students that identify as Latinx purchased, although this is not always the case. And the number of students purchased from 
+  # these zipcodes are a lot lower <6
+# Zip codes that have a higher percentage of Asian students between the ages of 15-19, also have more asian students purchased
+  # and a lot more student purchased by zip code 200>
+# Zip codes that have a higher percentage of White students between the ages of 15-19, also tend to have more white students purchased
+  # although not as much as the number of asian students purchased by zip code 100>
+
+# Compare zip codes of students purchased in LA metro area to those not purchased in LA metro area (e.g., median income, race/ethnicity)
+
+

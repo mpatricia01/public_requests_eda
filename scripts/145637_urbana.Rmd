@@ -708,6 +708,94 @@ df_la_county_per
 
 ## By zip code
 
+**LA metropolitan area zip codes** 
+
+```{r include=FALSE}
+# create a new 5-digit zip code and filter to LA msa for student list purchases
+df_sl_la <- df_sl_ca %>%
+  mutate(zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left')) %>%
+  filter(zipcode %in% la_zip_codes)
+# get rid of SAT/ACT test scores for now
+df_sl_la <- df_sl_la %>% dplyr::select(-contains("sat"), -contains("act"), -(Source:CDSCode))
+
+#create 0/1 race/ethnicity variables
+df_sl_la_race <- df_sl_la %>%
+  mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0),
+         nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         nat_am = ifelse(Race == "American Indian or Alaska Native" &
+                           (is.na(Hispanic) | Hispanic == "No"),1,0),
+         other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0)) 
+
+# aggregate to the zip code level
+df_sl_la_race <- df_sl_la_race %>%
+  group_by(zipcode) %>%
+  summarise(n_stu_zip = n(), #not accurate because doesn't account for all race/ethnicities of students
+            tot_white = sum(white, na.rm = TRUE),
+            stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
+            tot_black = sum(black, na.rm = TRUE),
+            stu_pct_black = mean(black, na.rm=TRUE)*100,
+            tot_asian = sum(asian, na.rm = TRUE),
+            stu_pct_asian = mean(asian, na.rm=TRUE)*100,
+            tot_latinx = sum(latinx, na.rm = TRUE),
+            stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
+            tot_nhpi = sum(nhpi, na.rm = TRUE),
+            stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
+            tot_natam = sum(nat_am,na.rm = TRUE),
+            stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
+            tot_other = sum(other, na.rm = TRUE),
+            stu_pct_other = mean(other, na.rm=TRUE)*100,
+            stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) %>%
+  arrange(-n_stu_zip)
+
+# keep only LA msa zip codes from acs data
+acs_race_la_zipcode <- acs_race_zipcode %>%
+  filter(zipcode %in% la_zip_codes) # 378 zip codes in LA msa
+
+# change to character
+acs_race_la_zipcode$zipcode <- as.character(acs_race_la_zipcode$zipcode)
+
+#merge
+df_sl_la_acs <- df_sl_la_race %>% right_join(acs_race_la_zipcode, by = "zipcode")
+
+anti_merge <- acs_race_la_zipcode %>% anti_join(df_sl_la_race, by = "zipcode")
+
+```
+
+**Zip codes not purchased in the LA metro area**
+```{r}
+# characteristics of zipcodes that were not purchased
+df_sl_la_acs %>%
+  filter(zipcode %in% anti_merge$zipcode) %>%
+  dplyr::select(zipcode, median_household_income, contains("15_19_pct")) %>%
+  arrange(-median_household_income)
+
+```
+
+**Comments**
+
+- First three zip codes with higher median income are in smaller (one unincorporated) communities (e.g., Seal Beach (OC), Trabuco Canyon (OC), and Lakewood)
+- Fourth and Fifth zip codes have a somewhat higher median household income, with higher percentage of Black, and other people of color between the ages 15-19 (e.g., Carson & Inglewood)
+- Zip codes with lower median household income also have higher percentage of Latinx and other populations of color between the ages of 15-19.
+
+**Zip codes where at least one student was purchased in the LA metro area**
+```{r}
+# characteristics of zipcodes that were purchased
+df_sl_la_acs %>%
+  filter(!is.na(n_stu_zip)) %>%
+  dplyr::select(zipcode, n_stu_zip, -contains("tot_"), median_household_income, contains("stu_pct"), contains("15_19_pct"))
+  
+```
+
+**Comments**
+
+- More students who identify as Asian are purchased at higher rates than the population of Asain identifying people between the ages of 15-19.
+- 90056 zip code for Windsor Hills (Ladera Heights), median income of 93k, about 75% Black and only one student purchased here.
+- Zip codes that have a higher percentage of Hispanic/Latinx people between the ages of 15-19 tend to go either way. However, less students in these zip codes are purchased (e.g., <6 per zip code).
+- Overall there seems to be an overrepresentation of Asian (in particular) and white students purchased compared to other communities of color by zip code.
+
 
 ## By HS aggregated to zip code level
 
