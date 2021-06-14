@@ -1524,6 +1524,160 @@ df_zip_purchase <- df_sl_la_acs %>%
 # Zip codes that have a higher percentage of White students between the ages of 15-19, also tend to have more white students purchased
   # although not as much as the number of asian students purchased by zip code 100>
 
-# Compare zip codes of students purchased in LA metro area to those not purchased in LA metro area (e.g., median income, race/ethnicity)
+# map zip codes purchased and not purchased in LA metro area
+#----------------------------------------------------------------------------------------------
+#load msa data
+msa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/msa_metadata.csv'), na = c('', 'NULL')) %>% 
+  mutate(pop_poc_pct = pop_black_pct + pop_hispanic_pct + pop_amerindian_pct)
+
+# subset to LA metro area
+msa_data <- msa_data %>% filter(cbsa_code == 31080)
+
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>% 
+  mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
+
+# Load shape files: https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
+state_shp <- readOGR(file.path(data_dir, 'cb_2018_us_state_500k', 'cb_2018_us_state_500k.shp'))
+zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+
+# Create var for race breaks
+la_zip_data <- df_sl_la_acs %>%
+  mutate(pop15_19_poc_pct = pop_black_15_19_pct + pop_hispanic_15_19_pct + pop_amerindian_15_19_pct + pop_nativehawaii_15_19_pct )
+  
+
+la_zip_data$race_brks_nonwhiteasian <- cut(la_zip_data$pop15_19_poc_pct, 
+                   breaks = c(-1, 20, 40, 60, 80, 90, 101), 
+                   labels = c('0-19%', '20-39%', '40-59%', 
+                              '60-79%', '80-89%', '90-100%'))
+
+# create var for race by high school
+hs_data$race_brks_nonwhiteasian <- cut(hs_data$pct_poc, 
+                                       breaks = c(-1, 20, 40, 60, 80, 90, 101), 
+                                       labels = c('0-19%', '20-39%', '40-59%', 
+                                                  '60-79%', '80-89%', '90-100%'))
+
+# Create var for income breaks
+la_zip_data$inc_brks <- cut(la_zip_data$median_household_income, 
+                         breaks = c(-1, 50000, 75000, 100000, 150000, 200000, 10000000), 
+                         labels = c('<$50k', '$50k-74k', '$75k-99k', 
+                                    '$100k-149k', '$150k-199k', '$200k+'))
 
 
+cbsa_shp <- merge(cbsa_shp, msa_data, by.x = 'GEOID', by.y = 'cbsa_code', all.x = T)
+zip_shp <- merge(zip_shp, la_zip_data, by.x = 'ZCTA5CE10', by.y = 'zipcode', all.x = T)
+
+#la msa area
+la_msa_shp <- subset(cbsa_shp, GEOID %in% msa_data$cbsa_code)
+
+# grab zip codes in LA metro area
+la_zips_shp <- subset(zip_shp, ZCTA5CE10 %in% la_zip_codes)
+# grab CA state
+CA_state_shp <- subset(state_shp, STUSPS == 'CA')
+
+CA_hs <- hs_data %>% filter(state_code == 'CA')
+
+
+# Create shared color scale functions
+color_income <- colorFactor('YlGnBu', la_zip_data$inc_brks)
+color_race <- colorFactor('YlGnBu', la_zip_data$race_brks_nonwhiteasian)
+color_pop <- colorNumeric('YlGnBu', la_zip_data$pop_total_15_19, n = 5)
+
+# Create popups
+pop_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
+                  'Total Population: ', format(la_zips_shp$pop_total_15_19, big.mark = ',')) %>% lapply(htmltools::HTML)
+
+income_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
+                     'Median Household Income: ', currency(la_zips_shp$median_household_income, digits = 0L)) %>% lapply(htmltools::HTML)
+
+race_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
+                   '% Population of Color: ', sprintf('%.1f', la_zips_shp$race_brks_nonwhiteasian)) %>% lapply(htmltools::HTML)
+
+
+highlight_zip <- highlightOptions(color = 'black',
+                                  bringToFront = F)
+
+# Create map
+map_CA <- leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  
+  addMiniMap(tiles = providers$CartoDB.Positron,
+             toggleDisplay = TRUE) %>%
+  
+  addPolygons(data = CA_state_shp, stroke = F, fillOpacity = 0.1, smoothFactor = 0.2, color = 'gray', group = 'CA') %>% 
+  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_pop(pop_total), label = pop_zip, group = 'CA by Population', highlightOptions = highlight_zip) %>%
+  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_income(inc_brks), label = income_zip, group = 'CA by Median Household Income', highlightOptions = highlight_zip) %>%
+  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_race(race_brks_nonwhiteasian), label = race_zip, group = 'CA by Race/Ethnicity', highlightOptions = highlight_zip) %>%
+  addPolylines(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, color = 'black', fillOpacity = 0, group = 'Zip codes') %>% 
+  
+  # add markers
+  addCircleMarkers(data = CA_hs, lng = ~longitude, lat = ~latitude, group = 'CA HS by Race/Ethnicity',
+                   radius = 3, fill = TRUE, fillOpacity = 1, weight = 1, color = 'white', fillColor = ~color_race(race_brks_nonwhiteasian)) %>%
+  
+  # add legends
+  addLegend(data = la_zips_shp,
+            position = 'topright', pal = color_pop, values = ~pop_total_15_19,
+            title = 'Population',
+            className = 'info legend legend-pop',
+            na.label = 'NA',
+            opacity = 1) %>%
+  
+  addLegend(data = la_zips_shp,
+            position = 'topright', pal = color_income, values = ~inc_brks,
+            title = 'Median Household Income',
+            className = 'info legend legend-income',
+            na.label = 'NA',
+            opacity = 1) %>%
+  
+  addLegend(data = la_zips_shp,
+            position = 'topright', pal = color_race, values = ~race_brks_nonwhiteasian,
+            title = 'Black, Latinx, and <br>Native American Population',
+            className = 'info legend legend-race',
+            na.label = 'NA',
+            opacity = 1) %>%
+  
+  # add options
+  addLayersControl(
+    position = c('bottomleft'),
+    baseGroups = c('CA', 'CA by Population', 'CA by Median Household Income', 'CA by Race/Ethnicity'),
+    overlayGroups = c('Purchased Zip codes', 'CA HS by Race/Ethnicity'),
+    options = layersControlOptions(collapsed = FALSE)
+  ) %>%
+  
+  hideGroup('CA HS by Race/Ethnicity') %>% 
+  
+  htmlwidgets::onRender("
+                        function(el, x) {
+                        var myMap = this;
+                        $('.legend').css('display', 'none');
+                        
+                        myMap.on('baselayerchange', function(e) {
+                        $('.legend').css('display', 'none');
+                        switch(e.name) {
+                        case 'CA by Population':
+                        $('.legend-pop').css('display', 'inherit');
+                        break;
+                        case 'CA by Median Household Income':
+                        $('.legend-income').css('display', 'inherit');
+                        break;
+                        case 'CA by Race/Ethnicity':
+                        $('.legend-race').css('display', 'inherit');
+                        break;
+                        }
+                        e.layer.bringToBack();
+                        });
+                        
+                        myMap.on('overlayadd', function(e) {
+                        if (e.name === 'CA HS by Race/Ethnicity') {
+                        $('.legend-race').css('display', 'inherit');
+                        }
+                        });
+                        
+                        myMap.on('overlayremove', function(e) {
+                        if (e.name === 'CA HS by Race/Ethnicity' && $('.leaflet-control-layers-base input[type=radio]:checked~span').text().trim() !== 'CA by Race/Ethnicity') {
+                        $('.legend-race').css('display', 'none');
+                        }
+                        });
+                        }")
+
+# saveWidget(map_IL, '~/Downloads/map_IL.html', background = 'transparent')
