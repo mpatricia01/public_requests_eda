@@ -6,6 +6,7 @@ library(raster)
 library(formattable)
 library(scales)
 library(htmlwidgets)
+library(readxl)
 
 #===========================================================================================
 #Prep data
@@ -1094,8 +1095,6 @@ OOS_msa_30024_zip
 #============================================================================
 #Student lists investigations of CA specific high schools
 #============================================================================
-# library
-library(readxl)
 
 # LOAD DATA
 #-----------------------------------------------------------------------
@@ -1726,3 +1725,28 @@ acs_tract_edu_ca <- acs_tract_edu_ca %>%
 # merge race + edu tract data sets
 acs_tract_ca <- acs_tract_race_ca %>% left_join(acs_tract_edu_ca, by = c("tract", "tract_name"))
 
+# read in zip code to census tract crosswalk data
+#----------------------------------------------------------------------------------------------
+
+zip_tract <- read_xlsx("data/zip_tract_12-19.xlsx") 
+
+#change to lowercase  
+names(zip_tract) <- str_to_lower(names(zip_tract))
+
+# grab census tracts in CA 
+ca_tracts <- acs_tract_ca$tract
+
+# acs tract is 6 digit & cross walk is 11 digits
+#https://transition.fcc.gov/form477/Geo/more_about_census_tracts.pdf
+
+# grab last 6 digits of tract
+
+zip_tract_ca <- zip_tract %>%
+  mutate(tract_6 = str_pad(str_sub(tract, 6, 11), width = 6, pad = '0', side = 'left')) %>%
+  filter(tract_6 %in% ca_tracts)
+
+zip_tract_ca %>%
+  group_by(tract_6, zip) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
