@@ -1681,3 +1681,48 @@ map_CA <- leaflet() %>%
                         }")
 
 # saveWidget(map_IL, '~/Downloads/map_IL.html', background = 'transparent')
+
+# tract-level EDA
+#----------------------------------------------------------------------------------------------
+# read in acs tract level race data
+acs_tract_race <- read_csv("data/acs_race_tract.csv")
+
+# to make it more manageable for now just keep CA tracts
+acs_tract_race_ca <- acs_tract_race %>%
+  filter(fips_state_code == '06') #should be 8,057
+
+# check missing values in every column
+sapply(acs_tract_race_ca, function(x) sum(is.na(x)))
+
+#check missing vars
+acs_tract_race_ca %>%
+  select(contains("_pct")) %>%
+  filter_all(any_vars(is.na(.)))
+
+# view and compare race/ethnicity pop & pct variables  
+View(acs_tract_race_ca %>%
+  select(contains("15_19")) %>%
+  filter_all(any_vars(is.na(.)))) # all are 0 for total_pop_15_19
+
+# more checks
+View(acs_tract_race_ca %>%
+       filter_all(any_vars(is.na(.)))) # seems that they don't have pop of young people ages 15-19 for these census tracts?
+
+#-------------------------------------------------------------------------------------
+# read in acs educational characteristics data
+acs_tract_edu <- read_csv("data/tract_raw_1.csv")
+
+# filter for ca tracts
+acs_tract_edu_ca <- acs_tract_edu %>%
+  filter(fips_state_code == '06') # 8,057 tracts
+
+# check missing values in every column
+sapply(acs_tract_edu_ca, function(x) sum(is.na(x))) # good no missing
+
+# remove 2 variables to avoid duplicates in merge
+acs_tract_edu_ca <- acs_tract_edu_ca %>%
+  select(-fips_county_code, -fips_state_code)
+
+# merge race + edu tract data sets
+acs_tract_ca <- acs_tract_race_ca %>% left_join(acs_tract_edu_ca, by = c("tract", "tract_name"))
+

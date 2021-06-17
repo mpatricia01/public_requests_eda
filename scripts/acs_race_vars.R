@@ -56,6 +56,10 @@ acs_tract %>%
 acs_tract %>%
   filter(pop_total_15_19 != pop_white_15_19 + pop_black_15_19 + pop_asian_15_19 + pop_amerindian_15_19 + pop_nativehawaii_15_19 + pop_otherrace_15_19 + pop_tworaces_15_19 + pop_hispanic_15_19)
 
+View(acs_tract %>%
+  filter(pop_total_15_19 == 0, fips_state_code == '06') %>%
+  select(contains('15_19'))) 
+
 View(acs_tract %>% select(pop_hispanic_15_19, `pop_hispanic_m_15-17`, `pop_hispanic_m_18-19`, `pop_hispanic_f_15-17`, `pop_hispanic_f_18-19`))
 
 View(acs_tract %>% select(pop_total_15_19, pop_white_15_19, pop_black_15_19, pop_asian_15_19, pop_amerindian_15_19, pop_nativehawaii_15_19, pop_otherrace_15_19, pop_tworaces_15_19, pop_hispanic_15_19))
@@ -87,4 +91,4 @@ View(acs_tract %>% select(pop_black_15_19_pct, pop_black_15_19, pop_total_15_19)
 acs_tract <- acs_tract %>% select(-contains('_f_'), -contains('_m_'))
 
 # save csv
-write_csv(acs_tract, str_c(file.path(data_dir), "/","acs_race_tract_.csv"))
+write_csv(acs_tract, str_c(file.path(data_dir), "/","acs_race_tract.csv"))
