@@ -48,7 +48,7 @@ def main():
                 if tract_ratio > curr_ratio:
                     print(ordered_tract_list)
 
-                row['tract_{}'.format(n)] = tract_code[-6:]
+                row['tract_{}'.format(n)] = tract_code
                 row['tract_{}_ratio'.format(n)] = tract_ratio
 
                 n += 1
