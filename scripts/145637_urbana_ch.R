@@ -6,6 +6,7 @@ library(tidyverse)
 library(readxl)
 library(lubridate)
 library(htmlwidgets)
+library(sf)
 
 
 # Directory paths
@@ -93,6 +94,9 @@ OOS_orders <- orders_df %>%
                           )) %>% 
   remove_NA_cols()
 
+OOS_eng_orders <- OOS_orders %>% filter(is.na(cbsa_name))
+OOS_noneng_orders <- OOS_orders %>% filter(order_num %in% c('483724', '470283', '371629', '456737', '386335', '403340'))
+
 intl_orders <- orders_df %>% 
   filter(order_num %in% c('372044', '371669', '470250', '483721')) %>% 
   remove_NA_cols()
@@ -102,16 +106,21 @@ zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-w
 zip_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_to_state.csv')) %>% 
   mutate(pop_poc_pct = (pop_black + pop_hispanic + pop_amerindian) / pop_total * 100) %>% 
   left_join(zip_cbsa_data, by = 'zip_code')
+tract_data <- read_csv(file.path(data_dir, 'tract_raw_1.csv')) %>% filter(tract_name != 'tract_name') %>%
+  left_join(read_csv(file.path(data_dir, 'tract_raw_2.csv')) %>% filter(tract_name != 'tract_name') %>% select(-fips_state_code, -fips_county_code, -tract), by = 'tract_name') %>% 
+  mutate(tract_id = str_c(fips_state_code, fips_county_code, tract))
 msa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/msa_metadata.csv'), na = c('', 'NULL')) %>% 
   mutate(pop_poc_pct = pop_black_pct + pop_hispanic_pct + pop_amerindian_pct)
 hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>% 
   mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
 univ_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/meta_university.csv'), col_types = c('univ_id' = 'c', 'fips_state_code' = 'c', 'fips_county_code' = 'c')) %>% 
   select(-X1)
+
 ceeb_nces <- read_csv(file.path(data_dir, 'ceeb_nces_crosswalk.csv'))
 cds_nces <- read_csv(file.path(data_dir, 'cds_nces_crosswalk.csv')) %>% 
   mutate(ncessch = str_c(NCESDist, NCESSchool)) %>% 
   select(ncessch, CDSCode)
+
 df_sat_ca_20 <- read_excel(file.path(data_dir, 'sat20.xlsx'), na = c('N/A', '*'))
 df_sat_ca_19 <- read_excel(file.path(data_dir, 'sat19.xlsx'), na = c('N/A', '*'), skip = 5)
 
@@ -119,10 +128,31 @@ df_sat_ca_19 <- read_excel(file.path(data_dir, 'sat19.xlsx'), na = c('N/A', '*')
 cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
 state_shp <- readOGR(file.path(data_dir, 'cb_2018_us_state_500k', 'cb_2018_us_state_500k.shp'))
 zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+tract_shp <- readOGR(file.path(data_dir, 'cb_2018_06_tract_500k', 'cb_2018_06_tract_500k.shp'))
+tract_shp_sf <- read_sf(file.path(data_dir, 'cb_2018_06_tract_500k', 'cb_2018_06_tract_500k.shp'))
+
+# https://gis.stackexchange.com/a/343477
+# https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+pnts <- hs_data %>% filter(state_code == 'CA') %>% select(school_type, ncessch, name, latitude, longitude)
+
+pnts_sf <- st_as_sf(pnts, coords = c('longitude', 'latitude'), crs = st_crs(tract_shp_sf))
+
+hs_tract_ca <- pnts_sf %>% mutate(  # 1 private HS did not get mapped to any tract
+  intersection = as.integer(st_intersects(geometry, tract_shp_sf)),
+  tract_id = if_else(is.na(intersection), '', tract_shp_sf$GEOID[intersection])
+) %>% 
+  left_join(tract_data, by = 'tract_id')
+
+hs_tract_ca %>%  # Most CA tracks have 1 HS, but can have up to 5
+  group_by(tract_id) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  View()
 
 save(IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
-     lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19,
-     file = file.path(data_dir, '145637_data.RData'))
+     lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19, hs_tract_ca,
+     file = file.path(data_dir, '145637_orders.RData'))
+
 
 # ----------
 # IL orders
@@ -284,7 +314,6 @@ OOS_noneng_lists <- OOS_noneng_lists %>%
 
 OOS_purchased_hs <- OOS_noneng_lists %>% select(latitude, longitude) %>% filter(!is.na(latitude), !is.na(longitude)) %>% distinct()
 
-OOS_noneng_orders <- OOS_orders %>% filter(order_num %in% c('483724', '470283', '371629', '456737', '386335', '403340'))
 OOS_noneng_msa <- (OOS_noneng_orders$cbsa_name %>% na.omit() %>% unique() %>% str_match_all('([A-Z]{2}) - ([^|]+)'))[[1]] %>% as.data.frame()
 names(OOS_noneng_msa) <- c('cbsa_full', 'cbsa_state', 'cbsa_title')
 
@@ -475,8 +504,6 @@ saveWidget(map_OOS_nonENG, '~/Downloads/map_OOS_nonENG_zip.html', background = '
 # ENG orders
 # ---------------
 
-OOS_eng_orders <- OOS_orders %>% filter(is.na(cbsa_name))
-
 # Lower test score criteria for female students
 View(OOS_eng_orders %>% select(gender, sat_score_min, sat_score_max, psat_score_min, psat_score_max) %>% distinct() %>% arrange(sat_score_min))
 
@@ -533,7 +560,7 @@ lists_df_sat_la_hs %>%  # if ceeb mapped to multiple ncessch, at most 1 of those
 # HS CHARACTERISTICS AGGREGATED TO ZIP-CODE LEVEL
 # ------------------------------------------------
 
-lists_df_all <- lists_df_pivot %>%  # 434120 unique students
+lists_df_all <- lists_df_pivot %>%  # 398804 unique students from the US
   filter(Country == 'United States') %>% 
   select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders
   mutate(
@@ -639,7 +666,14 @@ lists_df_all_la_zip %>% count(is.na(Ref))  # 18470 purchased students
 length(unique(lists_df_all_la_zip$ncessch))  # 506 HS
 
 lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
-  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc) %>% 
+  left_join(
+    hs_tract_ca %>%
+      mutate(pct_college_grads = (pop_edu_attain_doct + pop_edu_attain_prof + pop_edu_attain_master + pop_edu_attain_bach + pop_edu_attain_assoc) / pop_total_25plus) %>%
+      rowwise() %>% mutate(median_inc_2564 = mean(c(median_inc_2544, median_inc_4564), na.rm = T)) %>%
+      select(ncessch, median_inc_2564, pct_college_grads),
+    by = 'ncessch'
+  ) %>% 
+  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc, median_inc_2564, pct_college_grads) %>% 
   summarise(
     num_students_purchased = sum(!is.na(Ref))
   ) %>% 
@@ -652,10 +686,48 @@ lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
     avg_pct_white = mean(pct_white),
     avg_pct_poc = mean(pct_poc),
     avg_pct_white_weighted = sum(total_students / sum(total_students) * pct_white),
-    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc)
+    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc),
+    avg_tract_inc_2564 = mean(median_inc_2564, na.rm = T),
+    avg_tract_pct_college_grad = mean(pct_college_grads, na.rm = T)
   ) %>% 
   arrange(zip_code, desc(is_hs_purchased))
 
 sum(lists_df_all_la_zip_by_purchase$num_students_purchased)  # 18470 purchased students
 sum(lists_df_all_la_zip_by_purchase$num_hs)  # 506 HS
 lists_df_all_la_zip_by_purchase %>% group_by(is_hs_purchased) %>% summarise(count = sum(num_hs))  # 230 HS purchased (276 HS not purchased)
+
+
+# -----------------------------
+# CENSUS TRACT-LEVEL ANALYSIS
+# -----------------------------
+
+zip_tract_12_19 <- read_csv('data/zip_tract_12-19.csv', col_types = c('TRACT' = 'c'))
+zip_code_tract <- read_csv('data/zip_code_tract.csv', col_types = str_c('c', paste(rep('cn', 61), collapse = '')))
+
+# Verify tract ID is 11-digits long
+unique(nchar(zip_tract_12_19$TRACT))
+unique(nchar(zip_code_tract$tract_1))
+
+length(unique(zip_tract_12_19$TRACT))  # 73491 unique tracts total
+length(unique(zip_code_tract$tract_1))  # 26454 of which appears as tract_1 for at least 1 zip code (would be used)
+
+zip_code_tract %>%  # some tracks may be considered majority for multiple zip codes (multiple zip codes would map to the same tract using highest ratio tract_1)
+  group_by(tract_1) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  View()
+
+zip_tract_12_19 %>%  # most zip codes map to multiple tracts too (since bigger area)
+  group_by(ZIP) %>% 
+  summarise(num_tracts_zip_overlaps = n()) %>% 
+  arrange(desc(num_tracts_zip_overlaps)) %>% 
+  View()
+
+zip_tract_12_19 %>%  # distribution of how many tracts each zip code maps to (about a third is 1-to-1 mapping, while rest is multiple)
+  group_by(ZIP) %>% 
+  summarise(num_tracts_zip_overlaps = n()) %>%
+  group_by(num_tracts_zip_overlaps) %>% 
+  summarise(num_zip_code = n()) %>% 
+  arrange(desc(num_zip_code)) %>% 
+  mutate(pct_zip_code = num_zip_code / sum(num_zip_code) * 100) %>% 
+  View()

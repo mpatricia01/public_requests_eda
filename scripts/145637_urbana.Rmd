@@ -49,7 +49,7 @@ cds_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw
 
 load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/145637_orders.RData'))
 # Contains: IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
-#           lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19
+#           lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19, hs_tract_ca
 
 # Add 11 + 12 columns for the SAT test takers datasets
 add_testtakers_cols <- function(sat_df) {
@@ -841,7 +841,17 @@ sum(lists_df_all_zip_agg$num_hs)  # 19986 HS
 sum(lists_df_all_zip_agg$num_hs_purchased)  # 6299 purchased HS
 
 # Filter for just schools (that's in crosswalk file) in LA zip codes (506 HS)
-lists_df_all_zip_agg %>%filter(zip_code %in% la_zip_codes)
+lists_df_all_zip_agg %>% filter(zip_code %in% la_zip_codes)
+
+# In addition to NCES HS data, we can also use Census data from tract the HS is located in
+hs_tract_ca %>% as.data.frame() %>%  # Most CA tracks have 1 HS, but can have up to 5
+  select(-geometry) %>% 
+  group_by(tract_id) %>%
+  summarise(num_hs_in_tract = n()) %>%
+  group_by(num_hs_in_tract) %>% 
+  summarise(num_tracts = n()) %>%
+  arrange(desc(num_tracts)) %>% 
+  mutate(pct_tracts = num_tracts / sum(num_tracts) * 100)
 
 lists_df_all_la_zip <- lists_df_all_zip %>% filter(zip_code %in% la_zip_codes)
 
@@ -849,7 +859,14 @@ lists_df_all_la_zip %>% count(is.na(Ref))  # 18470 purchased students
 length(unique(lists_df_all_la_zip$ncessch))  # 506 HS
 
 lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
-  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc) %>% 
+  left_join(
+    hs_tract_ca %>% as.data.frame() %>% select(-geometry) %>% 
+      mutate(pct_college_grads = (pop_edu_attain_doct + pop_edu_attain_prof + pop_edu_attain_master + pop_edu_attain_bach + pop_edu_attain_assoc) / pop_total_25plus) %>%
+      rowwise() %>% mutate(median_inc_2564 = mean(c(median_inc_2544, median_inc_4564), na.rm = T)) %>%
+      select(ncessch, median_inc_2564, pct_college_grads),
+    by = 'ncessch'
+  ) %>% 
+  group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc, median_inc_2564, pct_college_grads) %>% 
   summarise(
     num_students_purchased = sum(!is.na(Ref))
   ) %>% 
@@ -862,7 +879,9 @@ lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>%
     avg_pct_white = mean(pct_white),
     avg_pct_poc = mean(pct_poc),
     avg_pct_white_weighted = sum(total_students / sum(total_students) * pct_white),
-    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc)
+    avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc),
+    avg_tract_inc_2564 = mean(median_inc_2564, na.rm = T),
+    avg_tract_pct_college_grad = mean(pct_college_grads, na.rm = T)
   ) %>% 
   arrange(zip_code, desc(is_hs_purchased))
 
@@ -877,3 +896,36 @@ lists_df_all_la_zip_by_purchase %>% group_by(is_hs_purchased) %>% summarise(coun
 
 - We would ideally know the HS/EN clusters to differentiate between HS that weren't purchased vs. HS that were purchased but no students met other criteria
 - CEEB/NCES crosswalk
+
+## Investigation of zip code to tract crosswalk
+
+```{r}
+zip_tract_12_19 <- read_csv(file.path(data_dir, 'zip_tract_12-19.csv'), col_types = c('TRACT' = 'c'))
+zip_code_tract <- read_csv(file.path(data_dir, 'zip_code_tract.csv'), col_types = str_c('c', paste(rep('cn', 61), collapse = '')))
+
+# Verify tract ID is 11-digits long
+unique(nchar(zip_tract_12_19$TRACT))
+unique(nchar(zip_code_tract$tract_1))
+
+length(unique(zip_tract_12_19$TRACT))  # 73491 unique tracts total
+length(unique(zip_code_tract$tract_1))  # 26454 of which appears as tract_1 for at least 1 zip code (would be used)
+
+zip_code_tract %>%  # some tracks may be considered majority for multiple zip codes (multiple zip codes would map to the same tract using highest ratio tract_1)
+  group_by(tract_1) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+
+zip_tract_12_19 %>%  # most zip codes map to multiple tracts too (since bigger area)
+  group_by(ZIP) %>% 
+  summarise(num_tracts_zip_overlaps = n()) %>% 
+  arrange(desc(num_tracts_zip_overlaps))
+
+zip_tract_12_19 %>%  # distribution of how many tracts each zip code maps to (about a third is 1-to-1 mapping, while rest is multiple)
+  group_by(ZIP) %>% 
+  summarise(num_tracts_zip_overlaps = n()) %>%
+  group_by(num_tracts_zip_overlaps) %>% 
+  summarise(num_zip_code = n()) %>% 
+  arrange(desc(num_zip_code)) %>% 
+  mutate(pct_zip_code = num_zip_code / sum(num_zip_code) * 100)
+```
+
