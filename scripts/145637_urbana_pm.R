@@ -1750,3 +1750,129 @@ zip_tract_ca %>%
   summarise(n_per_grp = n()) %>%
   ungroup() %>%
   count(n_per_grp)
+
+
+# district boundary EDA
+#----------------------------------------------------------------------------------------------
+# grab student list CA data
+#View(df_sl_ca)
+
+#uniquely identified by student Ref ID
+df_sl_ca %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+# how many schools are there using ncessch school code
+df_sl_ca %>%
+  group_by(ncessch) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+  
+length(unique(df_sl_ca$ncessch)) #910 schools
+
+# read in nces high school data
+ca_hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>% 
+  mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian) %>%
+  filter(state_code == "CA") # 1170
+
+# for now let's get rid of act/sat exams scores
+df_sl_ca <- df_sl_ca %>% dplyr::select(-Source, -contains("sat_"), -contains("act_"))
+
+# create race\ethnicity variables
+df_sl_ca <- df_sl_ca %>%
+  mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0),
+         nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0),
+         nat_am = ifelse(Race == "American Indian or Alaska Native" &
+                           (is.na(Hispanic) | Hispanic == "No"),1,0),
+         other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0)) 
+
+# get a count of how many students were purchased by high school
+df_sl_ca <- df_sl_ca %>%
+  group_by(ncessch) %>%
+  mutate(n_stu_hs = n()) %>%
+  ungroup()
+
+# aggregate to the high school-level
+df_sl_school_ca <- df_sl_ca %>%
+  group_by(ncessch) %>%
+  summarise(n_stu_hs = n(),
+            tot_white = sum(white, na.rm = TRUE),
+            stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data
+            tot_black = sum(black, na.rm = TRUE),
+            stu_pct_black = mean(black, na.rm=TRUE)*100,
+            tot_asian = sum(asian, na.rm = TRUE),
+            stu_pct_asian = mean(asian, na.rm=TRUE)*100,
+            tot_latinx = sum(latinx, na.rm = TRUE),
+            stu_pct_latinx = mean(latinx, na.rm=TRUE)*100,
+            tot_nhpi = sum(nhpi, na.rm = TRUE),
+            stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100,
+            tot_natam = sum(nat_am,na.rm = TRUE),
+            stu_pct_natam = mean(nat_am, na.rm=TRUE)*100,
+            tot_other = sum(other, na.rm = TRUE),
+            stu_pct_other = mean(other, na.rm=TRUE)*100,
+            stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) %>%
+  arrange(-n_stu_hs)
+
+  
+# merge student, high school-level data from Urbana purchases to nces data
+df_sl_ca_schools <- df_sl_school_ca %>% right_join(ca_hs_data, by = "ncessch")
+
+length(unique(df_sl_ca_schools$ncessch)) #1770
+
+# check
+anti_merge <- ca_hs_data %>% anti_join(df_sl_school_ca, by = "ncessch")
+
+length(unique(anti_merge$ncessch)) 
+
+# Merge in district level census data
+#----------------------------------------------------------------------------------------------
+
+# Create var for race breaks
+
+# create race vars for students purchased
+df_sl_ca_schools <- df_sl_ca_schools %>%
+  mutate(stu_pct_poc = stu_pct_black + stu_pct_latinx + stu_pct_natam + stu_pct_nhpi)
+
+
+# race breaks for students purchased
+df_sl_ca_schools$race_brks_nonwhiteasian_stu <- cut(df_sl_ca_schools$stu_pct_poc, 
+                                                breaks = c(-1, 20, 40, 60, 80, 90, 101), 
+                                                labels = c('0-19%', '20-39%', '40-59%', 
+                                                           '60-79%', '80-89%', '90-100%'))
+
+# race breaks for at high school-level
+df_sl_ca_schools$race_brks_nonwhiteasian <- cut(df_sl_ca_schools$pct_poc, 
+                                           breaks = c(-1, 20, 40, 60, 80, 90, 101), 
+                                           labels = c('0-19%', '20-39%', '40-59%', 
+                                                      '60-79%', '80-89%', '90-100%'))
+
+
+# table to display pct poc's purchased by high school compared to pct poc at the high school
+df_sl_ca_schools %>%
+  dplyr::select(ncessch, name, school_type, n_stu_hs, stu_pct_poc, race_brks_nonwhiteasian_stu, pct_poc, race_brks_nonwhiteasian)
+
+
+# read in acs school-district level data, education
+acs_dist_ed <- read_csv("data/district_raw_1.csv")
+
+# only keep CA districts
+acs_dist_ed_ca <- acs_dist_ed %>%
+  filter(fips_state_code == "06")
+
+
+# red in acs school-district level data, race/ethnicity
+acs_dist_race <- read_csv("data/district_raw_2.csv")
+
+# only keep CA districts
+acs_dist_race_ca <- acs_dist_race %>%
+  filter(fips_state_code == "06")
+
+# Merge dfs
+acs_dist_ca <- acs_dist_race_ca %>%
+  dplyr::select(-fips_state_code, -district_name) %>%
+  left_join(acs_dist_ed_ca, by = "district")
+
