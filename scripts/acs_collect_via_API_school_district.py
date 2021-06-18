@@ -37,8 +37,8 @@ def main():
                  'pop_hispanic_m_15-17', 'pop_hispanic_m_18-19', 'pop_hispanic_f_15-17', 'pop_hispanic_f_18-19',
                  
                  # Educational attainment
-                 # 'pop_edu_attain_doct', 'pop_edu_attain_prof', 'pop_edu_attain_master', 'pop_edu_attain_bach',
-                 # 'pop_edu_attain_assoc', 'pop_edu_somecollege_1plusyrs', 'pop_edu_somecollege_under1yr', 'pop_edu_GED', 'pop_edu_hs',
+                  'pop_edu_attain_doct', 'pop_edu_attain_prof', 'pop_edu_attain_master', 'pop_edu_attain_bach',
+                  'pop_edu_attain_assoc', 'pop_edu_somecollege_1plusyrs', 'pop_edu_somecollege_under1yr', 'pop_edu_GED', 'pop_edu_hs',
                  
                  'fips_state_code', 'district']  # last by default
 
@@ -64,8 +64,8 @@ def main():
                  'B01001I_006E', 'B01001I_007E', 'B01001I_021E', 'B01001I_022E',
                  
                  # Educational attainment
-                 # 'B15003_025E', 'B15003_024E', 'B15003_023E', 'B15003_022E',
-                 # 'B15003_021E', 'B15003_020E', 'B15003_019E', 'B15003_018E', 'B15003_017E',
+                  'B15003_025E', 'B15003_024E', 'B15003_023E', 'B15003_022E',
+                  'B15003_021E', 'B15003_020E', 'B15003_019E', 'B15003_018E', 'B15003_017E',
                  ]
 
     save_data(col_names, ','.join(var_names), 'district_raw.csv')
@@ -92,11 +92,11 @@ def get_data(region, headings, cols):
 
 def save_data(headings, cols, file):
 
-    with open('./data/state.txt') as datafile:
+    with open('../data/state.txt') as datafile:
         rows = csv.DictReader(datafile, delimiter='|')
         states = [row['STATE'] for row in rows if int(row['STATE']) < 60]
 
-    with open('./data/' + file, 'w', newline='') as csvfile:
+    with open('../data/' + file, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         for state in states:
