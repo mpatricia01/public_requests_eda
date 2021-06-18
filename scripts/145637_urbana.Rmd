@@ -310,7 +310,7 @@ OOS_msa_census %>%
   count(n_per_grp)
 
 #zip codes where students are purchased, sort by ascending
-OOS_zips <- OOS_msa_census %>%
+OOS_zips <- OOS_msa_census %>% select(zip_code, State) %>%
   group_by(zip_code) %>%
   summarise(n_per_grp = n()) %>%
   ungroup() %>%
@@ -929,3 +929,118 @@ zip_tract_12_19 %>%  # distribution of how many tracts each zip code maps to (ab
   mutate(pct_zip_code = num_zip_code / sum(num_zip_code) * 100)
 ```
 
+
+
+# Categorical Variable Exploration
+
+This table below shows the number of zip codes purchased by descending order 
+
+- Grouped by zip code and summarized to get a count of the number of students purchased within each zip code
+- Merged in census zip-code level data to show demographic data associated with each zip code  
+
+```{r}
+OOS_msa_zip %>%
+  dplyr::select(zip_code, state_code, n_per_grp, median_household_income, starts_with("pct"))
+```
+
+
+- Basic descriptive for number of students purchased by zip
+```{r}
+OOS_msa_zip %>% select(n_per_grp)  %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE ))
+
+```
+
+- Basic descriptive for number of students purchased by zip, variation by MSAs/States purchased from
+  - KS is probably missing something regarding OOS_MSA_Zip: Only purchased from 1 zip in AZ?
+  - But list_df has 1721 students from 75 zipcodes in AZ
+```{r}
+# Zip Codes purchased by State
+OOS_msa_zip %>% group_by(state_code) %>% count()
+
+# Check only 1 zip purchased from AZ?
+lists_df %>% filter(Country=="United States") %>% group_by(State) %>% count()
+
+lists_df %>% filter(State=="AZ") %>% 
+  mutate(zip5= substr(ZipCode, 1, 5)) %>%
+  group_by(zip5) %>% count() #None from South Tucson
+
+# Some data issues but continued to look at descriptive by state
+OOS_msa_zip %>% group_by(state_code)  %>% select(n_per_grp) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, med=median, min = min, max =max), na.rm = TRUE ))
+
+```
+## Texas Analyses
+
+- Explore Thresholds for TEXAS
+  - Purchased 25776 students from 338 zips in TX
+  - Number of students purchased per Zip: Mean= 41, Median=17.5 SD=65, Max= 564, Min=1
+
+```{r}
+OOS_msa_zip %>% filter(state_code=="TX") %>% ggplot(aes(x = n_per_grp)) + geom_density(aes(y = ..count..))
+
+OOS_msa_zip <- OOS_msa_zip %>% mutate(n_per_grp_cat =cut(n_per_grp, breaks=c(0, 1, 20, 100, 565))) 
+
+OOS_msa_zip %>% filter(state_code=="TX") %>%
+    count(n_per_grp_cat) %>%
+    mutate(percent = n / sum(n) * 100)
+
+```
+
+
+- Explore Demographics by Thresholds for TEXAS
+
+```{r}
+# by income
+OOS_msa_zip %>% filter(state_code=="TX") %>% group_by(n_per_grp_cat) %>%
+select(median_household_income) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE ))
+
+
+# by race
+OOS_msa_zip %>% filter(state_code=="TX") %>% group_by(n_per_grp_cat) %>%
+select(pct_white) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE ))
+```
+
+
+
+## California Analyses
+
+- Explore Thresholds for CALIFORNIA
+  - Purchased 52788 students from 615 zips in CA
+  - Number of students purchased per Zip: Mean= 27, Median=15, SD=35, Max= 331, Min=1
+
+```{r}
+OOS_msa_zip %>% filter(state_code=="CA") %>% ggplot(aes(x = n_per_grp)) + geom_density(aes(y = ..count..))
+
+
+OOS_msa_zip %>% filter(state_code=="CA") %>%
+    count(n_per_grp_cat) %>%
+    mutate(percent = n / sum(n) * 100)
+
+```
+
+
+- Explore Demographics by Thresholds for CALIFORNIA
+  - KS thought: Zip codes in diverse metros may not capture racial variation, need to get at census tract level
+  - Coincides with school-level analysis, purchasing only from predominantly White schools in a zip code?
+
+```{r}
+# by income
+OOS_msa_zip %>% filter(state_code=="CA") %>% group_by(n_per_grp_cat) %>%
+select(median_household_income) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE ))
+
+
+# by race
+OOS_msa_zip %>% filter(state_code=="CA") %>% group_by(n_per_grp_cat) %>%
+select(pct_white) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE ))
+```
