@@ -1,0 +1,1364 @@
+---
+title: "University of Illinois - Urbana-Champaign"
+urlcolor: blue
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    fig_caption: true
+    highlight: tango
+    theme: default
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(tibble.width = Inf, width = 10000, scipen = 999)
+
+library(tidyverse)
+library(readxl)
+library(lubridate)
+library(leaflet)
+library(rgdal)
+# library(raster)
+library(formattable)
+library(scales)
+library(htmlwidgets)
+```
+
+<style>
+pre code, pre, code {
+  white-space: pre !important;
+  overflow-x: auto !important;
+  word-break: keep-all !important;
+  word-wrap: initial !important;
+}
+</style>
+
+```{r include=FALSE}
+# Load data
+
+zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+
+ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
+cds_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv')) %>% 
+  mutate(ncessch = str_c(NCESDist, NCESSchool))
+
+load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/145637_orders.RData'))
+# Contains: IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
+#           lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19, hs_tract_ca
+
+# Add 11 + 12 columns for the SAT test takers datasets
+add_testtakers_cols <- function(sat_df) {
+  sat_df %>% mutate(
+    Enroll1112 = as.numeric(Enroll12) + as.numeric(Enroll11),
+    NumTSTTakr1112 = NumTSTTakr11 + NumTSTTakr12,
+    NumERWBenchmark1112 = as.numeric(NumERWBenchmark11) + as.numeric(NumERWBenchmark12),
+    PctERWBenchmark1112 = as.numeric(NumERWBenchmark1112) / as.numeric(NumTSTTakr1112),
+    NumMathBenchmark1112 = as.numeric(NumMathBenchmark11) + as.numeric(NumMathBenchmark12),
+    PctMathBenchmark1112 = as.numeric(NumMathBenchmark1112) / as.numeric(NumTSTTakr1112),
+    TotNumBothBenchmark1112 = as.numeric(TotNumBothBenchmark11) + as.numeric(TotNumBothBenchmark12),
+    PctBothBenchmark1112 = as.numeric(TotNumBothBenchmark1112) / as.numeric(NumTSTTakr1112)
+  )
+}
+
+df_sat_ca_20 <- add_testtakers_cols(df_sat_ca_20)
+df_sat_ca_19 <- add_testtakers_cols(df_sat_ca_19)
+```
+
+# RQ: What are the characteristics of student list purchases?
+
+```{r include=FALSE}
+
+#in-state orders
+IL_orders
+
+IL_orders <- IL_orders %>% mutate(year= format(date_start, format = "%Y"))
+IL_orders <- IL_orders %>% mutate(order_index = seq(n()))
+
+# out-of-state orders
+OOS_orders <- OOS_orders %>% mutate(year= format(date_start, format = "%Y"))
+OOS_orders <- OOS_orders %>% mutate(order_index = seq(n()))
+
+
+```
+
+## All years, in-state
+
+### Total number of orders, students, & spending
+
+2017-2020 = 51 orders; 121,110 students; $53,840.30:
+
+- 2017 = 6 orders; 22311 students; $9,593.73
+- 2018 = 18 orders; 45173 students; $19,424.39
+- 2019 = 21 orders; 43295 students; $19,966.61	
+- 2020 = 6 orders; 10331 students; $4,855.57
+
+
+```{r, echo=FALSE}
+IL_orders %>%
+   ggplot(aes(x=order_num, y=num_students, fill= factor(year))) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+
+IL_orders %>%
+   ggplot(aes(x=order_num, y=order_cost, fill= factor(year))) +
+  geom_bar(stat="identity") +  
+  scale_y_continuous(labels=scales::dollar_format()) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+```
+```{r include=FALSE}
+#descriptive
+IL_orders %>% summarise(total_students = sum(num_students))
+IL_orders %>%   summarise(total_costs = sum(order_cost))
+
+IL_orders %>% group_by(year) %>% summarise(total_orders = n())
+IL_orders %>% group_by(year) %>% summarise(total_students = sum(num_students))
+IL_orders %>% group_by(year) %>% summarise(total_costs = sum(order_cost))
+
+
+```
+
+
+### Filter Criteria
+
+
+Generally, on each purchase date, they make **6 IL orders by race/ethnicity and test scores**:
+
+- Race/ethnicity groups (A) + Test score range (low A)
+- Race/ethnicity groups (A) + Test score range (med A)
+- Race/ethnicity groups (A) + Test score range (high A)
+- Race/ethnicity groups (B) + Test score range (low B)
+- Race/ethnicity groups (B) + Test score range (med B)
+- Race/ethnicity groups (B) + Test score range (high B)
+
+**Group/filter definitions**:
+
+- **Race/ethnicity groups (A)**
+  - Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)|Native Hawaiian or Other Pacific Islander
+    - Starting from **Fall 2019**, they removed "_Native Hawaiian or Other Pacific Islander_" from the **med** and **high** orders
+  - **Test score range (low A)**: 1160 - 1270
+  - **Test score range (med A)**: 1260/1280 - 1440
+  - **Test score range (high A)**: 1450 - 1600
+- **Race/ethnicity groups (B)**
+  - Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban
+    - Starting from **Fall 2019**, they added "_Native Hawaiian or Other Pacific Islander_" to all orders (**low**, **med**, and **high**)
+  - **Test score range (low B)**: 1020/1030 - 1190
+  - **Test score range (med B)**: 1200 - 1350/1380
+  - **Test score range (high B)**: 1360/1390 - 1600
+  
+**Common filters**:
+
+- **GPA**: A+ to B-
+- **Class rank**: Highest tenth to second fifth
+
+- In the most recent 2 rounds of purchases (**6 orders** from **Dec 2019** & **Apr 2020**), they further limited geographic filter to 12 specific metro areas within IL
+<iframe src="https://cyouh95.github.io/third-way-report/assets/maps/public_requests/map_IL.html" width="100%" height="800px"></iframe>
+
+
+
+
+## All years, out-of-state
+
+### Total number of orders, students, & spending
+
+2018-2020 = 22 orders; 142,744 students; $641,18.54
+
+- 2018 = 9 orders; 55879 students; $24,027.97
+- 2019 = 11 orders; 61858 students; $28,337.28	
+- 2020 = 2 orders; 25007 students; $117,53.29
+
+```{r, echo=FALSE}
+OOS_orders %>%
+   ggplot(aes(x=order_num, y=num_students, fill= factor(year))) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+
+OOS_orders %>%
+   ggplot(aes(x=order_num, y=order_cost, fill= factor(year))) +
+  geom_bar(stat="identity") +  
+  scale_y_continuous(labels=scales::dollar_format()) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+```
+
+```{r include=FALSE}
+#descriptive
+OOS_orders %>% summarise(total_students = sum(num_students))
+OOS_orders %>%   summarise(total_costs = sum(order_cost))
+
+OOS_orders %>% group_by(year) %>% summarise(total_orders = n())
+OOS_orders %>% group_by(year) %>% summarise(total_students = sum(num_students))
+OOS_orders %>% group_by(year) %>% summarise(total_costs = sum(order_cost))
+
+
+```
+
+
+### Filter Criteria
+
+
+Based on geographic filters, we can categorize their orders into **3 broad categories**:
+
+- Specific MSAs (3 orders)
+- Non-engineering majors in specific MSAs + CA, CT, MO, and Armed Forces military districts (6 orders)
+- Engineering majors in all 49 states except IL + DC (13 orders)
+
+```{r include=FALSE}
+OOS_orders <- OOS_orders %>% mutate(order_cat = ifelse(order_num %in% c('500590', '567376', '483751'), "MSA", "ENG"))
+
+OOS_orders <- OOS_orders %>% mutate(order_cat = as.factor(ifelse(order_num %in% c('483724', '470283', '371629', '456737', '386335', '403340'), "Non-ENG", order_cat)))
+
+OOS_orders %>% count(order_cat)
+
+OOS_orders_grouped <- OOS_orders %>% select(order_cat, order_cost, num_students) %>%
+    group_by(order_cat) %>% 
+    summarise_each(list(sum))
+
+```
+
+```{r, echo=FALSE}
+
+OOS_orders_grouped %>%
+   ggplot(aes(x=order_cat, y=num_students)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+
+OOS_orders_grouped %>%
+   ggplot(aes(x=order_cat, y=num_students)) +
+  geom_bar(stat="identity") +  
+  scale_y_continuous(labels=scales::dollar_format()) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+```
+
+
+
+
+21 of the 22 out-of-state orders also use these [segment analysis](http://secure-media.collegeboard.org/mSSS/media/pdf/segment-analysis-service-overview.pdf) filters (total possible: _33 neighborhood clusters_ and _29 high-school clusters_):
+
+- **EN**:51, **HS**:65 | **EN**:51, **HS**:68 | **EN**:51, **HS**:70 | **EN**:51, **HS**:79 
+- **EN**:53, **HS**:65 | **EN**:53, **HS**:70 | 
+- **EN**:58, **HS**:64 | **EN**:58, **HS**:65 | **EN**:58, **HS**:70
+- **EN**:60, **HS**:65 | **EN**:60, **HS**:68 | **EN**:60, **HS**:70 | **EN**:60, **HS**:79 
+- **EN**:61, **HS**:ALL 
+- **EN**:63, **HS**:65 | **EN**:63, **HS**:70
+- **EN**:69, **HS**:68 | **EN**:69, **HS**:70 | **EN**:69, **HS**:75 
+- **EN**:70, **HS**:66 | **EN**:70, **HS**:68 | **EN**:70, **HS**:70 | **EN**:70, **HS**:79 
+- **EN**:73, **HS**:65 | **EN**:73, **HS**:70 
+- **EN**:78, **HS**:ALL
+
+Sample **neighborhood clusters (EN)** characteristics from 2011:
+
+![](https://github.com/cyouh95/third-way-report/raw/master/assets/maps/public_requests/EN.png)
+
+Sample **high school clusters (HS)** characteristics from 2011:
+
+![](https://github.com/cyouh95/third-way-report/raw/master/assets/maps/public_requests/HS.png)
+
+
+
+
+
+
+### OOS Order Category: By MSA 
+
+3 of the 21 OOS orders were by MSA
+
+  - 2 orders in 2019
+  - 1 order in 2020
+
+```{r include=FALSE}
+OOS_msa_orders <- OOS_orders %>% filter(order_num %in% c('500590', '567376', '483751'))
+
+OOS_msa_orders
+```
+
+They made **2** "OOS Regional MSA" orders **1** "Regional Counselor MSAs" order.
+
+- They used the segment analysis from above
+- A+/B- high school GPA
+- MSAs from states: CA, TX, GA, FL, NY, NJ
+
+<iframe src="https://cyouh95.github.io/third-way-report/assets/maps/public_requests/map_OOS_regional_msa.html" width="100%" height="800px"></iframe>
+
+<!-- ### Student-level MSA specific orders -->
+
+<!-- ```{r include=FALSE} -->
+<!-- #Prep data -->
+
+<!-- # Directory paths -->
+<!-- data_dir <- file.path('..', 'data') -->
+<!-- plots_dir <- file.path('..', 'outputs', 'plots') -->
+<!-- maps_dir <- file.path('..', 'outputs', 'maps') -->
+
+<!-- # Read in data -->
+<!-- lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c')) -->
+<!-- orders_df <- read_csv(file.path(data_dir, '145637_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c')) -->
+
+<!-- # Checks -->
+<!-- #str_detect(lists_df$Source, '^(?:\\w+ \\d+, \\d{4} [SACT]{3} Search \\d+;?\\s*)+$') %>% table() -->
+<!-- #str_count(lists_df$Source, 'SAT|ACT') %>% sum()  # 465231 matches number of rows in lists_df_pivot -->
+
+<!-- # https://cathblatter.rbind.io/blog/2020/03/16/using-pivot-longer-and-regex-for-data-wrangling/ -->
+<!-- lists_df_pivot <- lists_df %>% -->
+<!--   pivot_longer( -->
+<!--     cols = starts_with(c('sat_', 'act_')), -->
+<!--     names_to = c('.value', 'test_num'), -->
+<!--     names_pattern = '(^\\w+)_(\\d+)' -->
+<!--   ) %>% -->
+<!--   dplyr::select(-test_num) %>% -->
+<!--   pivot_longer( -->
+<!--     cols = starts_with(c('sat_', 'act_')), -->
+<!--     names_to = c('test_type', '.value'), -->
+<!--     names_sep = '_', -->
+<!--     values_drop_na = T -->
+<!--   ) %>% -->
+<!--   rename(order_num = test, order_date = date) %>% -->
+<!--   mutate(order_date = mdy(order_date)) -->
+
+<!-- # SAT orders -->
+<!-- lists_df_sat <- lists_df_pivot %>% filter(test_type == 'sat') -->
+
+<!-- # Missing order summary for 107713 of 415689 rows in lists_df_sat (15 distinct orders) -->
+<!-- #anti_join(lists_df_sat, orders_df, by = 'order_num') %>% nrow() -->
+<!-- #View(anti_join(lists_df_sat, orders_df, by = 'order_num') %>% dplyr::select(order_num, order_date) %>% distinct()) -->
+
+<!-- # 3 order summaries w/ no lists entries, but these look like draft orders that weren't actually placed (i.e., "Edit name") -->
+<!-- #View(anti_join(orders_df, lists_df_sat, by = 'order_num')) -->
+
+<!-- # Explore remaining matched rows (rows may be duplicates if they belong to multiple orders) -->
+<!-- merged_df_sat <- inner_join(lists_df_sat, orders_df, by = 'order_num') -->
+
+<!-- #Run some descriptive statistics -->
+<!-- merged_df_sat %>% group_by(order_num) %>% count() #about 77 order summaries -->
+
+<!-- #Out-of-state orders, MSA specific criteria -->
+<!-- OOS_msa_stu <- merged_df_sat %>% filter(order_num %in% c('500590', '567376', '483751')) -->
+<!-- ``` -->
+
+<!-- Number of students purchased in the three orders -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_stu %>% count(order_num) %>% arrange(-n) -->
+<!-- ``` -->
+
+
+<!-- It appears that 4 students might of been purchased twice -->
+<!-- ```{r} -->
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(Ref, order_num) %>% -->
+<!--   summarize(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   count(n_per_grp) -->
+
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(Ref, order_num) %>% -->
+<!--   summarize(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   filter(n_per_grp > 1) #4 students were purchased twice -->
+
+<!-- ``` -->
+
+<!-- ```{r include=FALSE} -->
+<!-- #============================================================================ -->
+<!-- #Student lists investigations of MSA specific orders -->
+<!-- #============================================================================ -->
+<!-- # View(OOS_msa_stu %>% -->
+<!-- #        filter(Ref %in% c(058607977, -->
+<!-- # 	058918440, 313230561, 964290266)) %>% -->
+<!-- #   dplyr::select(Ref:SchoolCode, order_num)) #not all are showing up? -->
+
+<!-- #check how many schools are purchased more than once -->
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(SchoolCode) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   count(n_per_grp) -->
+
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(SchoolCode) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   filter(n_per_grp > 1) %>% -->
+<!--   arrange(-n_per_grp) -->
+
+<!-- #check unique schools -->
+<!-- length(unique(OOS_msa_stu$SchoolCode)) #2455 -->
+
+
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(ZipCode) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   filter(n_per_grp>1) %>% arrange(-n_per_grp) -->
+
+
+<!-- ``` -->
+
+<!-- ```{r include=FALSE} -->
+<!-- #--------------- -->
+<!-- # Merge census data with student-level data by zip code -->
+<!-- #--------------- -->
+
+<!-- #read in zip-code level census data -->
+<!-- zip_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_to_state.csv')) -->
+
+<!-- #have to create a 5-digit zip code variable -->
+<!-- OOS_msa_stu %>% -->
+<!--   mutate(zip_code = str_extract(ZipCode, "\\d{5}")) %>% -->
+<!--   dplyr::select(zip_code, ZipCode) -->
+
+<!-- OOS_msa_stu <- OOS_msa_stu %>% -->
+<!--   mutate(zip_code = str_extract(ZipCode, "\\d{5}")) -->
+
+<!-- #unique zipcodes -->
+<!-- OOS_msa_stu %>% -->
+<!--   group_by(Ref, ZipCode) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   filter(n_per_grp>0) %>% arrange(-n_per_grp) -->
+
+<!-- length(unique(OOS_msa_stu$zip_code)) #2427 unique zip codes -->
+
+<!-- #join student-level & census data -->
+<!-- OOS_msa_census <- OOS_msa_stu %>% left_join(zip_data, by = "zip_code") -->
+
+<!-- OOS_msa_census %>% -->
+<!--   filter(zip_code != `zip_code(2)`) -->
+
+<!-- #check merge -->
+<!-- anti_msa_census <- OOS_msa_stu %>% anti_join(zip_data, by = "zip_code") -->
+<!-- ``` -->
+
+<!-- ```{r include=FALSE} -->
+<!-- #general investigations -->
+<!-- OOS_msa_census %>% -->
+<!--   group_by(zip_code) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   count(n_per_grp) -->
+
+<!-- #zip codes where students are purchased, sort by ascending -->
+<!-- OOS_zips <- OOS_msa_census %>% select(zip_code, State) %>% -->
+<!--   group_by(zip_code) %>% -->
+<!--   summarise(n_per_grp = n()) %>% -->
+<!--   ungroup() %>% -->
+<!--   filter(n_per_grp > 0) %>% arrange(-n_per_grp) -->
+
+<!-- #merge census data to zip code data -->
+<!-- OOS_msa_zip <- OOS_zips %>% left_join(zip_data, by = "zip_code") -->
+
+<!-- ``` -->
+
+<!-- ```{r include=FALSE} -->
+<!-- #investigate zip codes -->
+
+<!-- #create race/ethnicity pct variables -->
+<!-- OOS_msa_zip <- OOS_msa_zip %>% -->
+<!--   mutate(pct_black = pop_black/pop_total, -->
+<!--          pct_white = pop_white/pop_total, -->
+<!--          pct_asian = pop_asian/pop_total, -->
+<!--          pct_latinx = pop_hispanic/pop_total, -->
+<!--          pct_nat_am = pop_amerindian/pop_total, -->
+<!--          pct_nat_hi = pop_nativehawaii/pop_total, -->
+<!--          pct_two_races = pop_tworaces/pop_total, -->
+<!--          pct_other = pop_otherrace/pop_total) -->
+
+<!-- #check -->
+<!-- OOS_msa_zip %>% -->
+<!--   mutate(pct_tot = round(pct_black + pct_white + pct_asian + pct_latinx + pct_nat_am + pct_nat_hi + pct_other + pct_two_races)) %>% -->
+<!--   dplyr::select(pct_tot, pct_black, pct_white, pct_asian, pct_latinx, pct_nat_am, pct_nat_hi, pct_other, pct_two_races) %>% -->
+<!--   filter(pct_tot != 1) -->
+
+<!-- ``` -->
+
+<!-- This table below shows the number of zip codes purchased by descending order -->
+
+<!-- - Grouped by zip code and summarized to get a count of the number of students purchased within each zip code -->
+<!-- - Merged in census zip-code level data to show demographic data associated with each zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_zip %>% -->
+<!--   dplyr::select(zip_code, n_per_grp, median_household_income, starts_with("pct")) -->
+<!-- ``` -->
+
+
+<!-- ```{r include=FALSE} -->
+<!-- #grab top 5 zip codes -->
+<!-- top_five_zip <- head(OOS_msa_zip$zip_code,5) -->
+
+<!-- #filter msa/census df of top 5 zip codes -->
+<!-- OOS_msa_top_5_zip <- OOS_msa_census %>% -->
+<!--   filter(zip_code %in% top_five_zip) -->
+
+<!-- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "77494") %>% -->
+<!--   dplyr::select(Ref:State, GeoMarket, Race, Hispanic, order_num, cbsa_name, segment) #%>% #565 -->
+<!--   #filter(Race == "White" & (is.na(Hispanic) | Hispanic == "No")) #172 non-hispanic white about 30% of purchases from this zip code -->
+<!--   #filter(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No")) #about 26 Black non-hispanic, about 5% of purchases from this zip code -->
+<!--   #filter(Race == "White" & (!is.na(Hispanic) | Hispanic == "Yes")) #about 75 Latinx students, about 13% of purchases from this zip code -->
+<!--   #filter(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No")) #about 232 Asian students purchased, about 41% of purchases from this zip code -->
+
+<!-- #create race/ethnicity student-level variables -->
+<!-- OOS_msa_top_5_zip %>% -->
+<!--   group_by(Race) %>% -->
+<!--   summarise(n_per_grp = n()) -->
+
+<!-- OOS_msa_top_5_zip %>% -->
+<!--   filter(Hispanic == "Yes") -->
+
+<!-- OOS_msa_top_5_zip <- OOS_msa_top_5_zip %>% -->
+<!--   group_by(zip_code) %>% -->
+<!--   #dplyr::select(Ref:State, GeoMarket, Race, Hispanic, order_num, cbsa_name, segment) %>% #565 -->
+<!--   mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0), -->
+<!--          nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          nat_am = ifelse(Race == "American Indian or Alaska Native" & -->
+<!--                            (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          none = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          stu_pct_white = mean(white, na.rm=TRUE), #pct race/ethnicty for student-level data -->
+<!--          stu_pct_black = mean(black, na.rm=TRUE), -->
+<!--          stu_pct_asian = mean(asian, na.rm=TRUE), -->
+<!--          stu_pct_latinx = mean(latinx, na.rm=TRUE), -->
+<!--          stu_pct_nhpi = mean(nhpi, na.rm=TRUE), -->
+<!--          stu_pct_natam = mean(nat_am, na.rm=TRUE), -->
+<!--          stu_pct_none = mean(none, na.rm=TRUE), -->
+<!--          pct_black = pop_black/pop_total, #pct race/ethnicity for census data -->
+<!--          pct_white = pop_white/pop_total, -->
+<!--          pct_asian = pop_asian/pop_total, -->
+<!--          pct_latinx = pop_hispanic/pop_total, -->
+<!--          pct_nat_am = pop_amerindian/pop_total, -->
+<!--          pct_nat_hi = pop_nativehawaii/pop_total, -->
+<!--          pct_two_races = pop_tworaces/pop_total, -->
+<!--          pct_other = pop_otherrace/pop_total) -->
+
+
+
+<!-- #sum(OOS_msa_top_5_zip$latinx, na.rm=T) -->
+<!-- #sum(OOS_msa_top_5_zip$Hispanic=="Yes", na.rm=T) -->
+
+<!-- #OOS_msa_top_5_zip %>% -->
+<!-- #  dplyr::select(Race, Hispanic, latinx) -->
+<!-- ``` -->
+
+<!-- Filtered to the top five zip codes purchased -->
+
+<!-- - Calculated the race/ethnicity for students purchased by zip code to create percent race/ethnicity variables -->
+
+<!-- Zip code `77494` -->
+
+<!-- - Filtered to the zip code `77494` to compare the racial/ethnic composition of students purchased in this zip code and the racial/ethnic composition of the population of this zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_77494_zip <- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "77494") %>% -->
+<!--   dplyr::select(zip_code, stu_pct_white, pct_white, stu_pct_black, pct_black, stu_pct_asian, pct_asian, stu_pct_latinx, pct_latinx, stu_pct_nhpi, pct_nat_hi, stu_pct_natam, pct_nat_am) %>% head(n=1) -->
+
+<!-- OOS_msa_77494_zip -->
+<!-- ``` -->
+
+<!-- Zip code `77479` -->
+
+<!-- - Filtered to the zip code `77479` to compare the racial/ethnic composition of students purchased in this zip code and the racial/ethnic composition of the population of this zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_77479_zip <- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "77479") %>% -->
+<!--   dplyr::select(zip_code, stu_pct_white, pct_white, stu_pct_black, pct_black, stu_pct_asian, pct_asian, stu_pct_latinx, pct_latinx, stu_pct_nhpi, pct_nat_hi, stu_pct_natam, pct_nat_am) %>% head(n=1) -->
+
+<!-- OOS_msa_77479_zip -->
+<!-- ``` -->
+
+<!-- Zip code `94582` -->
+
+<!-- - Filtered to the zip code `94582` to compare the racial/ethnic composition of students purchased in this zip code and the racial/ethnic composition of the population of this zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_94582_zip <- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "94582") %>% -->
+<!--   dplyr::select(zip_code, stu_pct_white, pct_white, stu_pct_black, pct_black, stu_pct_asian, pct_asian, stu_pct_latinx, pct_latinx, stu_pct_nhpi, pct_nat_hi, stu_pct_natam, pct_nat_am) %>% head(n=1) -->
+
+<!-- OOS_msa_94582_zip -->
+<!-- ``` -->
+
+<!-- Zip code `77382` -->
+
+<!-- - Filtered to the zip code `77382` to compare the racial/ethnic composition of students purchased in this zip code and the racial/ethnic composition of the population of this zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_77382_zip <- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "77382") %>% -->
+<!--   dplyr::select(zip_code, stu_pct_white, pct_white, stu_pct_black, pct_black, stu_pct_asian, pct_asian, stu_pct_latinx, pct_latinx, stu_pct_nhpi, pct_nat_hi, stu_pct_natam, pct_nat_am) %>% head(n=1) -->
+
+<!-- OOS_msa_77382_zip -->
+<!-- ``` -->
+
+<!-- Zip code `30024` -->
+
+<!-- - Filtered to the zip code `30024` to compare the racial/ethnic composition of students purchased in this zip code and the racial/ethnic composition of the population of this zip code -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_30024_zip <- OOS_msa_top_5_zip %>% -->
+<!--   filter(zip_code == "30024") %>% -->
+<!--   dplyr::select(zip_code, stu_pct_white, pct_white, stu_pct_black, pct_black, stu_pct_asian, pct_asian, stu_pct_latinx, pct_latinx, stu_pct_nhpi, pct_nat_hi, stu_pct_natam, pct_nat_am) %>% head(n=1) -->
+
+<!-- OOS_msa_30024_zip -->
+<!-- ``` -->
+
+
+### OOS Order Category: Non-ENG orders 
+
+```{r include=FALSE}
+OOS_noneng_orders
+```
+
+They made **5** "OOS Non-ENG" orders & **1** "OOS ENG and Non-ENG" order between **Feb 2018** & **Jun 2019** w/ the criteria:
+
+- Specific MSAs + CA, CT, MO, and Armed Forces military districts
+- Above segment analysis filter for the **5** Non-ENG only orders but not the 1 order that included ENG majors too
+- A+ to B- high school GPA
+- SAT score of 1230/1240 - 1450 or PSAT score of 1220/1230/1240 - 1450
+  - The **1** ENG & Non-ENG order had criteria of SAT 1240 - 1450 or PSAT 1220 - 1450
+
+<iframe src="https://cyouh95.github.io/third-way-report/assets/maps/public_requests/map_OOS_nonENG.html" width="100%" height="800px"></iframe>
+
+### OOS Order Category: ENG orders 
+
+```{r include=FALSE}
+OOS_eng_orders
+
+# Lower test score criteria for female students
+OOS_eng_orders %>% dplyr::select(gender, sat_score_min, sat_score_max, psat_score_min, psat_score_max) %>%
+  distinct() %>% arrange(sat_score_min)
+
+# Fewer female students purchased
+OOS_eng_orders %>% group_by(gender) %>%
+  summarise(num_orders = n(), total_cost = sum(order_cost), total_students = sum(num_students))
+```
+
+They made **6** "OOS ENG Male" orders & **7** "OOS ENG Female" orders between **Feb 2018** & **Apr 2020** w/ the criteria:
+
+- All 49 states except IL + DC
+- Above segment analysis filter
+- A+ to B- high school GPA
+- SAT/PSAT score filter which differs by gender
+
+**General observations**:
+
+- More purchases made for female students and w/ lower test score criteria, but resulting female engineering majors in list still less than total male students
+
+
+### OOS Order Category: International
+
+```{r}
+intl_orders
+```
+
+
+They made **4** international orders between **May 2018** & **June 2019** with the following search criteria:
+
+- All filter for A+/B- high school GPA
+- SAT/PSAT scores vary by country.
+
+```{r}
+intl_orders %>% dplyr::select(order_title, order_num, num_students, sat_score_min, sat_score_max, psat_score_min, psat_score_max)
+```
+
+
+<!-- # CA HS SAT EDA -->
+
+<!-- ```{r} -->
+<!-- la_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '31080'))$zip_code -->
+
+<!-- # Look at just College Board LA students -->
+<!-- lists_df_sat_la <- lists_df_sat %>% -->
+<!--   select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders -->
+<!--   mutate( -->
+<!--     zip_code = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'), -->
+<!--     ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left'), -->
+<!--     is_white = as.integer(str_detect(Race, 'White')) -->
+<!--   ) %>%  -->
+<!--   filter(zip_code %in% la_zip_codes) -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- length(unique(lists_df_sat_la$zip_code))  # 307 zip codes in LA -->
+<!-- length(unique(lists_df_sat_la$ceeb))  # 348 HS in LA -->
+
+<!-- # Group by HS -->
+<!-- lists_df_sat_la_hs <- lists_df_sat_la %>% -->
+<!--   group_by(ceeb) %>%  -->
+<!--   summarise(total_students_purchased = n(), pct_white_purchased = mean(is_white, na.rm = T) * 100) %>%  -->
+<!--   arrange(-total_students_purchased) %>% -->
+<!--   left_join(ceeb_nces, by = 'ceeb') %>%  -->
+<!--   left_join(cds_nces %>% select(ncessch, CDSCode), by = 'ncessch') %>%  -->
+<!--   left_join(hs_data %>% select(ncessch, total_students, pct_white), by = 'ncessch') %>%  -->
+<!--   left_join(df_sat_ca_20, by = c('CDSCode' = 'CDS')) -->
+
+<!-- lists_df_sat_la_hs -->
+<!-- ``` -->
+
+
+<!-- **Available variables**: -->
+
+<!-- - **Student lists** -->
+<!--   - `total_students_purchased` -->
+<!--   - `pct_white_purchased` -->
+<!-- - **NCES HS data** -->
+<!--   - `total_students` -->
+<!--   - `pct_white` -->
+<!-- - **CA DOE data** -->
+<!--   - 12th graders: `Enroll12` (_enrolled_), `NumTSTTakr12` (_# of testtakers_), `NumERWBenchmark12` (_# met english benchmark_), `NumMathBenchmark12` (_# met math benchmark_), `TotNumBothBenchmark12` (_# met both benchmarks_) -->
+<!--   - 11th graders: `Enroll11`, `NumTSTTakr11`, `NumERWBenchmark11`, `NumMathBenchmark11`, `TotNumBothBenchmark11` -->
+<!--   - 12th + 11th graders: `Enroll1112`, `NumTSTTakr1112`, `NumERWBenchmark1112`, `NumMathBenchmark1112`, `TotNumBothBenchmark1112` -->
+
+<!-- **Possible analysis**: -->
+
+<!-- - Compare high school's racial composition & test readiness against actual purchased students -->
+<!-- - Ideally, we'd be able to isolate purchased students by grad year/grade to match with secondary data for the same class of students -->
+<!--   - We weren't able to do it for Urbana because some orders filtered for multiple graduating classes and there's no grad_class column in the student-level data - that could be something we can try to request for -->
+<!--   - We'll also need to update NCES data (e.g., different year's data, use race variables by grade level) and check crosswalk -->
+
+<!-- **Potential questions/concerns**: -->
+
+<!-- - If the characteristics of purchased students (e.g., racial composition, test readiness) do indeed differ from that of the high school for the same cohort/class of students, what are we able to conclude about why that is? -->
+<!--   - We will need to look at the order summary criteria to see what filters were being used -->
+<!--   - In the case of Urbana, the out-of-state orders filtered by geography (state, MSA, segment analysis), SAT/PSAT score ranges, and HS GPA (and sometimes separate orders for gender but both male/female were purchased) -->
+<!--   - In theory, all students who took the SAT who met the test score/GPA criteria and attended a HS that falls within the purchased geography/segment should be on the list -->
+<!--   - If a student from a purchased HS is not on the list, they either did not take the SAT/opt in or did not meet the test/GPA criteria -->
+<!-- - In other words, Urbana could not specifically pick students from the high school (apart from the filter criteria used), but they are specifically picking high schools to purchase through the segment analysis filter -->
+<!--   - It would be ideal to know the characteristics of the EN/HS clusters being purchased as compared to the clusters not purchased -->
+<!--   - We could try to look at purchased student-level data to infer characteristics of purchased EN/HS clusters, but without knowing the nonpurchased students, it would be hard to make comparisons/draw conclusions -->
+<!--   - Ideally we would be able to request the segment analysis info from the University -->
+
+
+<!-- ```{r include=FALSE} -->
+<!-- # read in student list df of CA student purchases -->
+<!-- df_sl_ca <- read_csv("../data/145637_list_ca.csv") -->
+
+<!-- # read in 2018-2019 & 2019-2020 CA DOE data -->
+<!-- df_sat_ca_20 <- read_xlsx("../data/sat20.xlsx", na = c('N/A', '*'))   -->
+<!-- df_sat_ca_19 <- read_xlsx("../data/sat19.xlsx", na = c('N/A', '*'), skip = 5) -->
+
+<!-- # read in acs race variables for ages 15-19 -->
+<!-- acs_race_zipcode <- read_csv("../data/acs_race_zipcode.csv") -->
+
+<!-- #subset to only california zipcodes -->
+<!-- acs_race_ca_zipcode <- acs_race_zipcode %>% -->
+<!--   filter(state_fips_code == 6) -->
+
+<!-- #read in nces hs data -->
+<!-- hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>%  -->
+<!--   mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian) -->
+
+<!-- hs_ca_data <- hs_data %>% -->
+<!--   filter(state_code == "CA") -->
+
+<!-- df_sl_ca <- df_sl_ca %>% -->
+<!--   group_by(ncessch) %>% -->
+<!--   mutate(n_stu_nces = n()) %>% -->
+<!--   ungroup()  -->
+
+<!-- # merge DOE to CA student list data -->
+<!-- df_sl_sat_CA <- df_sl_ca %>% rename(CDS=CDSCode) %>% left_join(df_sat_ca_19, by = "CDS") -->
+
+<!-- # merge NCES to CA student list & DOE data -->
+<!-- df_sl_hs_sat_CA <- df_sl_sat_CA %>% left_join(hs_ca_data, by = "ncessch") -->
+
+<!-- # Subset to LA county schools only -->
+<!-- df_la_county <- df_sl_hs_sat_CA %>% filter(CName == "Los Angeles") -->
+
+<!-- #df_la_county -->
+<!-- ``` -->
+
+<!-- ```{r include=FALSE} -->
+<!-- df_la_county <- add_testtakers_cols(df_la_county) -->
+
+<!-- df_sl_la_race <- df_la_county %>% -->
+<!--   group_by(ncessch) %>% -->
+<!--   filter(!is.na(ncessch), !is.na(CDS)) %>% -->
+<!--   mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0), -->
+<!--          nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          nat_am = ifelse(Race == "American Indian or Alaska Native" & -->
+<!--                            (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data -->
+<!--          stu_pct_black = mean(black, na.rm=TRUE)*100, -->
+<!--          stu_pct_asian = mean(asian, na.rm=TRUE)*100, -->
+<!--          stu_pct_latinx = mean(latinx, na.rm=TRUE)*100, -->
+<!--          stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100, -->
+<!--          stu_pct_natam = mean(nat_am, na.rm=TRUE)*100, -->
+<!--          stu_pct_other = mean(other, na.rm=TRUE)*100, -->
+<!--          stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) -->
+
+<!-- ``` -->
+
+<!-- <br> -->
+
+<!-- **The table below compares the number of student's purchased for each high school (according to ncessch ID) and the racial/ethnic identities of those students to the racial/ethnic makeup of the school.** -->
+<!-- ```{r} -->
+<!-- df_la_race <- df_sl_la_race %>% -->
+<!--        group_by(ncessch) %>% -->
+<!--        filter(row_number(ncessch) == 1) %>% -->
+<!--        arrange(-n_stu_nces) %>% -->
+<!--        select(ncessch, n_stu_nces, SName, stu_pct_white, pct_white, stu_pct_black, pct_black ,stu_pct_asian, pct_asian ,stu_pct_latinx, pct_hispanic, stu_pct_natam, pct_amerindian, stu_pct_other, pct_other) -->
+
+<!-- df_la_race -->
+<!-- ``` -->
+
+<!-- **The table below sorts in descending order the number of students purchased by high school (according to ncessch ID) and shows the number of 11th and 12th graders enrolled (2018-2019 academic year), number of 11th & 12th grade test takers, and the number and percentage of test takers that met the benchmakrs for ERW and Math for the SAT.**   -->
+
+<!-- - 11th graders in 2018-2019 are graduating class of 2020 -->
+<!-- - 12th graders in 2018-2019 are graduating class of 2019 -->
+<!-- - SAT benchmark for ERW is score of 480 and benchmark for Math is score of 530. -->
+<!-- - For 11th graders benchmark for ERW is 460 and benchmark for Math is 510. -->
+<!-- ```{r} -->
+<!-- df_la_county_per <- df_la_county %>% -->
+<!--   group_by(ncessch) %>% -->
+<!--   filter(row_number(ncessch) == 1, !is.na(CDS)) %>% -->
+<!--   select(ncessch, SName, n_stu_nces, Enroll1112, NumTSTTakr1112, NumERWBenchmark1112, PctERWBenchmark1112, NumMathBenchmark1112, PctMathBenchmark1112, TotNumBothBenchmark11, PctBothBenchmark1112) %>%  -->
+<!--   arrange(-n_stu_nces) -->
+
+<!-- df_la_county_per -->
+<!-- ``` -->
+
+<!-- **Comments** -->
+
+<!-- - The CA Department of Education separates SAT scores for ERW and Math, while order summaries combine both to filter for total SAT score. -->
+<!-- - Might be tricky to identify what SAT ranges universities' filter for since we are comparing at the high school-level and separate orders could filter for different SAT ranges (e.g., students purchased from same high school may come from separate orders.) -->
+<!--     - Could perhaps identify a range for SAT filter a university uses since that usually doesn't vary much. -->
+
+
+<!-- # Zip code level analysis -->
+
+<!-- ## By zip code -->
+
+<!-- **LA metropolitan area zip codes**  -->
+
+<!-- ```{r include=FALSE} -->
+<!-- # create a new 5-digit zip code and filter to LA msa for student list purchases -->
+<!-- df_sl_la <- df_sl_ca %>% -->
+<!--   mutate(zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left')) %>% -->
+<!--   filter(zipcode %in% la_zip_codes) -->
+<!-- # get rid of SAT/ACT test scores for now -->
+<!-- df_sl_la <- df_sl_la %>% dplyr::select(-contains("sat"), -contains("act"), -(Source:CDSCode)) -->
+
+<!-- #create 0/1 race/ethnicity variables -->
+<!-- df_sl_la_race <- df_sl_la %>% -->
+<!--   mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0), -->
+<!--          nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          nat_am = ifelse(Race == "American Indian or Alaska Native" & -->
+<!--                            (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0))  -->
+
+<!-- # aggregate to the zip code level -->
+<!-- df_sl_la_race <- df_sl_la_race %>% -->
+<!--   group_by(zipcode) %>% -->
+<!--   summarise(n_stu_zip = n(), #not accurate because doesn't account for all race/ethnicities of students -->
+<!--             tot_white = sum(white, na.rm = TRUE), -->
+<!--             stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data -->
+<!--             tot_black = sum(black, na.rm = TRUE), -->
+<!--             stu_pct_black = mean(black, na.rm=TRUE)*100, -->
+<!--             tot_asian = sum(asian, na.rm = TRUE), -->
+<!--             stu_pct_asian = mean(asian, na.rm=TRUE)*100, -->
+<!--             tot_latinx = sum(latinx, na.rm = TRUE), -->
+<!--             stu_pct_latinx = mean(latinx, na.rm=TRUE)*100, -->
+<!--             tot_nhpi = sum(nhpi, na.rm = TRUE), -->
+<!--             stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100, -->
+<!--             tot_natam = sum(nat_am,na.rm = TRUE), -->
+<!--             stu_pct_natam = mean(nat_am, na.rm=TRUE)*100, -->
+<!--             tot_other = sum(other, na.rm = TRUE), -->
+<!--             stu_pct_other = mean(other, na.rm=TRUE)*100, -->
+<!--             stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) %>% -->
+<!--   arrange(-n_stu_zip) -->
+
+<!-- # keep only LA msa zip codes from acs data -->
+<!-- acs_race_la_zipcode <- acs_race_zipcode %>% -->
+<!--   filter(zipcode %in% la_zip_codes) # 378 zip codes in LA msa -->
+
+<!-- # change to character -->
+<!-- acs_race_la_zipcode$zipcode <- as.character(acs_race_la_zipcode$zipcode) -->
+
+<!-- #merge -->
+<!-- df_sl_la_acs <- df_sl_la_race %>% right_join(acs_race_la_zipcode, by = "zipcode") -->
+
+<!-- anti_merge <- acs_race_la_zipcode %>% anti_join(df_sl_la_race, by = "zipcode") -->
+
+<!-- ``` -->
+
+<!-- **Zip codes not purchased in the LA metro area** -->
+<!-- ```{r} -->
+<!-- # characteristics of zipcodes that were not purchased -->
+<!-- df_sl_la_acs %>% -->
+<!--   filter(zipcode %in% anti_merge$zipcode) %>% -->
+<!--   dplyr::select(zipcode, median_household_income, contains("15_19_pct")) %>% -->
+<!--   arrange(-median_household_income) -->
+
+<!-- ``` -->
+
+<!-- **Comments** -->
+
+<!-- - First three zip codes with higher median income are in smaller (one unincorporated) communities (e.g., Seal Beach (OC), Trabuco Canyon (OC), and Lakewood) -->
+<!-- - Fourth and Fifth zip codes have a somewhat higher median household income, with higher percentage of Black, and other people of color between the ages 15-19 (e.g., Carson & Inglewood) -->
+<!-- - Zip codes with lower median household income also have higher percentage of Latinx and other populations of color between the ages of 15-19. -->
+
+<!-- **Zip codes where at least one student was purchased in the LA metro area** -->
+<!-- ```{r} -->
+<!-- # characteristics of zipcodes that were purchased -->
+<!-- df_sl_la_acs %>% -->
+<!--   filter(!is.na(n_stu_zip)) %>% -->
+<!--   dplyr::select(zipcode, n_stu_zip, -contains("tot_"), median_household_income, contains("stu_pct"), contains("15_19_pct")) -->
+
+<!-- ``` -->
+
+<!-- **Comments** -->
+
+<!-- - More students who identify as Asian are purchased at higher rates than the population of Asain identifying people between the ages of 15-19. -->
+<!-- - 90056 zip code for Windsor Hills (Ladera Heights), median income of 93k, about 75% Black and only one student purchased here. -->
+<!-- - Zip codes that have a higher percentage of Hispanic/Latinx people between the ages of 15-19 tend to go either way. However, less students in these zip codes are purchased (e.g., <6 per zip code). -->
+<!-- - Overall there seems to be an overrepresentation of Asian (in particular) and white students purchased compared to other communities of color by zip code. -->
+
+
+<!-- ## By HS aggregated to zip code level -->
+
+<!-- ```{r} -->
+<!-- lists_df_all <- lists_df_pivot %>%  # 434120 unique students -->
+<!--   filter(Country == 'United States') %>%  -->
+<!--   select(-test_type, -order_num, -order_date) %>% distinct() %>%  # Each student is unique - got rid of duplicates that came from multiple orders -->
+<!--   mutate( -->
+<!--     ceeb = str_pad(SchoolCode, width = 6, pad = '0', side = 'left') -->
+<!--   ) -->
+
+<!-- ceeb_hs <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too -->
+
+<!-- lists_df_all_hs <- lists_df_all %>% left_join(ceeb_hs, by = 'ceeb')  # 476 repeated rows (matched to one of the 46 ceeb that had multiple ncessch entries in crosswalk) -->
+
+<!-- # 322211 (80.7%) from public HS, 47544 (11.9%) from private HS, 29525 (7.4%) either no entry in crosswalk or no available NCES data -->
+<!-- table(lists_df_all_hs$school_type, useNA = 'always') -->
+
+<!-- lists_df_all_zip <- lists_df_all %>% right_join(ceeb_hs, by = 'ceeb') -->
+<!-- # dropping NA students who did not match to available NCES data -->
+<!-- # this also dropped HS whose ncessch did not exist in crosswalk (no chance of it merging w/ purchased students if there were any) -->
+
+<!-- lists_df_all_zip %>% count(is.na(Ref))  # 369755 purchased students -->
+<!-- length(unique(lists_df_all_zip$ncessch))  # 19986 HS -->
+
+<!-- # Group by HS's zip code -->
+<!-- lists_df_all_zip_agg <- lists_df_all_zip %>% -->
+<!--   mutate( -->
+<!--     ncessch_purchased = if_else(is.na(Ref), NA_character_, ncessch) -->
+<!--   ) %>%  -->
+<!--   group_by(zip_code, state_code) %>% -->
+<!--   summarise( -->
+<!--     num_hs = n_distinct(ncessch, na.rm = T), -->
+<!--     num_hs_purchased = n_distinct(ncessch_purchased, na.rm = T), -->
+<!--     num_students_purchased = sum(as.numeric(!is.na(Ref))) -->
+<!--   ) %>% -->
+<!--   arrange(desc(num_students_purchased)) -->
+
+<!-- lists_df_all_zip_agg -->
+
+<!-- sum(lists_df_all_zip_agg$num_students_purchased)  # 369755 purchased students -->
+<!-- sum(lists_df_all_zip_agg$num_hs)  # 19986 HS -->
+<!-- sum(lists_df_all_zip_agg$num_hs_purchased)  # 6299 purchased HS -->
+
+<!-- # Filter for just schools (that's in crosswalk file) in LA zip codes (506 HS) -->
+<!-- lists_df_all_zip_agg %>% filter(zip_code %in% la_zip_codes) -->
+
+<!-- # In addition to NCES HS data, we can also use Census data from tract the HS is located in -->
+<!-- hs_tract_ca %>% as.data.frame() %>%  # Most CA tracks have 1 HS, but can have up to 5 -->
+<!--   select(-geometry) %>%  -->
+<!--   group_by(tract_id) %>% -->
+<!--   summarise(num_hs_in_tract = n()) %>% -->
+<!--   group_by(num_hs_in_tract) %>%  -->
+<!--   summarise(num_tracts = n()) %>% -->
+<!--   arrange(desc(num_tracts)) %>%  -->
+<!--   mutate(pct_tracts = num_tracts / sum(num_tracts) * 100) -->
+
+<!-- lists_df_all_la_zip <- lists_df_all_zip %>% filter(zip_code %in% la_zip_codes) -->
+
+<!-- lists_df_all_la_zip %>% count(is.na(Ref))  # 18470 purchased students -->
+<!-- length(unique(lists_df_all_la_zip$ncessch))  # 506 HS -->
+
+<!-- lists_df_all_la_zip_by_purchase <- lists_df_all_la_zip %>% -->
+<!--   left_join( -->
+<!--     hs_tract_ca %>% as.data.frame() %>% select(-geometry) %>%  -->
+<!--       mutate(pct_college_grads = (pop_edu_attain_doct + pop_edu_attain_prof + pop_edu_attain_master + pop_edu_attain_bach + pop_edu_attain_assoc) / pop_total_25plus) %>% -->
+<!--       rowwise() %>% mutate(median_inc_2564 = mean(c(median_inc_2544, median_inc_4564), na.rm = T)) %>% -->
+<!--       select(ncessch, median_inc_2564, pct_college_grads), -->
+<!--     by = 'ncessch' -->
+<!--   ) %>%  -->
+<!--   group_by(zip_code, state_code, ncessch, total_students, pct_white, pct_poc, median_inc_2564, pct_college_grads) %>%  -->
+<!--   summarise( -->
+<!--     num_students_purchased = sum(!is.na(Ref)) -->
+<!--   ) %>%  -->
+<!--   mutate(is_hs_purchased = num_students_purchased > 0) %>% -->
+<!--   group_by(zip_code, state_code, is_hs_purchased) %>% -->
+<!--   summarise( -->
+<!--     num_hs = n(), -->
+<!--     num_students_purchased = sum(num_students_purchased), -->
+<!--     avg_hs_size = mean(total_students), -->
+<!--     avg_pct_white = mean(pct_white), -->
+<!--     avg_pct_poc = mean(pct_poc), -->
+<!--     avg_pct_white_weighted = sum(total_students / sum(total_students) * pct_white), -->
+<!--     avg_pct_poc_weighted = sum(total_students / sum(total_students) * pct_poc), -->
+<!--     avg_tract_inc_2564 = mean(median_inc_2564, na.rm = T), -->
+<!--     avg_tract_pct_college_grad = mean(pct_college_grads, na.rm = T) -->
+<!--   ) %>%  -->
+<!--   arrange(zip_code, desc(is_hs_purchased)) -->
+
+<!-- lists_df_all_la_zip_by_purchase -->
+
+<!-- sum(lists_df_all_la_zip_by_purchase$num_students_purchased)  # 18470 purchased students -->
+<!-- sum(lists_df_all_la_zip_by_purchase$num_hs)  # 506 HS -->
+<!-- lists_df_all_la_zip_by_purchase %>% group_by(is_hs_purchased) %>% summarise(count = sum(num_hs))  # 230 HS purchased (276 HS not purchased) -->
+<!-- ``` -->
+
+<!-- **Notes**:  -->
+
+<!-- - We would ideally know the HS/EN clusters to differentiate between HS that weren't purchased vs. HS that were purchased but no students met other criteria -->
+<!-- - CEEB/NCES crosswalk -->
+
+<!-- ## Investigation of zip code to tract crosswalk -->
+
+<!-- ```{r} -->
+<!-- zip_tract_12_19 <- read_csv(file.path(data_dir, 'zip_tract_12-19.csv'), col_types = c('TRACT' = 'c')) -->
+<!-- zip_code_tract <- read_csv(file.path(data_dir, 'zip_code_tract.csv'), col_types = str_c('c', paste(rep('cn', 61), collapse = ''))) -->
+
+<!-- # Verify tract ID is 11-digits long -->
+<!-- unique(nchar(zip_tract_12_19$TRACT)) -->
+<!-- unique(nchar(zip_code_tract$tract_1)) -->
+
+<!-- length(unique(zip_tract_12_19$TRACT))  # 73491 unique tracts total -->
+<!-- length(unique(zip_code_tract$tract_1))  # 26454 of which appears as tract_1 for at least 1 zip code (would be used) -->
+
+<!-- zip_code_tract %>%  # some tracks may be considered majority for multiple zip codes (multiple zip codes would map to the same tract using highest ratio tract_1) -->
+<!--   group_by(tract_1) %>%  -->
+<!--   summarise(count = n()) %>%  -->
+<!--   arrange(desc(count)) -->
+
+<!-- zip_tract_12_19 %>%  # most zip codes map to multiple tracts too (since bigger area) -->
+<!--   group_by(ZIP) %>%  -->
+<!--   summarise(num_tracts_zip_overlaps = n()) %>%  -->
+<!--   arrange(desc(num_tracts_zip_overlaps)) -->
+
+<!-- zip_tract_12_19 %>%  # distribution of how many tracts each zip code maps to (about a third is 1-to-1 mapping, while rest is multiple) -->
+<!--   group_by(ZIP) %>%  -->
+<!--   summarise(num_tracts_zip_overlaps = n()) %>% -->
+<!--   group_by(num_tracts_zip_overlaps) %>%  -->
+<!--   summarise(num_zip_code = n()) %>%  -->
+<!--   arrange(desc(num_zip_code)) %>%  -->
+<!--   mutate(pct_zip_code = num_zip_code / sum(num_zip_code) * 100) -->
+<!-- ``` -->
+
+
+
+<!-- # Categorical Variable Exploration -->
+
+<!-- This table below shows the number of zip codes purchased by descending order  -->
+
+<!-- - Grouped by zip code and summarized to get a count of the number of students purchased within each zip code -->
+<!-- - Merged in census zip-code level data to show demographic data associated with each zip code   -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_zip %>% -->
+<!--   dplyr::select(zip_code, state_code, n_per_grp, median_household_income, starts_with("pct")) -->
+<!-- ``` -->
+
+
+<!-- - Basic descriptive for number of students purchased by zip -->
+<!-- ```{r} -->
+<!-- OOS_msa_zip %>% select(n_per_grp)  %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE )) -->
+
+<!-- ``` -->
+
+<!-- - Basic descriptive for number of students purchased by zip, variation by MSAs/States purchased from -->
+<!--   - KS is probably missing something regarding OOS_MSA_Zip: Only purchased from 1 zip in AZ? -->
+<!--   - But list_df has 1721 students from 75 zipcodes in AZ -->
+<!-- ```{r} -->
+<!-- # Zip Codes purchased by State -->
+<!-- OOS_msa_zip %>% group_by(state_code) %>% count() -->
+
+<!-- # Check only 1 zip purchased from AZ? -->
+<!-- lists_df %>% filter(Country=="United States") %>% group_by(State) %>% count() -->
+
+<!-- lists_df %>% filter(State=="AZ") %>%  -->
+<!--   mutate(zip5= substr(ZipCode, 1, 5)) %>% -->
+<!--   group_by(zip5) %>% count() #None from South Tucson -->
+
+<!-- # Some data issues but continued to look at descriptive by state -->
+<!-- OOS_msa_zip %>% group_by(state_code)  %>% select(n_per_grp) %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, med=median, min = min, max =max), na.rm = TRUE )) -->
+
+<!-- ``` -->
+<!-- ## Texas Analyses -->
+
+<!-- - Explore Thresholds for TEXAS -->
+<!--   - Purchased 25776 students from 338 zips in TX -->
+<!--   - Number of students purchased per Zip: Mean= 41, Median=17.5 SD=65, Max= 564, Min=1 -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_zip %>% filter(state_code=="TX") %>% ggplot(aes(x = n_per_grp)) + geom_density(aes(y = ..count..)) -->
+
+<!-- OOS_msa_zip <- OOS_msa_zip %>% mutate(n_per_grp_cat =cut(n_per_grp, breaks=c(0, 1, 20, 100, 565)))  -->
+
+<!-- OOS_msa_zip %>% filter(state_code=="TX") %>% -->
+<!--     count(n_per_grp_cat) %>% -->
+<!--     mutate(percent = n / sum(n) * 100) -->
+
+<!-- ``` -->
+
+
+<!-- - Explore Demographics by Thresholds for TEXAS -->
+
+<!-- ```{r} -->
+<!-- # by income -->
+<!-- OOS_msa_zip %>% filter(state_code=="TX") %>% group_by(n_per_grp_cat) %>% -->
+<!-- select(median_household_income) %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE )) -->
+
+
+<!-- # by race -->
+<!-- OOS_msa_zip %>% filter(state_code=="TX") %>% group_by(n_per_grp_cat) %>% -->
+<!-- select(pct_white) %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE )) -->
+<!-- ``` -->
+
+
+
+<!-- ## California Analyses -->
+
+<!-- - Explore Thresholds for CALIFORNIA -->
+<!--   - Purchased 52788 students from 615 zips in CA -->
+<!--   - Number of students purchased per Zip: Mean= 27, Median=15, SD=35, Max= 331, Min=1 -->
+
+<!-- ```{r} -->
+<!-- OOS_msa_zip %>% filter(state_code=="CA") %>% ggplot(aes(x = n_per_grp)) + geom_density(aes(y = ..count..)) -->
+
+
+<!-- OOS_msa_zip %>% filter(state_code=="CA") %>% -->
+<!--     count(n_per_grp_cat) %>% -->
+<!--     mutate(percent = n / sum(n) * 100) -->
+
+<!-- ``` -->
+
+
+<!-- - Explore Demographics by Thresholds for CALIFORNIA -->
+<!--   - KS thought: Zip codes in diverse metros may not capture racial variation, need to get at census tract level -->
+<!--   - Coincides with school-level analysis, purchasing only from predominantly White schools in a zip code? -->
+
+<!-- ```{r} -->
+<!-- # by income -->
+<!-- OOS_msa_zip %>% filter(state_code=="CA") %>% group_by(n_per_grp_cat) %>% -->
+<!-- select(median_household_income) %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE )) -->
+
+
+<!-- # by race -->
+<!-- OOS_msa_zip %>% filter(state_code=="CA") %>% group_by(n_per_grp_cat) %>% -->
+<!-- select(pct_white) %>% -->
+<!--       summarise(across( -->
+<!--         .fns = list(mean = mean, sd = sd, min = min, max =max), na.rm = TRUE )) -->
+<!-- ``` -->
+
+<!-- # School district-level exploration -->
+
+<!-- ```{r include=FALSE} -->
+<!-- # district boundary EDA -->
+<!-- #---------------------------------------------------------------------------------------- -->
+
+<!-- # read in nces high school data -->
+<!-- ca_hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c')) %>%  -->
+<!--   mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian) %>% -->
+<!--   filter(state_code == "CA") # 1170 -->
+
+<!-- # for now let's get rid of act/sat exams scores -->
+<!-- df_sl_ca <- df_sl_ca %>% dplyr::select(-Source, -contains("sat_"), -contains("act_")) -->
+
+<!-- # create race\ethnicity variables -->
+<!-- df_sl_ca <- df_sl_ca %>% -->
+<!--   mutate(white = ifelse(Race == "White" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          black = ifelse(Race == "Black or African American" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          asian = ifelse(Race == "Asian" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          latinx = ifelse((!is.na(Hispanic) & Hispanic == "Yes"),1,0), -->
+<!--          nhpi = ifelse(Race == "Native Hawaiian or Other Pacific" & (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          nat_am = ifelse(Race == "American Indian or Alaska Native" & -->
+<!--                            (is.na(Hispanic) | Hispanic == "No"),1,0), -->
+<!--          other = ifelse(is.na(Race) & (is.na(Hispanic) | Hispanic == "No"),1,0))  -->
+
+<!-- # get a count of how many students were purchased by high school -->
+<!-- df_sl_ca <- df_sl_ca %>% -->
+<!--   group_by(ncessch) %>% -->
+<!--   mutate(n_stu_hs = n()) %>% -->
+<!--   ungroup() -->
+
+<!-- # aggregate to the high school-level -->
+<!-- df_sl_school_ca <- df_sl_ca %>% -->
+<!--   group_by(ncessch) %>% -->
+<!--   summarise(n_stu_hs = n(), -->
+<!--             tot_white = sum(white, na.rm = TRUE), -->
+<!--             stu_pct_white = mean(white, na.rm=TRUE)*100, #pct race/ethnicty for student-level data -->
+<!--             tot_black = sum(black, na.rm = TRUE), -->
+<!--             stu_pct_black = mean(black, na.rm=TRUE)*100, -->
+<!--             tot_asian = sum(asian, na.rm = TRUE), -->
+<!--             stu_pct_asian = mean(asian, na.rm=TRUE)*100, -->
+<!--             tot_latinx = sum(latinx, na.rm = TRUE), -->
+<!--             stu_pct_latinx = mean(latinx, na.rm=TRUE)*100, -->
+<!--             tot_nhpi = sum(nhpi, na.rm = TRUE), -->
+<!--             stu_pct_nhpi = mean(nhpi, na.rm=TRUE)*100, -->
+<!--             tot_natam = sum(nat_am,na.rm = TRUE), -->
+<!--             stu_pct_natam = mean(nat_am, na.rm=TRUE)*100, -->
+<!--             tot_other = sum(other, na.rm = TRUE), -->
+<!--             stu_pct_other = mean(other, na.rm=TRUE)*100, -->
+<!--             stu_pct_tot = stu_pct_white + stu_pct_black + stu_pct_asian + stu_pct_latinx + stu_pct_nhpi + stu_pct_natam + stu_pct_other) %>% -->
+<!--   arrange(-n_stu_hs) -->
+
+
+<!-- # merge student, high school-level data from Urbana purchases to nces data -->
+<!-- df_sl_ca_schools <- df_sl_school_ca %>% right_join(ca_hs_data, by = "ncessch") -->
+
+<!-- length(unique(df_sl_ca_schools$ncessch)) #1770 -->
+
+<!-- # check -->
+<!-- anti_merge <- ca_hs_data %>% anti_join(df_sl_school_ca, by = "ncessch") -->
+
+<!-- length(unique(anti_merge$ncessch))  -->
+
+<!-- # Merge in district level census data -->
+<!-- #---------------------------------------------------------------------------------------- -->
+
+<!-- # Create var for race breaks -->
+
+<!-- # create race vars for students purchased -->
+<!-- df_sl_ca_schools <- df_sl_ca_schools %>% -->
+<!--   mutate(stu_pct_poc = stu_pct_black + stu_pct_latinx + stu_pct_natam + stu_pct_nhpi) -->
+
+
+<!-- # race breaks for students purchased -->
+<!-- df_sl_ca_schools$race_brks_nonwhiteasian_stu <- cut(df_sl_ca_schools$stu_pct_poc,  -->
+<!--                                                 breaks = c(-1, 20, 40, 60, 80, 90, 101),  -->
+<!--                                                 labels = c('0-19%', '20-39%', '40-59%',  -->
+<!--                                                            '60-79%', '80-89%', '90-100%')) -->
+
+<!-- # race breaks for at high school-level -->
+<!-- df_sl_ca_schools$race_brks_nonwhiteasian <- cut(df_sl_ca_schools$pct_poc,  -->
+<!--                                            breaks = c(-1, 20, 40, 60, 80, 90, 101),  -->
+<!--                                            labels = c('0-19%', '20-39%', '40-59%',  -->
+<!--                                                       '60-79%', '80-89%', '90-100%')) -->
+
+<!-- ``` -->
+
+<!-- This table below shows the number of students in high schools in California sorted by descending order. -->
+
+<!-- - Grouped at the high school level and summarized to get a count of the number of students purchased within each high school and race/ethnicity -->
+<!-- - Merged in NCES data to compare the race/ethnicity of students purchased by high school to the race/ethnicity composition of the school.  -->
+<!-- ```{r} -->
+<!-- # table to display pct poc's purchased by high school compared to pct poc at the high school -->
+<!-- df_sl_ca_schools %>% -->
+<!--   dplyr::select(ncessch, name, school_type, n_stu_hs, stu_pct_poc, race_brks_nonwhiteasian_stu, pct_poc, race_brks_nonwhiteasian) -->
+
+<!-- ``` -->
+
+<!-- Next steps:  -->
+
+<!-- - Map high schools onto school district boundaries.  -->
+<!-- - Perhaps students are purchased within a district, but the frequency of which students are purchased in specific high schools within a school district may vary.   -->
+
+
+
+# RQ: What are the characteristics of schools/communities included vs. not included in purchased lists 
+
+
+## Out-of-State, zip codes purchased from vs. not purchased from
+
+
+```{r include=FALSE}
+lists_df_sat_US <- lists_df_sat %>% filter(Country=="United States")
+
+lists_df_sat_US <- lists_df_sat_US %>% filter(State!="IL")
+
+
+lists_df_sat_US <- lists_df_sat_US %>% mutate(zip = substr(ZipCode, 1, 5))
+
+acs_race_zipcode <- read_csv("../data/acs_race_zipcode.csv")
+zip_to_state <- read_csv("../data/zip_to_state.csv")
+zip_to_state <- zip_to_state %>% select(state_code, zip_code)
+
+
+acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11))
+
+acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
+
+statelist <- lists_df_sat_US %>% group_by(State) %>% count()
+ziplist <- lists_df_sat_US %>% group_by(zip) %>% count()
+
+acs_race_zipcodev2$purchased_zip <- ifelse(acs_race_zipcodev2$zip %in% ziplist$zip,1,0)
+acs_race_zipcodev2$purchased_state <- ifelse(acs_race_zipcodev2$state_code %in% statelist$State,1,0)
+
+
+acs_race_zipcodev2 %>% count(purchased_zip)
+acs_race_zipcodev2 %>% count(purchased_state)
+
+acs_race_zipcode <- acs_race_zipcodev2 %>% filter(purchased_state==1)
+
+acs_race_zipcode <- acs_race_zipcode %>% mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income))
+
+acs_race_zipcode_grouped <- acs_race_zipcode %>% select(purchased_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct) %>%
+    group_by(purchased_zip) %>% 
+    summarise_each(funs(mean(., na.rm = TRUE)))
+
+```
+
+
+```{r, echo=FALSE}
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_zip), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_zip), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_zip), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_zip), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_zip), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+```
+
+
