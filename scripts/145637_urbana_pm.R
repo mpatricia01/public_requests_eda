@@ -13,14 +13,11 @@ library(readxl)
 #===========================================================================================
 
 # Directory paths
-output_dir <- file.path('.', 'outputs')
-original_dir <- file.path('.', 'originals')
 data_dir <- file.path('.', 'data')
-plots_dir <- file.path('.', 'outputs', 'plots')
 
 # Read in data
-lists_df <- read_csv(file.path(output_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
-orders_df <- read_csv(file.path(output_dir, '145637_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c'))
+lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
+orders_df <- read_csv(file.path(data_dir, '145637_orders.csv'), col_types = c('univ_id' = 'c', 'order_num' = 'c'))
 
 # Checks
 str_detect(lists_df$Source, '^(?:\\w+ \\d+, \\d{4} [SACT]{3} Search \\d+;?\\s*)+$') %>% table()
@@ -1364,9 +1361,12 @@ df_la_zipcode <- df_la_county %>%
 # Compare characteristics of zipcodes purchased to those that were not purchased for 
 # the LA msa area 
 #-----------------------------------------------------------------------
+#============================================================================
+# RQ: What are the characteristics of schools and communities included vs. not included in student lists purchased by universities?
+#============================================================================
 
 # use student list data
-df_sl_ca <- read_csv("data/145637_list_ca.csv")
+df_sl_ca <- read_csv("./data/145637_list_ca.csv")
 
 #uniquely identified by student Ref ID
 df_sl_ca %>%
@@ -1403,9 +1403,14 @@ df_sl_la %>%
 
 # first subset df and then merge in census data to student list data
 
+#create df to keep schools as well
+df_sl_la <- df_sl_la %>% dplyr::select(-contains("sat"), -contains("act"), -(Source:CDSCode))
+length(unique(df_sl_la$zipcode)) #313 zip codes, according to google there are 378 zip codes in LA metro area
+
 # get rid of SAT/ACT test scores for now
 df_sl_la <- df_sl_la %>% dplyr::select(-contains("sat"), -contains("act"), -(Source:CDSCode))
 length(unique(df_sl_la$zipcode)) #313 zip codes, according to google there are 378 zip codes in LA metro area
+
 
 df_sl_la %>%
   group_by(zipcode) %>%
@@ -1536,9 +1541,9 @@ hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master
   mutate(pct_poc = pct_black + pct_hispanic + pct_amerindian)
 
 # Load shape files: https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-cbsa_shp <- readOGR(file.path(data_dir, 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
-state_shp <- readOGR(file.path(data_dir, 'cb_2018_us_state_500k', 'cb_2018_us_state_500k.shp'))
-zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+cbsa_shp <- readOGR(file.path('data', 'cb_2018_us_cbsa_500k', 'cb_2018_us_cbsa_500k.shp'))
+state_shp <- readOGR(file.path('data', 'cb_2018_us_state_500k', 'cb_2018_us_state_500k.shp'))
+zip_shp <- readOGR(file.path('data', 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
 
 # Create var for race breaks
 la_zip_data <- df_sl_la_acs %>%
@@ -1556,41 +1561,59 @@ hs_data$race_brks_nonwhiteasian <- cut(hs_data$pct_poc,
                                        labels = c('0-19%', '20-39%', '40-59%', 
                                                   '60-79%', '80-89%', '90-100%'))
 
+# create var for race by high school
+la_zip_data$num_zip_purchased <- cut(la_zip_data$n_stu_zip, 
+                                       breaks = c(-1, 10, 50, 100, 200, 300, 501), 
+                                       labels = c('1-9%', '10-49%', '49-99%', 
+                                                  '100-199%', '200-299%', '300+'))
+
 # Create var for income breaks
 la_zip_data$inc_brks <- cut(la_zip_data$median_household_income, 
                          breaks = c(-1, 50000, 75000, 100000, 150000, 200000, 10000000), 
                          labels = c('<$50k', '$50k-74k', '$75k-99k', 
                                     '$100k-149k', '$150k-199k', '$200k+'))
 
+#subset zip code shape file
+zip_shp <- subset(zip_shp, ZCTA5CE10 %in% la_zip_data$zipcode) #include all zip codes in LA metro area
+zip_shp <- merge(zip_shp, la_zip_data, by.x = 'ZCTA5CE10', by.y = 'zipcode', all.x = T) #merge student list purchased data
 
-cbsa_shp <- merge(cbsa_shp, msa_data, by.x = 'GEOID', by.y = 'cbsa_code', all.x = T)
-zip_shp <- merge(zip_shp, la_zip_data, by.x = 'ZCTA5CE10', by.y = 'zipcode', all.x = T)
+#check missing
+sum(is.na(zip_shp$n_stu_zip)) #looks good
+
+#create subset of purchased students in zip code and non-purchased students
+non_zip_shp <- subset(zip_shp, is.na(zip_shp$n_stu_zip))
+pur_zip_shp <- subset(zip_shp, !is.na(zip_shp$n_stu_zip))
 
 #la msa area
 la_msa_shp <- subset(cbsa_shp, GEOID %in% msa_data$cbsa_code)
 
-# grab zip codes in LA metro area
-la_zips_shp <- subset(zip_shp, ZCTA5CE10 %in% la_zip_codes)
 # grab CA state
 CA_state_shp <- subset(state_shp, STUSPS == 'CA')
 
 CA_hs <- hs_data %>% filter(state_code == 'CA')
 
+#grab schools in zip codes that are purchased; have to merge with schools that are actually purchased
+CA_pur <- CA_hs %>% filter(zip_code %in% df_zip_purchase$zipcode)
+
+#grab schools in zip codes non purchased
+CA_non_pur <- CA_hs %>% filter(zip_code %in% df_zip_non_purchase$zipcode)
+
 
 # Create shared color scale functions
-color_income <- colorFactor('YlGnBu', la_zip_data$inc_brks)
-color_race <- colorFactor('YlGnBu', la_zip_data$race_brks_nonwhiteasian)
-color_pop <- colorNumeric('YlGnBu', la_zip_data$pop_total_15_19, n = 5)
+color_income <- colorFactor('YlGnBu', zip_shp$inc_brks)
+color_race <- colorFactor('YlGnBu', zip_shp$race_brks_nonwhiteasian)
+color_pop <- colorNumeric('YlGnBu', zip_shp$pop_total_15_19, n = 5)
+color_num_pur <- colorFactor('YlGnBu', zip_shp$num_zip_purchased)
 
 # Create popups
-pop_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
-                  'Total Population: ', format(la_zips_shp$pop_total_15_19, big.mark = ',')) %>% lapply(htmltools::HTML)
+pop_zip <- paste0('<b>', zip_shp$ZCTA5CE10, '</b><br>',
+                  'Total Population: ', format(zip_shp$pop_total_15_19, big.mark = ',')) %>% lapply(htmltools::HTML)
 
-income_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
-                     'Median Household Income: ', currency(la_zips_shp$median_household_income, digits = 0L)) %>% lapply(htmltools::HTML)
+income_zip <- paste0('<b>', zip_shp$ZCTA5CE10, '</b><br>',
+                     'Median Household Income: ', currency(zip_shp$median_household_income, digits = 0L)) %>% lapply(htmltools::HTML)
 
-race_zip <- paste0('<b>', la_zips_shp$ZCTA5CE10, '</b><br>',
-                   '% Population of Color: ', sprintf('%.1f', la_zips_shp$race_brks_nonwhiteasian)) %>% lapply(htmltools::HTML)
+race_zip <- paste0('<b>', zip_shp$ZCTA5CE10, '</b><br>',
+                   '% Population of Color: ', sprintf('%.1f', zip_shp$race_brks_nonwhiteasian)) %>% lapply(htmltools::HTML)
 
 
 highlight_zip <- highlightOptions(color = 'black',
@@ -1604,31 +1627,37 @@ map_CA <- leaflet() %>%
              toggleDisplay = TRUE) %>%
   
   addPolygons(data = CA_state_shp, stroke = F, fillOpacity = 0.1, smoothFactor = 0.2, color = 'gray', group = 'CA') %>% 
-  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_pop(pop_total), label = pop_zip, group = 'CA by Population', highlightOptions = highlight_zip) %>%
-  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_income(inc_brks), label = income_zip, group = 'CA by Median Household Income', highlightOptions = highlight_zip) %>%
-  addPolygons(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_race(race_brks_nonwhiteasian), label = race_zip, group = 'CA by Race/Ethnicity', highlightOptions = highlight_zip) %>%
-  addPolylines(data = raster::intersect(CA_state_shp, la_zips_shp), weight = 1, color = 'black', fillOpacity = 0, group = 'Zip codes') %>% 
+  addPolygons(data = raster::intersect(CA_state_shp, zip_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_pop(pop_total), label = pop_zip, group = 'CA by Population', highlightOptions = highlight_zip) %>%
+  addPolygons(data = raster::intersect(CA_state_shp, zip_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_income(inc_brks), label = income_zip, group = 'CA by Median Household Income', highlightOptions = highlight_zip) %>%
+  addPolygons(data = raster::intersect(CA_state_shp, zip_shp), weight = 1, stroke = T, fillOpacity = 0.8, smoothFactor = 0.2, color = ~color_race(race_brks_nonwhiteasian), label = race_zip, group = 'CA by Race/Ethnicity', highlightOptions = highlight_zip) %>%
+  addPolylines(data = raster::intersect(CA_state_shp, zip_shp), weight = 1, color = 'black', fillOpacity = 0, group = 'Zip codes') %>% 
   
   # add markers
-  addCircleMarkers(data = CA_hs, lng = ~longitude, lat = ~latitude, group = 'CA HS by Race/Ethnicity',
-                   radius = 3, fill = TRUE, fillOpacity = 1, weight = 1, color = 'white', fillColor = ~color_race(race_brks_nonwhiteasian)) %>%
+  #addCircleMarkers(data = CA_hs, lng = ~longitude, lat = ~latitude, group = 'CA HS by Race/Ethnicity',
+  #                 radius = 3, fill = TRUE, fillOpacity = 1, weight = 1, color = 'white', fillColor = ~color_race(race_brks_nonwhiteasian)) %>%
   
+  addCircleMarkers(data = CA_pur, lng = ~longitude, lat = ~latitude, group = 'HS purchased by number',
+                   radius = case_when(levels(zip_shp$num_zip_purchased) == "1-9%" ~ 3, levels(zip_shp$num_zip_purchased) == "10-49%" ~ 4, levels(zip_shp$num_zip_purchased) == "49-99%" ~ 5, levels(zip_shp$num_zip_purchased) == "100-199%" ~ 6, levels(zip_shp$num_zip_purchased) == "200-299%" ~ 7,  levels(zip_shp$num_zip_purchased) == "300+" ~ 8), fill = TRUE, fillOpacity = 0.5, weight = 1, color = 'white', fillColor = "navy") %>%
+
+  addCircleMarkers(data = CA_non_pur, lng = ~longitude, lat = ~latitude, group = 'HS not purchased',
+                                    radius = 3, fill = TRUE, fillOpacity = 0.5, weight = 1, color = 'white', fillColor = "red") %>%
+
   # add legends
-  addLegend(data = la_zips_shp,
+  addLegend(data = zip_shp,
             position = 'topright', pal = color_pop, values = ~pop_total_15_19,
             title = 'Population',
             className = 'info legend legend-pop',
             na.label = 'NA',
             opacity = 1) %>%
   
-  addLegend(data = la_zips_shp,
+  addLegend(data = zip_shp,
             position = 'topright', pal = color_income, values = ~inc_brks,
             title = 'Median Household Income',
             className = 'info legend legend-income',
             na.label = 'NA',
             opacity = 1) %>%
   
-  addLegend(data = la_zips_shp,
+  addLegend(data = zip_shp,
             position = 'topright', pal = color_race, values = ~race_brks_nonwhiteasian,
             title = 'Black, Latinx, and <br>Native American Population',
             className = 'info legend legend-race',
@@ -1639,11 +1668,12 @@ map_CA <- leaflet() %>%
   addLayersControl(
     position = c('bottomleft'),
     baseGroups = c('CA', 'CA by Population', 'CA by Median Household Income', 'CA by Race/Ethnicity'),
-    overlayGroups = c('Purchased Zip codes', 'CA HS by Race/Ethnicity'),
+    overlayGroups = c('HS purchased by number', 'HS not purchased'),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
-  
-  hideGroup('CA HS by Race/Ethnicity') %>% 
+    
+  hideGroup('HS purchased by number') %>% 
+  hideGroup('HS not purchased') %>% 
   
   htmlwidgets::onRender("
                         function(el, x) {
@@ -1667,19 +1697,19 @@ map_CA <- leaflet() %>%
                         });
                         
                         myMap.on('overlayadd', function(e) {
-                        if (e.name === 'CA HS by Race/Ethnicity') {
+                        if (e.name === 'HS purchased by number') {
                         $('.legend-race').css('display', 'inherit');
                         }
                         });
                         
                         myMap.on('overlayremove', function(e) {
-                        if (e.name === 'CA HS by Race/Ethnicity' && $('.leaflet-control-layers-base input[type=radio]:checked~span').text().trim() !== 'CA by Race/Ethnicity') {
+                        if (e.name === 'HS purchased by number' && $('.leaflet-control-layers-base input[type=radio]:checked~span').text().trim() !== 'CA by Race/Ethnicity') {
                         $('.legend-race').css('display', 'none');
                         }
                         });
                         }")
 
-# saveWidget(map_IL, '~/Downloads/map_IL.html', background = 'transparent')
+#saveWidget(map_CA, '~/Downloads/map_la_metro.html', background = 'transparent')
 
 # tract-level EDA
 #----------------------------------------------------------------------------------------------
@@ -1875,4 +1905,5 @@ acs_dist_race_ca <- acs_dist_race %>%
 acs_dist_ca <- acs_dist_race_ca %>%
   dplyr::select(-fips_state_code, -district_name) %>%
   left_join(acs_dist_ed_ca, by = "district")
+
 
