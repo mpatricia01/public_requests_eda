@@ -1,0 +1,98 @@
+---
+title: "Texas A & M University - Texarkana"
+urlcolor: blue
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    number_sections: true
+    fig_caption: true
+    highlight: tango
+    theme: default
+    df_print: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+options(tibble.width = Inf, width = 10000, scipen = 999)
+
+library(tidyverse)
+
+load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/224545_data.RData'))
+
+remove_NA_cols <- function(data_df) {
+  data_df[!sapply(data_df, function(x) all(is.na(x)))]
+}
+
+sort_rows <- function(data_df) {
+  data_df %>% arrange(date_start, hs_grad_class, sat_score_min, sat_score_max, psat_score_min, psat_score_max)
+}
+
+primary_orders <- orders_df %>% filter(market == 'primary') %>% remove_NA_cols() %>% sort_rows()
+secondary_orders <- orders_df %>% filter(market == 'secondary') %>% remove_NA_cols() %>% sort_rows()
+houston_orders <- orders_df %>% filter(market == 'houston') %>% remove_NA_cols() %>% sort_rows()
+dallas_orders <- orders_df %>% filter(market == 'dallas') %>% remove_NA_cols()
+```
+
+<style>
+pre code, pre, code {
+  white-space: pre !important;
+  overflow-x: auto !important;
+  word-break: keep-all !important;
+  word-wrap: initial !important;
+}
+</style>
+
+
+# Primary market purchases (38 orders)
+
+```{r}
+primary_orders
+```
+
+Generally, on each purchase date, they make **orders by SAT or PSAT score ranges** (**SAT** if purchasing _seniors_ or _juniors_, **PSAT** if purchasing _juniors_ or _sophomores_):
+
+- **Senior purchases** by **SAT** filter
+  - **Sep 2017** (_grad class 2018_): 4 groups (A, B1, C, D)
+  - **Sep 2018** (_grad class 2019_): 4 groups (A, B2, C, D)
+  - **Sep 2019** (_grad class 2020_): 1 group (B3)
+- **Junior purchases** by **SAT** or **PSAT** filter
+  - **Sep 2017** (_grad class 2019_): 3 groups (C1, D, E) - **PSAT**
+  - **Feb 2018** (_grad class 2019_): 3 groups (B, C1, D) - **PSAT**
+  - **Sep 2018** (_grad class 2020_): 3 groups (C2, D, E) - **PSAT**
+  - **Feb 2019** (_grad class 2020_): 4 groups (B, C2, D, E) - **PSAT**
+  - **Sep 2019** (_grad class 2021_): 1 group (B3) - **SAT**
+  - **Apr 2020** (_grad class 2021_): 1 group (B3) - **SAT**
+- **Sophomore purchases** by **PSAT** filter
+  - **Sep 2017** (_grad class 2020_): 2 groups (B, E)
+  - **Feb 2018** (_grad class 2020_): 4 groups (A, B, C1, D)
+  - **Sep 2018** (_grad class 2021_): 3 groups (C2, D, E)
+  - **Feb 2019** (_grad class 2021_): 4 groups (B, C2, D, E)
+  - **Sep 2019** (_grad class 2022_): 1 group (C3)
+
+```{r}
+distinct(primary_orders %>% select(sat_score_min, sat_score_max, psat_score_min, psat_score_max)) %>% 
+  arrange(sat_score_min, sat_score_max, psat_score_min, psat_score_max) %>%
+  add_column(score_range = c('A', 'B1', 'B2', 'B3', 'C', 'D', 'A', 'B', 'C1', 'C2', 'C3', 'D', 'E'), .before = 1)
+```
+
+**Common filters**:
+
+- **GPA**: A+ to C+
+
+**General observations**:
+
+- Only purchase **seniors** during the Fall, and **juniors** and **sophomores** both Fall & Spring
+  - For **juniors** and **sophomores**, Spring purchases generally have lower test score ranges than Fall purchases
+  - Over the years, there is a slight increase in some test score ranges for all grad classes
+- Usually making multiple orders at a time w/ different test score ranges, but starting in 2019, only made 1 order covering broader score range for all grad classes
+  - Also, started using SAT instead of PSAT filter for **sophomores**
+
+
+
+
+
+
+
+

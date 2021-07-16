@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Third Way Income Graph</title>
+  <style>
+    .line1 { stroke: #bf4b4b; }
+    .line2 { stroke: #6c4bbf; }
+    .line3 { stroke: #4bbbbf; }
+    
+    .axis path {
+      opacity: 0;
+    }
+    
+    .axis text {
+      fill: gray;
+    }
+  </style>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      
+      // Prepping data...
+      
+      var allData = {
+        'primary': [
+          {  // Fall seniors
+            'key': 0,
+            '2017': [
+              {'key': 0, 'min': 980, 'max': 1040}, 
+              {'key': 1, 'min': 1050, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2018': [
+              {'key': 0, 'min': 980, 'max': 1040}, 
+              {'key': 1, 'min': 1060, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2019': [
+              {'key': 1, 'min': 1060, 'max': 1450}
+            ]
+          },
+          {  // Fall juniors
+            'key': 1,
+            '2017': [
+              {'key': 1, 'min': 1050, 'max': 1140}, 
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2018': [
+              {'key': 1, 'min': 1060, 'max': 1140}, 
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2019': [
+              {'key': 1, 'min': 1060, 'max': 1450}
+            ]
+          },
+          {  // Spring juniors
+            'key': 2,
+            '2017': [],
+            '2018': [
+              {'key': 0, 'min': 980, 'max': 1040}, 
+              {'key': 1, 'min': 1050, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290}
+            ],
+            '2019': [
+              {'key': 0, 'min': 980, 'max': 1040}, 
+              {'key': 1, 'min': 1060, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ]
+          },
+          {  // Fall sophomores
+            'key': 3,
+            '2017': [
+              {'key': 1, 'min': 980, 'max': 1040}, 
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2018': [
+              {'key': 1, 'min': 1060, 'max': 1140}, 
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ],
+            '2019': [
+              {'key': 1, 'min': 1060, 'max': 1450}
+            ]
+          },
+          {  // Spring sophomores
+            'key': 4,
+            '2017': [],
+            '2018': [
+              {'key': 0, 'min': 920, 'max': 970}, 
+              {'key': 0, 'min': 980, 'max': 1040},
+              {'key': 1, 'min': 1050, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290}
+            ],
+            '2019': [
+              {'key': 0, 'min': 980, 'max': 1040}, 
+              {'key': 1, 'min': 1060, 'max': 1140},
+              {'key': 2, 'min': 1150, 'max': 1290},
+              {'key': 3, 'min': 1300, 'max': 1450}
+            ]
+          }
+        ]
+      }
+      
+      // Defining scales...
+      
+      var totalWidth = 800,
+          totalHeight = 1000;
+      
+      var chartWidth = 200,
+          chartHeight = 100;
+      
+      var xScale = d3.scaleLinear()
+          .domain([920, 1450])
+          .range([0, chartWidth]);
+      
+      var yScale = d3.scaleLinear()
+          .domain([0, 4])
+          .range([0, chartHeight]);
+      
+      var ySetScale = d3.scaleLinear()
+          .domain([0, 4])
+          .range([0, chartHeight * 5]);
+          
+      var xAxisGenerator = d3.axisBottom(xScale)
+          .tickSize(1)
+          .tickValues([950, 1050, 1150, 1250, 1350, 1450]);
+      
+      // Attaching things...
+
+      var svg = d3.select('#main').append('svg')
+          .attr('width', totalWidth)
+          .attr('height', totalHeight);
+          
+      var g_primary = svg.append('g');
+      
+      var g_primary_sets = g_primary
+          .selectAll('g')
+          .data(allData.primary)
+          .enter()
+          .append('g')
+          .attr('transform', function(d) { return 'translate(0, ' + ySetScale(d.key) + ')'; });
+          
+      g_primary_sets.append('g')
+          .selectAll('line')
+          .data(function(d){ return d['2017']; })
+          .enter()
+          .append('line')
+          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
+          .classed('line1', true)
+          .attr('x1', function(d) { return xScale(d.min); })
+          .attr('x2', function(d) { return xScale(d.max); })
+          .attr('y1', 10)
+          .attr('y2', 10);
+          
+      g_primary_sets.append('g')
+          .selectAll('line')
+          .data(function(d){ return d['2018']; })
+          .enter()
+          .append('line')
+          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
+          .classed('line2', true)
+          .attr('x1', function(d) { return xScale(d.min); })
+          .attr('x2', function(d) { return xScale(d.max); })
+          .attr('y1', 15)
+          .attr('y2', 15);
+          
+      g_primary_sets.append('g')
+          .selectAll('line')
+          .data(function(d){ return d['2019']; })
+          .enter()
+          .append('line')
+          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
+          .classed('line3', true)
+          .attr('x1', function(d) { return xScale(d.min); })
+          .attr('x2', function(d) { return xScale(d.max); })
+          .attr('y1', 20)
+          .attr('y2', 20);
+      
+      g_primary_sets.append('g')
+          .classed('axis', true)
+          .attr('transform', 'translate(0,' + chartHeight + ')')
+          .call(xAxisGenerator);
+
+    });
+  </script>
+</head>
+<body>
+  <div id="main"></div>
+</body>
+</html>
