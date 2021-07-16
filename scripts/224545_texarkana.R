@@ -101,6 +101,11 @@ color_race <- colorFactor('YlGnBu', zip_shp$race_brks_nonwhiteasian)
 color_pop <- colorNumeric('YlGnBu', zip_shp$pop_total, n = 5)
 
 
+# View different sets of zip codes purchased
+zip_purchased <- str_split(unique(orders_df$zip_code) %>% na.omit() %>% as.character(), '\\|')
+
+zip_shp_purchased <- subset(zip_shp, zip_code_3 %in% zip_purchased[[1]])
+
 # Create popups
 pop_zip <- paste0('<b>', zip_shp_purchased$zip_name, '</b><br>',
                   'Total Population: ', format(zip_shp_purchased$pop_total, big.mark = ',')) %>% lapply(htmltools::HTML)
@@ -110,12 +115,6 @@ income_zip <- paste0('<b>', zip_shp_purchased$zip_name, '</b><br>',
 
 race_zip <- paste0('<b>', zip_shp_purchased$zip_name, '</b><br>',
                    '% Population of Color: ', sprintf('%.1f', zip_shp_purchased$pop_poc_pct)) %>% lapply(htmltools::HTML)
-
-# View different sets of zip codes purchased
-zip_purchased <- str_split(unique(orders_df$zip_code) %>% na.omit() %>% as.character(), '\\|')
-
-zip_shp_purchased <- subset(zip_shp, zip_code_3 %in% zip_purchased[[1]])
-
 
 # Plot purchased zip codes
 leaflet(data = zip_shp_purchased) %>%

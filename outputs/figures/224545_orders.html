@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Third Way Income Graph</title>
+  <title>Texarkana</title>
   <style>
-    .line1 { stroke: #bf4b4b; }
-    .line2 { stroke: #6c4bbf; }
-    .line3 { stroke: #4bbbbf; }
+    .color1 { stroke: #bf4b4b; fill: #bf4b4b; }
+    .color2 { stroke: #6c4bbf; fill: #6c4bbf; }
+    .color3 { stroke: #4bbbbf; fill: #4bbbbf; }
+    
+    .legend text { stroke: none; }
     
     .axis path {
       opacity: 0;
@@ -25,8 +27,9 @@
       
       var allData = {
         'primary': [
-          {  // Fall seniors
+          {
             'key': 0,
+            'label': 'Fall seniors',
             '2017': [
               {'key': 0, 'min': 980, 'max': 1040}, 
               {'key': 1, 'min': 1050, 'max': 1140},
@@ -43,8 +46,9 @@
               {'key': 1, 'min': 1060, 'max': 1450}
             ]
           },
-          {  // Fall juniors
+          {
             'key': 1,
+            'label': 'Fall juniors',
             '2017': [
               {'key': 1, 'min': 1050, 'max': 1140}, 
               {'key': 2, 'min': 1150, 'max': 1290},
@@ -59,8 +63,9 @@
               {'key': 1, 'min': 1060, 'max': 1450}
             ]
           },
-          {  // Spring juniors
+          {
             'key': 2,
+            'label': 'Spring juniors',
             '2017': [],
             '2018': [
               {'key': 0, 'min': 980, 'max': 1040}, 
@@ -74,8 +79,9 @@
               {'key': 3, 'min': 1300, 'max': 1450}
             ]
           },
-          {  // Fall sophomores
+          { 
             'key': 3,
+            'label': 'Fall sophomores',
             '2017': [
               {'key': 1, 'min': 980, 'max': 1040}, 
               {'key': 3, 'min': 1300, 'max': 1450}
@@ -89,8 +95,9 @@
               {'key': 1, 'min': 1060, 'max': 1450}
             ]
           },
-          {  // Spring sophomores
+          {
             'key': 4,
+            'label': 'Spring sophomores',
             '2017': [],
             '2018': [
               {'key': 0, 'min': 920, 'max': 970}, 
@@ -110,19 +117,15 @@
       
       // Defining scales...
       
-      var totalWidth = 800,
+      var totalWidth = 1300,
           totalHeight = 1000;
       
       var chartWidth = 200,
-          chartHeight = 100;
+          chartHeight = 80;
       
       var xScale = d3.scaleLinear()
           .domain([920, 1450])
           .range([0, chartWidth]);
-      
-      var yScale = d3.scaleLinear()
-          .domain([0, 4])
-          .range([0, chartHeight]);
       
       var ySetScale = d3.scaleLinear()
           .domain([0, 4])
@@ -138,7 +141,37 @@
           .attr('width', totalWidth)
           .attr('height', totalHeight);
           
-      var g_primary = svg.append('g');
+      svg.append('text')
+          .text('Test score')
+          .style('font-weight', 600)
+          .style('font-size', '15px')
+          .attr('transform', function(d) { return 'translate(10, 50)'; });
+          
+      svg.append('text')
+          .text('HS GPA')
+          .style('font-weight', 600)
+          .style('font-size', '15px')
+          .attr('transform', function(d) { return 'translate(10, 580)'; });
+          
+      svg.append('g')
+          .selectAll('text')
+          .data(allData.primary)
+          .enter()
+          .append('text')
+          .text(function(d) { return d.label; })
+          .style('font-size', '13px')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale(d.key) + 85) + ')'; });
+          
+      var g_primary = svg.append('g')
+          .attr('transform', function(d) { return 'translate(140, 20)'; });
+      
+      g_primary
+          .append('text')
+          .text('Primary')
+          .style('font-weight', 600)
+          .style('text-anchor', 'middle')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 0)'; });
       
       var g_primary_sets = g_primary
           .selectAll('g')
@@ -152,41 +185,195 @@
           .data(function(d){ return d['2017']; })
           .enter()
           .append('line')
-          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
-          .classed('line1', true)
+          .classed('color1', true)
           .attr('x1', function(d) { return xScale(d.min); })
           .attr('x2', function(d) { return xScale(d.max); })
-          .attr('y1', 10)
-          .attr('y2', 10);
+          .attr('y1', 60)
+          .attr('y2', 60);
           
       g_primary_sets.append('g')
           .selectAll('line')
           .data(function(d){ return d['2018']; })
           .enter()
           .append('line')
-          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
-          .classed('line2', true)
+          .classed('color2', true)
           .attr('x1', function(d) { return xScale(d.min); })
           .attr('x2', function(d) { return xScale(d.max); })
-          .attr('y1', 15)
-          .attr('y2', 15);
+          .attr('y1', 65)
+          .attr('y2', 65);
           
       g_primary_sets.append('g')
           .selectAll('line')
           .data(function(d){ return d['2019']; })
           .enter()
           .append('line')
-          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.key) + ')'; })
-          .classed('line3', true)
+          .classed('color3', true)
           .attr('x1', function(d) { return xScale(d.min); })
           .attr('x2', function(d) { return xScale(d.max); })
-          .attr('y1', 20)
-          .attr('y2', 20);
+          .attr('y1', 70)
+          .attr('y2', 70);
       
       g_primary_sets.append('g')
           .classed('axis', true)
           .attr('transform', 'translate(0,' + chartHeight + ')')
           .call(xAxisGenerator);
+      
+      var g_primary_gpa = g_primary
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 600)';  });
+          
+      g_primary_gpa
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_primary_gpa
+          .append('text')
+          .text('A+')
+          .style('fill', 'green')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-35, 0)';  });
+          
+      g_primary_gpa
+          .append('text')
+          .text('C+')
+          .style('fill', 'orange')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(35, 0)';  });
+          
+      var g_secondary = svg.append('g')
+          .attr('transform', function(d) { return 'translate(390, 20)'; });
+      
+      g_secondary
+          .append('text')
+          .text('Secondary')
+          .style('font-weight', 600)
+          .style('text-anchor', 'middle')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 0)'; });
+          
+      var g_secondary_gpa = g_secondary
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 600)';  });
+          
+      g_secondary_gpa
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_secondary_gpa
+          .append('text')
+          .text('A+')
+          .style('fill', 'green')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-35, 0)';  });
+          
+      g_secondary_gpa
+          .append('text')
+          .text('C+')
+          .style('fill', 'orange')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(35, 0)';  });
+          
+      var g_houston = svg.append('g')
+          .attr('transform', function(d) { return 'translate(640, 20)'; });
+      
+      g_houston
+          .append('text')
+          .text('Houston')
+          .style('font-weight', 600)
+          .style('text-anchor', 'middle')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 0)'; });
+          
+      var g_houston_gpa = g_houston
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 600)';  });
+          
+      g_houston_gpa
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_houston_gpa
+          .append('text')
+          .text('A+')
+          .style('fill', 'green')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-35, 0)';  });
+          
+      g_houston_gpa
+          .append('text')
+          .text('C+')
+          .style('fill', 'orange')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(35, 0)';  });
+          
+      var g_dallas = svg.append('g')
+          .attr('transform', function(d) { return 'translate(890, 20)'; });
+      
+      g_dallas
+          .append('text')
+          .text('Dallas')
+          .style('font-weight', 600)
+          .style('text-anchor', 'middle')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 0)'; });
+          
+      var g_dallas_gpa = g_dallas
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 600)';  });
+          
+      g_dallas_gpa
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_dallas_gpa
+          .append('text')
+          .text('A+')
+          .style('fill', 'green')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-35, 0)';  });
+          
+      g_dallas_gpa
+          .append('text')
+          .text('C+')
+          .style('fill', 'orange')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(35, 0)';  });
+          
+      var g_legend = svg.append('g')
+          .classed('legend', true)
+          .attr('transform', function(d) { return 'translate(1140, 50)'; });
+      
+      g_legend
+          .append('text')
+          .text('2017 orders')
+          .style('font-size', '13px')
+          .attr('dy', '0.35em')
+          .classed('color1', true);
+      
+      g_legend
+          .append('text')
+          .text('2018 orders')
+          .style('font-size', '13px')
+          .classed('color2', true)
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(0, 20)'; });
+      
+      g_legend
+          .append('text')
+          .text('2019 orders')
+          .style('font-size', '13px')
+          .classed('color3', true)
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(0, 40)'; });
 
     });
   </script>
