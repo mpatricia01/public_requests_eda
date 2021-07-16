@@ -1605,8 +1605,8 @@ la_zip_data %>%
 
 la_zip_data$num_zip_purchased <- cut(la_zip_data$n_stu_zip, 
                                        breaks = c(-1, 10, 50, 100, 200, 300, 501), 
-                                       labels = c('1-9%', '10-49%', '49-99%', 
-                                                  '100-199%', '200-299%', '300+'))
+                                       labels = c('1-9', '10-49', '49-99', 
+                                                  '100-199', '200-299', '300+'))
 
 # check
 View(la_zip_data %>%
@@ -1663,7 +1663,7 @@ race_zip <- paste0('<b>', zip_shp$ZCTA5CE10, '</b><br>',
 
 
 num_zip <- paste0('<b>', zip_shp$ZCTA5CE10, '</b><br>',
-                   '% Purchased: ', sprintf('%.1f', zip_shp$num_zip_purchased)) %>% lapply(htmltools::HTML)
+                   '# Purchased: ', zip_shp$num_zip_purchased) %>% lapply(htmltools::HTML)
 
 
 highlight_zip <- highlightOptions(color = 'black',
@@ -1766,7 +1766,7 @@ map_CA <- leaflet() %>% setView(lng = -118.2437, lat = 34.0522, zoom = 8) %>%
                       
                         }")
 
-map_CA
+#map_CA
 #saveWidget(map_CA, './outputs/maps/map_la_metro.html', background = 'transparent')
 
 # tract-level EDA
