@@ -1290,8 +1290,11 @@ intl_orders %>% dplyr::select(order_title, order_num, num_students, sat_score_mi
 # RQ: What are the characteristics of schools/communities included vs. not included in purchased lists 
 
 
-## Out-of-State, zip codes purchased from vs. not purchased from
+## Communities: Out-of-State, zip codes purchased from vs. not purchased from
 
+All "non-purchased" zipcodes included below are only those in states where at least one student was purchased within at least one zipcode
+
+  - Binary version of purchased_zip is problematic because of variation in number of students purchased by zip
 
 ```{r include=FALSE}
 lists_df_sat_US <- lists_df_sat %>% filter(Country=="United States")
@@ -1313,7 +1316,7 @@ acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
 statelist <- lists_df_sat_US %>% group_by(State) %>% count()
 ziplist <- lists_df_sat_US %>% group_by(zip) %>% count()
 
-acs_race_zipcodev2$purchased_zip <- ifelse(acs_race_zipcodev2$zip %in% ziplist$zip,1,0)
+acs_race_zipcodev2$purchased_zip <- ifelse(acs_race_zipcodev2$zip_code %in% ziplist$zip,1,0)
 acs_race_zipcodev2$purchased_state <- ifelse(acs_race_zipcodev2$state_code %in% statelist$State,1,0)
 
 
@@ -1329,7 +1332,6 @@ acs_race_zipcode_grouped <- acs_race_zipcode %>% select(purchased_zip, median_ho
     summarise_each(funs(mean(., na.rm = TRUE)))
 
 ```
-
 
 ```{r, echo=FALSE}
 acs_race_zipcode_grouped %>%
@@ -1357,8 +1359,101 @@ acs_race_zipcode_grouped %>%
    ggplot(aes(x=as.factor(purchased_zip), y=pop_black_15_19_pct)) +
   geom_bar(stat="identity") +  
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+```
+
+
+## Out-of-State, zip codes charactertistics based on # of names purchased
+
+Large variation in the number of students purchased by zip codes (where at least one student purchased) 
+  - Across all purchased zips: mean=40, median=10, sd=76
+
+```{r include=FALSE}
+
+ziplist$zip_code <- as.character(ziplist$zip)
+ziplist$purchased_num <- ziplist$n
+
+
+ziplist <- ziplist %>% filter(zip_code!="-") 
+
+acs_race_zipcodev2 <- left_join(acs_race_zipcode, ziplist, by= "zip_code")
+
+acs_race_zipcodev2 <- acs_race_zipcodev2 %>%
+  mutate(purchased_num = ifelse(purchased_zip==0, 0, purchased_num))
+
+lbls <- c('zero','1-10','11-40','41-100','101-500', '500+')
+
+acs_race_zipcodev2 <- acs_race_zipcodev2 %>% mutate(purchased_num_cat =cut(purchased_num, breaks=c(-Inf, 0, 10, 40, 100, 500, +Inf),labels = lbls)) 
+
+
+acs_race_zipcode_grouped <- acs_race_zipcodev2 %>% select(median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, purchased_num_cat) %>%
+    group_by(purchased_num_cat) %>% 
+    summarise_each(funs(mean(., na.rm = TRUE)))
 
 
 ```
 
+```{r, echo=FALSE}
+# Zip Codes purchased by State
+#acs_race_zipcodev2 %>% group_by(state_code) %>% count()
 
+
+#Across all purchased zips
+acs_race_zipcodev2 %>% filter(purchased_zip==1) %>%  select(purchased_num) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, med=median, min = min, max =max), na.rm = TRUE )) 
+
+
+# Average num of students purchased within zips by state
+acs_race_zipcodev2 %>% filter(purchased_zip==1) %>% group_by(state_code)  %>% select(purchased_num) %>%
+      summarise(across(
+        .fns = list(mean = mean, sd = sd, med=median, min = min, max =max), na.rm = TRUE )) 
+
+
+# Tabulate categorical purchased var within purchased states
+acs_race_zipcodev2 %>% filter(purchased_state==1) %>% count(purchased_num_cat)
+
+
+```
+
+```{r, echo=FALSE}
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_num_cat), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+  
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_num_cat), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_num_cat), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_num_cat), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+acs_race_zipcode_grouped %>%
+   ggplot(aes(x=as.factor(purchased_num_cat), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+```
+
+
+
+
+## Schools: Descriptives across U.S. (filtered by purchased states)
+
+## Schools: Zoom into  Metros (filtered by purchased states)
+
+
+
+
+# Overall Findings/Themes
+
+- Out-of-State
+  - 
