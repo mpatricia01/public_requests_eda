@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Urbana</title>
+  <style>
+    .axis path {
+      opacity: 0;
+    }
+    
+    .axis text {
+      fill: gray;
+    }
+  </style>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      
+      // Prepping data...
+      
+      var allData = [
+        {
+          'label': 'Race group A',
+          'dates': [
+            {
+              'label': 'Oct 2017',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']}
+              ]
+            },
+            {
+              'label': 'Feb 2018',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']}
+              ]
+            },
+            {
+              'label': 'May 2018',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']}
+              ]
+            },
+            {
+              'label': 'Aug 2018',
+              'scores': [
+                {'min': 1160, 'max': 1250, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1260, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']}
+              ]
+            },
+            {
+              'label': 'Feb 2019',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']}
+              ]
+            },
+            {
+              'label': 'Sep 2019',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH']}
+              ]
+            },
+            {
+              'label': 'Dec 2019',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH']}
+              ]
+            },
+            {
+              'label': 'Apr 2020',
+              'scores': [
+                {'min': 1160, 'max': 1270, 'race': ['AS', 'O', 'NLX', 'WH', 'NH']},
+                {'min': 1280, 'max': 1440, 'race': ['AS', 'O', 'NLX', 'WH']},
+                {'min': 1450, 'max': 1520, 'race': ['AS', 'O', 'NLX', 'WH']}
+              ]
+            }
+          ]
+        },
+        {
+          'label': 'Race group B',
+          'dates': [
+            {
+              'label': 'Oct 2017',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'Feb 2018',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'May 2018',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'Aug 2018',
+              'scores': [
+                {'min': 1030, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1350, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1360, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'Feb 2019',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'Mar 2019',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX']}
+              ]
+            },
+            {
+              'label': 'Sep 2019',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX', 'NH']}
+              ]
+            },
+            {
+              'label': 'Dec 2019',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX', 'NH']}
+              ]
+            },
+            {
+              'label': 'Apr 2020',
+              'scores': [
+                {'min': 1020, 'max': 1190, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1200, 'max': 1380, 'race': ['BL', 'AI', 'LX', 'NH']},
+                {'min': 1390, 'max': 1520, 'race': ['BL', 'AI', 'LX', 'NH']}
+              ]
+            }
+          ]
+        }
+      ]
+      
+      // Defining scales...
+      
+      var totalWidth = 1300,
+          totalHeight = 1000;
+      
+      var chartWidth = 200,
+          chartHeight = 80;
+          
+      var raceCategories = allData.map(function(curr) { return curr.label; }),
+          orderDates = allData[1].dates.map(function(curr) { return curr.label; });
+          
+      var raceGroups = ['White (including Middle Eastern origin)', 'Asian (including Indian subcontinent and Philippines origin)', 'Native Hawaiian or Other Pacific Islander', 'American Indian or Alaska Native', 'Black or African American', 'Other, I do not wish to respond to race', 'Hispanic or Latino (including Spanish origin), Mexican, Puerto Rican, Cuban, Other Hispanic or Latino', 'No, not of Hispanic, Latino, or Spanish origin'],
+          raceAbbrevs = ['WH', 'AS', 'NH', 'AI', 'BL', 'O', 'LX', 'NLX'];
+      
+      var xScale = d3.scaleLinear()
+          .domain([1000, 1600])
+          .range([0, chartWidth]);
+          
+      var xPointScale = d3.scalePoint()
+          .domain(raceAbbrevs)
+          .range([0, chartWidth]);
+      
+      var yScale = d3.scalePoint()
+          .domain(orderDates)
+          .range([0, chartHeight]);
+      
+      var ySetScale = d3.scalePoint()
+          .domain(raceCategories)
+          .range([0, chartHeight * 1.8]);
+          
+      var xAxisGenerator = d3.axisBottom(xScale)
+          .tickSize(1)
+          .tickValues([1000, 1100, 1200, 1300, 1400, 1500, 1600]);
+          
+      var colorScale = d3.scaleOrdinal()
+          .domain(orderDates)
+          .range(['#0D0887FF', '#3E049CFF', '#6300A7FF', '#8707A6FF', '#A62098FF', '#C03A83FF', '#D5546EFF', '#E76F5AFF', '#F58C46FF', '#FDAD32FF', '#FCD225FF', '#F0F921FF']);
+      
+      // Attaching things...
+
+      var svg = d3.select('#main').append('svg')
+          .attr('width', totalWidth)
+          .attr('height', totalHeight);
+          
+      svg.append('text')
+          .text('Test score')
+          .style('font-weight', 600)
+          .style('font-size', '15px')
+          .attr('transform', function(d) { return 'translate(10, 50)'; });
+          
+      svg.append('text')
+          .text('HS GPA')
+          .style('font-weight', 600)
+          .style('font-size', '15px')
+          .attr('transform', function(d) { return 'translate(10, 380)'; });
+          
+      svg.append('text')
+          .text('HS class rank')
+          .style('font-weight', 600)
+          .style('font-size', '15px')
+          .attr('transform', function(d) { return 'translate(10, 480)'; });
+          
+      svg.append('g')
+          .selectAll('text')
+          .data(allData)
+          .enter()
+          .append('text')
+          .text(function(d) { return d.label; })
+          .style('font-size', '13px')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale(d.label) + 85) + ')'; });
+          
+      svg.append('text')
+          .text('WH, AS, NH, NLX, O')
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale('Race group A') + 100) + ')'; });
+          
+      svg.append('text')
+          .text('---- Excludes NH')
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale('Race group A') + 112) + ')'; });
+          
+      svg.append('text')
+          .text('Filtered for only select MSAs within IL -->')
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale('Race group A') + 160) + ')'; });
+          
+      svg.append('text')
+          .text('BL, AI, LX')
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale('Race group B') + 100) + ')'; });
+          
+      svg.append('text')
+          .text('---- Includes NH')
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(10, ' + (ySetScale('Race group B') + 112) + ')'; });
+          
+      var g_IL = svg.append('g')
+          .attr('transform', function(d) { return 'translate(150, 20)'; });
+      
+      g_IL
+          .append('text')
+          .text('Illinois')
+          .style('font-weight', 600)
+          .style('text-anchor', 'middle')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 0)'; });
+          
+      g_IL
+          .append('rect')
+          .attr('width', '150')
+          .attr('height', '20')
+          .attr('fill', 'transparent')
+          .attr('stroke', 'gray')
+          .attr('stroke-width', 0.5)
+          .attr('transform', 'translate(40, ' + (yScale('Dec 2019') + 65) + ')')
+      
+      var g_IL_sets = g_IL
+          .append('g')
+          .attr('transform', function(d) { return 'translate(0, 70)'; })
+          .selectAll('g')
+          .data(allData)
+          .enter()
+          .append('g')
+          .attr('transform', function(d) { return 'translate(0, ' + ySetScale(d.label) + ')'; });
+          
+      var g_IL_dates = g_IL_sets.append('g')
+          .selectAll('g')
+          .data(function(d) { return d.dates.map(function(e) { e.category = d.label; return e; }); })
+          .enter()
+          .append('g')
+          .attr('transform', function(d) { return 'translate(0, ' + yScale(d.label) + ')'; });
+          
+      g_IL_dates
+          .selectAll('line')
+          .data(function(d) { return d.scores.map(function(e) { e.category = d.category; e.label = d.label; return e; }); })
+          .enter()
+          .append('line')
+          .style('stroke', function(d) { return colorScale(d.label); })
+          .style('stroke-dasharray', function(d) { return (d.category === 'Race group A' && !d.race.includes('NH')) || (d.category === 'Race group B' && d.race.includes('NH')) ? '4 1' : '4 0'; })
+          .attr('x1', function(d) { return xScale(d.min); })
+          .attr('x2', function(d) { return xScale(d.max); })
+          .attr('y1', 0)
+          .attr('y2', 0);
+      
+      g_IL_sets.append('g')
+          .classed('axis', true)
+          .attr('transform', 'translate(0,' + (chartHeight + 10) + ')')
+          .call(xAxisGenerator);
+      
+      var g_IL_gpa = g_IL
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 400)';  });
+          
+      g_IL_gpa
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_IL_gpa
+          .append('text')
+          .text('A+')
+          .style('fill', 'forestgreen')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-35, 0)';  });
+          
+      g_IL_gpa
+          .append('text')
+          .text('B-')
+          .style('fill', 'goldenrod')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(35, 0)';  });
+      
+      var g_IL_rank = g_IL
+          .append('g')
+          .attr('transform', function(d) { return 'translate(' + (chartWidth / 2) + ', 500)';  });
+          
+      g_IL_rank
+          .append('text')
+          .text('to')
+          .style('text-anchor', 'middle');
+          
+      g_IL_rank
+          .append('text')
+          .text('Top 10th')
+          .style('fill', 'forestgreen')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(-55, 0)';  });
+          
+      g_IL_rank
+          .append('text')
+          .text('2nd 5th')
+          .style('fill', 'goldenrod')
+          .style('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .attr('transform', function(d) { return 'translate(55, 0)';  });
+          
+      svg.append('g')
+          .attr('transform', function(d) { return 'translate(400, 50)'; })
+          .selectAll('text')
+          .data(orderDates)
+          .enter()
+          .append('text')
+          .text(function(d) { return d; })
+          .style('font-size', '10px')
+          .style('fill', function(d) { return colorScale(d); })
+          .attr('dy', '0.35em')
+          .attr('transform', function(d) { return 'translate(0, ' + yScale(d) + ')'; });
+          
+      svg.append('g')
+          .attr('transform', function(d) { return 'translate(400, 150)'; })
+          .selectAll('text')
+          .data(raceAbbrevs)
+          .enter()
+          .append('text')
+          .text(function(d, i) { return d + ' - ' + raceGroups[i] })
+          .style('font-size', '10px')
+          .style('fill', 'gray')
+          .attr('dy', '0.35em')
+          .attr('transform', function(d, i) { return 'translate(0, ' + (i * 10) + ')'; });
+          
+      svg.append('svg:image')
+          .attr('width', 350)
+          .style('outline', '1px gray solid')
+          .attr('transform', 'translate(400, 250)')
+          .attr('xlink:href', '../../data/IL_urbana.png');
+
+    });
+  </script>
+</head>
+<body>
+  <div id="main"></div>
+</body>
+</html>

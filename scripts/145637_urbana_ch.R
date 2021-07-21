@@ -106,6 +106,7 @@ zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-w
 zip_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_to_state.csv')) %>% 
   mutate(pop_poc_pct = (pop_black + pop_hispanic + pop_amerindian) / pop_total * 100) %>% 
   left_join(zip_cbsa_data, by = 'zip_code')
+zip_race_data <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv'), col_types = c('zipcode' = 'c'))
 tract_data <- read_csv(file.path(data_dir, 'tract_raw_1.csv')) %>% filter(tract_name != 'tract_name') %>%
   left_join(read_csv(file.path(data_dir, 'tract_raw_2.csv')) %>% filter(tract_name != 'tract_name') %>% select(-fips_state_code, -fips_county_code, -tract), by = 'tract_name') %>% 
   mutate(tract_id = str_c(fips_state_code, fips_county_code, tract))
@@ -157,6 +158,60 @@ save(IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
 # ----------
 # IL orders
 # ----------
+
+IL_lists <- lists_df_sat %>%
+  filter(order_num %in% IL_orders$order_num) %>%
+  filter(Country == 'United States') %>%
+  mutate(zipcode = str_sub(ZipCode, end = 5))
+
+nrow(IL_lists)
+sum(IL_orders$num_students)
+
+# zipcode/state seems to correspond to student's home address... not just in IL even though that was the filter
+table(IL_lists$State)
+
+# From those IL orders, seemed to purchase from 1265 of 1383 zip codes
+length(unique((IL_lists %>% filter(State == 'IL'))$zipcode))
+nrow(zip_race_data %>% filter(state_fips_code == 17))
+
+# IL lists info could be inaccurate - Indiana zip code, but 1 student row says IL as state instead of IN
+View(IL_lists %>% filter(zipcode == '47406'))
+
+# Filter only IL zip codes from Census data
+IL_zip_race <- zip_race_data %>%
+  filter(state_fips_code  == 17)
+table(IL_zip_race$state_fips_code)
+
+# Filter IL order purchased lists to truly IL zip codes
+IL_only_lists <- IL_lists %>%
+  filter(zipcode %in% IL_zip_race$zipcode)
+length(unique(IL_only_lists$zipcode))  # 1237 of 1383 purchased
+table(IL_only_lists$State)  # tho 1 IL zip code still listed KY as state for a student
+
+# IL demographics
+colMeans(IL_zip_race %>% select(contains('_pct')), na.rm = T)  # IL demographics
+
+# Compared to # purchased from each race categories
+IL_orders %>%
+  mutate(race_group = if_else(str_detect(race_ethnicity, 'Asian'), 'Race group A', 'Race group B')) %>%
+  select(race_group, num_students) %>%
+  group_by(race_group) %>% 
+  summarise(total_orders = n(), total_students = sum(num_students))
+
+IL_only_lists %>%
+  select(zipcode, order_num) %>%
+  left_join(IL_orders %>% mutate(race_group = if_else(str_detect(race_ethnicity, 'Asian'), 'group_A', 'group_B')) %>% select(order_num, race_group), by = 'order_num') %>% 
+  group_by(zipcode, race_group) %>% 
+  summarise(num_students_purchased = n()) %>% 
+  pivot_wider(names_from = race_group, values_from = num_students_purchased) %>% 
+  mutate(pct_group_A = group_A / (group_A + group_B), pct_group_B = group_B / (group_A + group_B)) %>% 
+  left_join(IL_zip_race %>% select(zipcode, pop_white_15_19_pct, pop_asian_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_amerindian_15_19_pct), by = 'zipcode') %>% 
+  View()
+
+
+# --------------
+# IL orders map
+# --------------
 
 # Usually filter for full IL state, except sometimes only these 12 MSA's within IL
 IL_msa <- (IL_orders$cbsa_name %>% na.omit() %>% unique() %>% str_match_all('IL - ([^|]+)'))[[1]][, 2]
