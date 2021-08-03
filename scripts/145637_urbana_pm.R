@@ -1998,15 +1998,31 @@ hs_data %>%
 
 # filter for high schools with a zip code in the LA msa area
 hs_data_la <- hs_data %>% filter(zip_code %in% la_zip_codes) #557
+hs_data_ca <- hs_data %>% filter(state_code == "CA")
+  
+sum(is.na(df_sl_ca$ncessch)) #421 missing therefore the below code is not accurate, could count 421 as not purchased instead of not matching
+#have to come back to this...
+
+table(hs_data_la$ncessch %in% df_sl_ca$ncessch)
 
 hs_data_la <- hs_data_la %>%  
   mutate(hs_purchased = ifelse(ncessch %in% df_sl_ca$ncessch,1,0))
 
 table(hs_data_la$hs_purchased) #227 schools in LA msa area were purchased
 
+hs_data_ca <- hs_data_ca %>%
+  mutate(hs_purchased = ifelse(ncessch %in% df_sl_ca$ncessch,1,0))
+table(hs_data_ca$hs_purchased) #741 schools in LA msa area were purchased
+
 # Merge nces data with student list data
-#df_sl_hs_ca <- df_sl_ca %>% left_join(hs_data_ca , by = "ncessch")
-df_sl_hs_la <- df_sl_ca %>% right_join(hs_data_la , by = "ncessch")
+df_sl_hs_la <- df_sl_ca %>% left_join(hs_data_la, by = "ncessch")
+anti_merge <- df_sl_ca %>% anti_join(hs_data_la, by = "ncessch")
+
+
+anti_merge %>% filter(is.na(ncessch))
+df_sl_hs_la %>% filter(is.na(ncessch))
+
+df_sl_hs_la<- df_sl_ca %>% right_join(hs_data_la , by = "ncessch")
 
 df_sl_hs_la %>% filter(hs_purchased == 1) %>% dplyr::select(name)
 
@@ -2167,10 +2183,16 @@ acs_race_sch_groupedv2 %>%
 #============================================================================
 # Next want to repeat all of this for NY & Dallas metro areas.
 #--------------------------------------------------------------------------
+#============================================================================
+# THINGS TO CONSIDER:
+# NOT SURE IF IT MAKES SENSE TO FILTER FOR STUDENTS THAT ARE RESIDENTS OF NY
+# OR IF IT MAKES MORE SENSE TO FILTER FOR MSA SPECIFIC ORDERS FOR MSA IN NY?
+#--------------------------------------------------------------------------
+
 # Student list data, only SAT 
 lists_df_sat %>% filter(State=="NY") #24,362
 
-#filter to students from NY
+#filter for students from NY
 df_sl_ny <- lists_df_sat %>% filter(State=="NY")
 
 # not uniquely identified by Ref ID, [LOOK AT KARINA'S CODE FOR CA SCHOOLS]
@@ -2182,7 +2204,7 @@ df_sl_ny %>%
 
 View(df_sl_ny %>%
   group_by(Ref) %>%
-    filter(row_number(Ref)==1))  #same students purchaseds by different orders, for now just keep one of them
+    filter(row_number(Ref)!=1))  #same students purchased by different orders, for now just keep one of them
 
 # get rid of duplicates for now since we aren't focusing on order summaries
 df_sl_ny_v2 <- df_sl_ny %>%
@@ -2203,6 +2225,9 @@ df_sl_ny_v2 <- df_sl_ny_v2 %>%
 
 # check
 df_sl_ny_v2 %>% dplyr::select(ZipCode, stu_zipcode)
+
+# check that geomarket contains NY
+sum(str_detect(df_sl_ny_v2$GeoMarket, "NY"))
 
 #NY MSA code, 35620
 # grab zip codes in NY-NJ_PA msa
@@ -2230,7 +2255,7 @@ df_sl_ny_msa %>%
   summarize(n_per_grp = n()) %>%
   count(n_per_grp)
 
-typeof(acs_race_zipcode_ny$zipcode) # double
+typeof(acs_race_zipcode_ny$zipcode) #double
 typeof(df_sl_ny_msa$stu_zipcode) #character
 
 acs_race_zipcode_ny$zipcode <- as.character(acs_race_zipcode_ny$zipcode)
@@ -2375,10 +2400,799 @@ acs_race_zipcode_groupedv2 %>%
   geom_bar(stat="identity") +  
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
 
-#Dallas MSA code, 19100
+#---------------------------------------------------------------------
+
+# Student list data, only SAT 
+lists_df_sat %>% filter(State=="TX") #23,533
+
+#filter for students from NY
+df_sl_tx <- lists_df_sat %>% filter(State=="TX")
+
+# not uniquely identified by Ref ID
+df_sl_tx %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+df_sl_tx %>%
+  group_by(Ref) %>%
+  count() %>%
+  filter(n > 1)
+
+View(df_sl_tx %>%
+  filter(duplicated(df_sl_tx$Ref))) # it seems that same students purchased by different orders, for now just keep one of them
+
+# get rid of duplicates for now since we aren't focusing on order summaries
+df_sl_tx_v2 <- df_sl_tx %>%
+  group_by(Ref) %>%
+  filter(row_number(Ref)==1)
+
+# check
+df_sl_tx_v2 %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp) #looks good
 
 
+# Create 5-digit zip code
+df_sl_tx_v2 <- df_sl_tx_v2 %>%
+  mutate(stu_zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'))
 
+# check
+df_sl_tx_v2 %>% dplyr::select(ZipCode, stu_zipcode)
+
+# check that geomarket contains TX
+sum(str_detect(df_sl_tx_v2$GeoMarket, "TX"), na.rm = T) #23387
+
+# check which cities are purchased the most
+df_sl_tx_v2 %>%
+  group_by(City) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  dplyr::select(City, n_per_grp) %>% arrange(desc(n_per_grp)) #Austin and Houston
+
+#Austin MSA code, 12420
+# grab zip codes in Austin-Round Rock msa
+zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+
+austin_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '12420'))$zip_code
+
+#filter student lists to zip codes in Dallas msa area
+df_sl_austin_msa <- df_sl_tx_v2 %>% filter(stu_zipcode %in% austin_zip_codes)
+
+# Read in acs race data by zip code
+acs_race_zipcodes <- read_csv("data/acs_race_zipcode.csv")
+
+# uniquely identified by zip code
+acs_race_zipcode %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+
+# filter for zip codes in Dallas msa
+acs_race_zipcode_austin <- acs_race_zipcode %>% filter(zipcode %in% austin_zip_codes)
+
+# check
+df_sl_austin_msa %>%
+  group_by(Ref) %>%
+  summarize(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+typeof(acs_race_zipcode_austin$zipcode) #double
+typeof(df_sl_austin_msa$stu_zipcode) #character
+
+acs_race_zipcode_austin$zipcode <- as.character(acs_race_zipcode_austin$zipcode)
+
+# check unique zip codes
+length(unique(df_sl_austin_msa$stu_zipcode)) #51
+
+# merge census data with student list + hs data
+df_stu_austin_acs <- df_sl_austin_msa %>% rename(zipcode=stu_zipcode) %>% right_join(acs_race_zipcode_austin, by = "zipcode")
+
+length(unique(df_stu_austin_acs$zipcode)) #96
+sum(is.na(df_stu_austin_acs$Ref)) #49 zip codes of student' homes not purchased in Austin msa
+
+
+# check merge
+anti_merge <- acs_race_zipcode_austin %>% rename(stu_zipcode=zipcode) %>% anti_join(df_sl_austin_msa, by = "stu_zipcode")
+length(unique(anti_merge$stu_zipcode)) #49
+
+
+# create count of zip codes at student's home address purchased
+df_stu_austin_acs <- df_stu_austin_acs %>%
+  group_by(zipcode) %>%
+  mutate(n_per_zip = n()) %>%
+  ungroup() %>%
+  mutate(n_per_zip = ifelse(is.na(Ref),0,n_per_zip),
+         zip_purchased = ifelse(is.na(Ref),0,1))
+
+
+table(df_stu_austin_acs$zip_purchased) #49 not purchased, 3715 purchased
+
+df_stu_austin_acs %>%
+  group_by(zipcode) %>%
+  filter(zip_purchased==1) %>%
+  count() #47 unique zip codes purchased
+
+#check
+df_stu_austin_acs %>%
+  filter(is.na(n_per_zip)) # looks good
+
+df_stu_austin_acs %>%
+  filter(n_per_zip == 0) #49
+
+# note to p: include this in .Rmd file
+# quick table of demographics of zipcodes not purchased by Urbana in Dallas MSA
+View(df_stu_austin_acs %>%
+  filter(n_per_zip == 0 & zip_purchased == 0) %>%
+  dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+  arrange(desc(median_household_income)))
+
+View(df_stu_austin_acs %>%
+       group_by(zipcode) %>%
+       filter(row_number(zipcode) == 1 & zip_purchased == 1) %>%
+       dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+       arrange(desc(n_per_zip)))
+
+
+# binary plots of 0/1 purchased variable by student's home address zip code
+acs_race_zipcode_grouped <- df_stu_austin_acs %>% 
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(zip_purchased, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct) %>%
+  group_by(zip_purchased) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+# of students purchased by zipcodes
+
+# create var for race by high school
+df_stu_austin_acs %>%
+  filter(n_per_zip==0) %>%
+  count() #49 not purchased
+
+df_stu_austin_acs %>%
+  filter(n_per_zip >=1 & n_per_zip<=10) %>%
+  count() #44
+
+df_stu_austin_acs %>%
+  filter(n_per_zip>=11 & n_per_zip<50) %>%
+  count() #189
+
+df_stu_austin_acs %>%
+  filter(n_per_zip>=51 & n_per_zip<100) %>%
+  count() #774
+
+df_stu_austin_acs %>%
+  filter(n_per_zip>=101 & n_per_zip<200) %>%
+  count() #881
+
+df_stu_austin_acs %>%
+  filter(n_per_zip>=201 & n_per_zip<300) %>%
+  count() #1149
+
+df_stu_austin_acs %>%
+  filter(n_per_zip>=300) %>%
+  count() #678
+
+
+lbls <- c('zero','1-10','11-50','51-100','101-200', '201-300','300+')
+
+acs_race_zipcode <- df_stu_austin_acs %>% mutate(purchased_num_cat =cut(n_per_zip, breaks=c(-Inf, 0, 10, 50, 100, 200, 300, +Inf),labels = lbls)) 
+
+acs_race_zipcode %>% count(purchased_num_cat)
+
+acs_race_zipcode_groupedv2 <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, purchased_num_cat) %>%
+  group_by(purchased_num_cat) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+# plot by # of students purchased by zip code
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+# NOTES
+# maybe create a table comparing the mean of # of purchased zip codes vs. non-purchased zip codes
+# characteristics to the descriptive stats of the zip code
+
+# purchased zipcodes
+ acs_zip_pur_austin <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+  group_by(zipcode) %>%
+  filter(n_per_zip > 0) %>%
+  summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(n_per_zip))
+
+ 
+# non purchased zip codes
+ acs_zip_npur_austin <- acs_race_zipcode %>%
+   mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+   dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+   group_by(zipcode) %>%
+   filter(n_per_zip == 0) %>%
+   summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(median_household_income))
+ 
+# what other types of investigations could we do? 
+# at some point before Tuesday, map these out for LA, NY, & Austin
+# try to think through a school-level analysis
+ 
+#--------------------------------------------------------------------
+lists_df_sat %>%
+  filter(Country == "United States") %>%
+  group_by(State) %>%
+  summarise(n_per_grp = n()) %>% arrange(desc(n_per_grp))
+ 
+lists_df_sat %>%
+  filter(State == "FL") %>%
+  dplyr::select(City, State) %>%
+  group_by(City) %>%
+  summarise(n_per_grp = n()) %>%
+  arrange(desc(n_per_grp))
+ 
+# Student list data, only SAT 
+lists_df_sat %>% filter(State=="FL") #12,369
+
+#filter for students from FL
+df_sl_fl <- lists_df_sat %>% filter(State=="FL")
+
+
+# not uniquely identified by Ref ID
+df_sl_fl %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+df_sl_fl %>%
+  group_by(Ref) %>%
+  count() %>%
+  filter(n > 1)
+
+View(df_sl_fl %>%
+       filter(duplicated(df_sl_fl$Ref))) # it seems that same students purchased by different orders, for now just keep one of them
+
+
+# get rid of duplicates for now since we aren't focusing on order summaries
+df_sl_fl_v2 <- df_sl_fl %>%
+  group_by(Ref) %>%
+  filter(row_number(Ref)==1)
+
+# check
+df_sl_fl_v2 %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp) #looks good
+
+
+# Create 5-digit zip code
+df_sl_fl_v2 <- df_sl_fl_v2 %>%
+  mutate(stu_zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'))
+
+
+# Read in acs race data by zip code
+acs_race_zipcodes <- read_csv("data/acs_race_zipcode.csv")
+
+# uniquely identified by zip code
+acs_race_zipcode %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+
+# filter for zip codes in Tampa msa
+tampa_zip_codes <- (zip_cbsa_data %>% filter(cbsa_1 == '45300'))$zip_code
+
+acs_race_zipcode_tampa <- acs_race_zipcodes %>% filter(zipcode %in% tampa_zip_codes)
+
+#filter student lists to zip codes in Tampa msa area
+df_sl_tampa_msa <- df_sl_fl_v2 %>% filter(stu_zipcode %in% tampa_zip_codes)
+
+# check
+df_sl_tampa_msa %>%
+  group_by(Ref) %>%
+  summarize(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+typeof(acs_race_zipcode_tampa$zipcode) #double
+typeof(df_sl_tampa_msa$stu_zipcode) #character
+
+acs_race_zipcode_tampa$zipcode <- as.character(acs_race_zipcode_tampa$zipcode)
+
+# check unique zip codes
+length(unique(df_sl_tampa_msa$stu_zipcode)) #61
+
+# merge census data with student list + hs data
+df_stu_tampa_acs <- df_sl_tampa_msa %>% rename(zipcode=stu_zipcode) %>% right_join(acs_race_zipcode_tampa, by = "zipcode")
+
+length(unique(df_stu_tampa_acs$zipcode)) #134
+sum(is.na(df_stu_tampa_acs$Ref)) #74 zip codes of student' homes not purchased in Tampa msa
+
+
+# check merge
+anti_merge <- acs_race_zipcode_tampa %>% rename(stu_zipcode=zipcode) %>% anti_join(df_sl_tampa_msa, by = "stu_zipcode")
+length(unique(anti_merge$stu_zipcode)) #74
+
+
+# create count of zip codes at student's home address purchased
+df_stu_tampa_acs <- df_stu_tampa_acs %>%
+  group_by(zipcode) %>%
+  mutate(n_per_zip = n()) %>%
+  ungroup() %>%
+  mutate(n_per_zip = ifelse(is.na(Ref),0,n_per_zip),
+         zip_purchased = ifelse(is.na(Ref),0,1))
+
+
+table(df_stu_tampa_acs$zip_purchased) #74 not purchased, 2165 purchased
+
+df_stu_tampa_acs %>%
+  group_by(zipcode) %>%
+  filter(zip_purchased==1) %>%
+  count() #60 unique zip codes purchased
+
+#check
+df_stu_tampa_acs %>%
+  filter(is.na(n_per_zip)) # looks good
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip == 0) #74
+
+# note to p: include this in .Rmd file
+# quick table of demographics of zipcodes not purchased by Urbana in Dallas MSA
+View(df_stu_tampa_acs %>%
+       filter(n_per_zip == 0 & zip_purchased == 0) %>%
+       dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+       arrange(desc(median_household_income)))
+
+View(df_stu_tampa_acs %>%
+       group_by(zipcode) %>%
+       filter(row_number(zipcode) == 1 & zip_purchased == 1) %>%
+       dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+       arrange(desc(n_per_zip)))
+
+
+# binary plots of 0/1 purchased variable by student's home address zip code
+acs_race_zipcode_grouped <- df_stu_tampa_acs %>% 
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(zip_purchased, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct) %>%
+  group_by(zip_purchased) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+# of students purchased by zipcodes
+
+# create var for race by high school
+df_stu_tampa_acs %>%
+  filter(n_per_zip==0) %>%
+  count() #74 not purchased
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip >=1 & n_per_zip<=10) %>%
+  count() #71
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip>=11 & n_per_zip<50) %>%
+  count() #461
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip>=51 & n_per_zip<100) %>%
+  count() #280
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip>=101 & n_per_zip<200) %>%
+  count() #341
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip>=201 & n_per_zip<300) %>%
+  count() #669
+
+df_stu_tampa_acs %>%
+  filter(n_per_zip>=300) %>%
+  count() #343
+
+
+lbls <- c('zero','1-10','11-50','51-100','101-200', '201-300','300+')
+
+acs_race_zipcode <- df_stu_tampa_acs %>% mutate(purchased_num_cat =cut(n_per_zip, breaks=c(-Inf, 0, 10, 50, 100, 200, 300, +Inf),labels = lbls)) 
+
+acs_race_zipcode %>% count(purchased_num_cat)
+
+acs_race_zipcode_groupedv2 <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, purchased_num_cat) %>%
+  group_by(purchased_num_cat) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+# plot by # of students purchased by zip code
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+# NOTES
+# maybe create a table comparing the mean of # of purchased zip codes vs. non-purchased zip codes
+# characteristics to the descriptive stats of the zip code
+
+# purchased zipcodes
+acs_zip_pur_tampa <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+  group_by(zipcode) %>%
+  filter(n_per_zip > 0) %>%
+  summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(n_per_zip))
+
+
+# non purchased zip codes
+acs_zip_npur_tampa <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+  group_by(zipcode) %>%
+  filter(n_per_zip == 0) %>%
+  summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(median_household_income))
+
+#------------------------------------------------------------------------------------------------------------------------
+# Analysis at the state level
+
+lists_df_sat %>%
+  filter(Country == "United States") %>%
+  group_by(State) %>%
+  summarise(n_per_grp = n()) %>% arrange(desc(n_per_grp))
+
+lists_df_sat %>%
+  filter(State == "CA") %>%
+  dplyr::select(City, State) %>%
+  group_by(City) %>%
+  summarise(n_per_grp = n()) %>%
+  arrange(desc(n_per_grp))
+
+# check orders with msa specific 
+View(merged_df_sat %>%
+  dplyr::select(Ref, City, State, cbsa_name) %>%
+  filter(!is.na(cbsa_name) & State=="CA"))
+
+#str_detect(merged_df_sat$cbsa_name, "CA")
+
+
+# Student list data, only SAT 
+lists_df_sat %>% filter(State=="CA") #51,030
+
+#filter for students from FL
+df_sl_ca <- lists_df_sat %>% filter(State=="CA")
+
+
+# not uniquely identified by Ref ID
+df_sl_ca %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp)
+
+df_sl_ca %>%
+  group_by(Ref) %>%
+  count() %>%
+  filter(n > 1)
+
+View(df_sl_ca %>%
+       filter(duplicated(df_sl_ca$Ref))) # it seems that same students purchased by different orders, for now just keep one of them
+
+
+# get rid of duplicates for now since we aren't focusing on order summaries
+df_sl_ca_v2 <- df_sl_ca %>%
+  group_by(Ref) %>%
+  filter(row_number(Ref)==1)
+
+# check
+df_sl_ca_v2 %>%
+  group_by(Ref) %>%
+  summarise(n_per_grp = n()) %>%
+  ungroup() %>%
+  count(n_per_grp) #looks good
+
+
+# Create 5-digit zip code
+df_sl_ca_v2 <- df_sl_ca_v2 %>%
+  mutate(stu_zipcode = str_pad(str_sub(ZipCode, 1, 5), width = 5, pad = '0', side = 'left'))
+
+
+# Read in acs race data by zip code
+acs_race_zipcodes <- read_csv("data/acs_race_zipcode.csv")
+
+# uniquely identified by zip code
+acs_race_zipcodes %>%
+  group_by(zipcode) %>%
+  summarise(n_per_grp = n()) %>%
+  count(n_per_grp)
+
+
+typeof(acs_race_zipcodes$zipcode) #double
+typeof(df_sl_ca_v2$stu_zipcode) #character
+
+#filter for CA zip codes
+acs_race_ca_zipcode <- acs_race_zipcodes %>% filter(state_fips_code==06)
+acs_race_ca_zipcode$zipcode <- as.character(acs_race_ca_zipcode$zipcode)
+
+# check unique zip codes
+length(unique(df_sl_ca_v2$stu_zipcode)) #814
+
+# merge census data with student list + hs data
+df_stu_ca_acs <- df_sl_ca_v2 %>% rename(zipcode=stu_zipcode) %>% right_join(acs_race_ca_zipcode, by = "zipcode")
+
+length(unique(df_stu_ca_acs$zipcode)) #1764
+sum(is.na(df_stu_ca_acs$Ref)) #1009 zip codes of student' homes not purchased in Tampa msa
+
+
+# check merge
+anti_merge <- acs_race_ca_zipcode %>% rename(stu_zipcode=zipcode) %>% anti_join(df_sl_ca_v2, by = "stu_zipcode")
+length(unique(anti_merge$stu_zipcode)) #1009
+
+
+# create count of zip codes at student's home address purchased
+df_stu_ca_acs <- df_stu_ca_acs %>%
+  group_by(zipcode) %>%
+  mutate(n_per_zip = n()) %>%
+  ungroup() %>%
+  mutate(n_per_zip = ifelse(is.na(Ref),0,n_per_zip),
+         zip_purchased = ifelse(is.na(Ref),0,1))
+
+
+table(df_stu_ca_acs$zip_purchased) #1009 not purchased, 50894 purchased
+
+df_stu_ca_acs %>%
+  group_by(zipcode) %>%
+  filter(zip_purchased==1) %>%
+  count() #755 unique zip codes purchased
+
+#check
+df_stu_ca_acs %>%
+  filter(is.na(n_per_zip)) # looks good
+
+df_stu_ca_acs %>%
+  filter(n_per_zip == 0) #1009
+
+# note to p: include this in .Rmd file
+# quick table of demographics of zipcodes not purchased by Urbana in Dallas MSA
+View(df_stu_ca_acs %>%
+       filter(n_per_zip == 0 & zip_purchased == 0) %>%
+       dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+       arrange(desc(median_household_income)))
+
+View(df_stu_ca_acs %>%
+       group_by(zipcode) %>%
+       filter(row_number(zipcode) == 1 & zip_purchased == 1) %>%
+       dplyr::select(zipcode, n_per_zip, zip_purchased, median_household_income, contains("15_19_pct")) %>%
+       arrange(desc(n_per_zip)))
+
+
+# binary plots of 0/1 purchased variable by student's home address zip code
+acs_race_zipcode_grouped <- df_stu_ca_acs %>% 
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(zip_purchased, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct) %>%
+  group_by(zip_purchased) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_grouped %>%
+  ggplot(aes(x=as.factor(zip_purchased), y=pop_black_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+
+# of students purchased by zipcodes
+
+# create var for race by high school
+df_stu_ca_acs %>%
+  filter(n_per_zip==0) %>%
+  count() #1009 not purchased
+
+df_stu_ca_acs %>%
+  filter(n_per_zip >=1 & n_per_zip<=10) %>%
+  count() #885
+
+df_stu_ca_acs %>%
+  filter(n_per_zip>=11 & n_per_zip<50) %>%
+  count() #5914
+
+df_stu_ca_acs %>%
+  filter(n_per_zip>=51 & n_per_zip<100) %>%
+  count() #8442
+
+df_stu_ca_acs %>%
+  filter(n_per_zip>=101 & n_per_zip<200) %>%
+  count() #10862
+
+df_stu_ca_acs %>%
+  filter(n_per_zip>=201 & n_per_zip<300) %>%
+  count() #9004
+
+df_stu_ca_acs %>%
+  filter(n_per_zip>=300) %>%
+  count() #15487
+
+
+lbls <- c('zero','1-10','11-50','51-100','101-200', '201-300','300+')
+
+acs_race_zipcode <- df_stu_ca_acs %>% mutate(purchased_num_cat =cut(n_per_zip, breaks=c(-Inf, 0, 10, 50, 100, 200, 300, +Inf),labels = lbls)) 
+
+acs_race_zipcode %>% count(purchased_num_cat)
+
+acs_race_zipcode_groupedv2 <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, purchased_num_cat) %>%
+  group_by(purchased_num_cat) %>% 
+  summarise_each(funs(mean(., na.rm = TRUE)))
+
+
+# plot by # of students purchased by zip code
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=median_household_income)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_white_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_asian_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_hispanic_15_19_pct)) +
+  geom_bar(stat="identity") +  
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+
+acs_race_zipcode_groupedv2 %>%
+  ggplot(aes(x=as.factor(purchased_num_cat), y=pop_black_15_19_pct, color=purchased_num_cat)) +
+  geom_bar(stat="identity", fill="white") + 
+  labs(x = "Number of students purchased by zip code",
+       y = "Percent Black") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position = "none") 
+
+
+# NOTES
+# maybe create a table comparing the mean of # of purchased zip codes vs. non-purchased zip codes
+# characteristics to the descriptive stats of the zip code
+
+# purchased zipcodes
+acs_zip_pur_ca <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+  group_by(zipcode) %>%
+  filter(n_per_zip > 0) %>%
+  summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(n_per_zip))
+
+# non purchased zip codes
+acs_zip_npur_ca <- acs_race_zipcode %>%
+  mutate(median_household_income = ifelse(median_household_income==-666666666, NA, median_household_income)) %>%
+  dplyr::select(n_per_zip, median_household_income, pop_white_15_19_pct, pop_black_15_19_pct, pop_hispanic_15_19_pct, pop_asian_15_19_pct, zipcode) %>%
+  group_by(zipcode) %>%
+  filter(n_per_zip == 0) %>%
+  summarise_each(funs(mean(., na.rm = TRUE))) %>% arrange(desc(median_household_income))
+
+#----------------------------------------------------------------------------------------------
 # tract-level EDA
 #----------------------------------------------------------------------------------------------
 # read in acs tract level race data
