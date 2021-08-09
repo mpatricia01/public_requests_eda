@@ -15,6 +15,8 @@ data_dir <- file.path('.', 'data')
 
 # Load data
 load(file = file.path(data_dir, '224545_data.RData'))
+orders_df <- orders_df_224545
+lists_df <- lists_df_224545
 
 # Load zip data
 zip_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_to_state.csv')) %>% 

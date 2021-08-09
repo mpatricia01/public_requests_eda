@@ -58,6 +58,27 @@ View(anti_join(lists_df_sat, orders_df, by = 'order_num') %>% select(order_num, 
 # 3 order summaries w/ no lists entries, but these look like draft orders that weren't actually placed (i.e., 'Edit name')
 View(anti_join(orders_df, lists_df_sat, by = 'order_num'))
 
+# Save College Board data
+orders_df_145637 <- orders_df
+lists_df_145637 <- lists_df_sat %>%
+  select(-test_type) %>% 
+  mutate(univ_id = '145637')
+
+names(lists_df_145637) <- str_to_lower(names(lists_df_145637))
+names(lists_df_145637)
+
+lists_df_145637 <- lists_df_145637 %>%
+  rename(
+    order_no = order_num,
+    hs_code = schoolcode,
+    is_hispanic_origin = hispanic,
+    zip = zipcode,
+    student_id = ref
+  )
+names(lists_df_145637)
+
+save(orders_df_145637, lists_df_145637, file = file.path(data_dir, '145637_data.RData'))
+
 # Explore remaining matched rows (rows may be duplicates if they belong to multiple orders)
 merged_df_sat <- inner_join(lists_df_sat, orders_df, by = 'order_num')
 
@@ -663,6 +684,9 @@ lists_df_all_hs <- lists_df_all %>% left_join(ceeb_hs, by = 'ceeb')  # 476 repea
 
 # 322211 (80.7%) from public HS, 47544 (11.9%) from private HS, 29525 (7.4%) either no entry in crosswalk or no available NCES data
 table(lists_df_all_hs$school_type, useNA = 'always')
+
+table((lists_df_all_hs %>% filter(State == 'CA'))$school_type, useNA = 'always')
+table((lists_df_all_hs %>% filter(zip_code %in% la_zip_codes))$school_type, useNA = 'always')
 
 lists_df_all_zip <- lists_df_all %>% right_join(ceeb_hs, by = 'ceeb')
 # dropping NA students who did not match to available NCES data
