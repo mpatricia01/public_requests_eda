@@ -23,10 +23,10 @@ orders_df <- read_csv(file.path(data_dir, '145637_orders.csv'), col_types = c('u
 
 # Checks
 str_detect(lists_df$Source, '^(?:\\w+ \\d+, \\d{4} [SACT]{3} Search \\d+;?\\s*)+$') %>% table()
-str_count(lists_df$Source, 'SAT|ACT') %>% sum()  # 465231 matches number of rows in lists_df_pivot BEFORE distinct()
+str_count(lists_df$Source, 'SAT|ACT') %>% sum()  # 465231 matches number of rows in lists_df_pivot_full BEFORE distinct()
 
 # https://cathblatter.rbind.io/blog/2020/03/16/using-pivot-longer-and-regex-for-data-wrangling/
-lists_df_pivot <- lists_df %>% 
+lists_df_pivot_full <- lists_df %>% 
   pivot_longer(
     cols = starts_with(c('sat_', 'act_')),
     names_to = c('.value', 'test_num'),
@@ -44,7 +44,22 @@ lists_df_pivot <- lists_df %>%
   distinct()
 
 # Uniquely identified by both order_num + order_date (e.g., could have multiple runs on different dates for same order: "Nov 05, 2019 SAT Search 500551; Sep 05, 2019 SAT Search 500551")
-lists_df_pivot %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key = n()) %>% ungroup() %>% count(n_per_key)
+lists_df_pivot_full %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key = n()) %>% ungroup() %>% count(n_per_key)
+
+# But not just by order_num
+lists_df_pivot_full %>% group_by(Ref, order_num) %>% summarise(n_per_key = n()) %>% ungroup() %>% count(n_per_key)
+
+# Get rid of duplicate rows for same order_num/diff order_date
+lists_df_pivot <- lists_df_pivot_full %>% 
+  group_by(Ref, City, State, ZipCode, Country, GeoMarket, Race, Hispanic, SchoolCode, Source, test_type, order_num) %>%
+  summarise(order_date = str_c(sort(order_date), collapse = '|')) %>% 
+  ungroup()
+
+# Now uniquely identified by just order_num
+lists_df_pivot %>% group_by(Ref, order_num) %>% summarise(n_per_key = n()) %>% ungroup() %>% count(n_per_key)
+
+# order_date now collapsed in same field
+(lists_df_pivot %>% filter(order_num == '500551'))$order_date %>% unique()
 
 # ACT orders
 lists_df_act <- lists_df_pivot %>% filter(test_type == 'act')
@@ -55,7 +70,7 @@ View(lists_df_act %>% select(order_num, order_date) %>% distinct())
 # SAT orders
 lists_df_sat <- lists_df_pivot %>% filter(test_type == 'sat')
 
-# Missing order summary for 107541 of 415458 rows in lists_df_sat (15 distinct orders)
+# Missing order summary for 107541 of 415432 rows in lists_df_sat (15 distinct orders)
 anti_join(lists_df_sat, orders_df, by = 'order_num') %>% nrow()
 View(anti_join(lists_df_sat, orders_df, by = 'order_num') %>% select(order_num, order_date) %>% distinct())
 
