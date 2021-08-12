@@ -102,7 +102,7 @@ load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combi
 orders_df %>% glimpse()
 lists_df %>% glimpse()
 
-orders_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector) %>%
+orders_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
   right_join(orders_df, by = 'univ_id') %>% select(-univ_sector)
 
 # LABEL ORDER SUMMARY DATA
@@ -114,6 +114,7 @@ var_label(orders_df[['po_num']]) <- 'Purchase order number (multiple student lis
   #orders_df %>% count(order_num)
   # each value of order_num -- which uniquely identifies obs - is associated with a purchase order number
   # orders_df %>% count(po_num,order_num) %>% print(n=100)
+  # orders_df %>% count(univ_name,po_num) %>% print(n=100)
 
 var_label(orders_df[['order_num']]) <- 'Student list order number; each student list order number represents a unique student list'
   #orders_df %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)
@@ -183,9 +184,12 @@ var_label(orders_df[['date_end']]) <- '????'
   #orders_df %>% count(date_start) %>% print(n=100)
   #orders_df %>% count(date_end) %>% print(n=100)
 var_label(orders_df[['zip_code_file']]) <- '????' # var always NA for urbana
-var_label(orders_df[['zip_code']]) <- 'zip codes (always 3 digit?) specified in filter for student list purchase' # var always NA for urbana
   #orders_df %>% count(zip_code_file) %>% print(n=100)
+  # orders_df %>% count(univ_name,zip_code_file) %>% print(n=100)
+var_label(orders_df[['zip_code']]) <- 'zip codes (always 3 digit?) specified in filter for student list purchase' # var always NA for urbana
+  
   #orders_df %>% count(zip_code) %>% print(n=100)
+  #orders_df %>% count(univ_name,zip_code) %>% print(n=100)
   #orders_df %>% count(univ_name,zip_code) %>% print(n=100)
 var_label(orders_df[['county']]) <- 'Name of county specified in filter for student list purchase' # var always NA for urbana
 var_label(orders_df[['date_updated']]) <- '????'
@@ -197,32 +201,565 @@ var_label(orders_df[['geomarket']]) <- 'Name the university assigned to the (geo
 # check that vars have variable labels
 orders_df %>% var_label()
 
+## -----------------------------------------------------------------------------
+## INVESTIGATE LIST DATA
+## -----------------------------------------------------------------------------
 
-orders_df %>% count(univ_name) %>% print(n=100)
-orders_df %>% count(univ_name,major) %>% print(n=100)
-orders_df %>% count(univ_name,market,zip_code) %>% print(n=100)
+lists_df %>% glimpse()
 
-orders_df %>% count(zip_code_file) %>% print(n=100)
+#### URBANA **** (data manipulation Crystal did to create Urbana obs in lists_df)
+  # read in prospect data from College Board and ACT student lists
+    #lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
+    # data structure
+      # 434,120 obs, one obs per "Ref", which I think is a unique identifier to represent prospects
+         #lists_df %>% group_by(Ref) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)
+    # variable "Source"
+      # str_count(lists_df$Source, 'SAT|ACT') %>% sum()  # str_count() counts the number of matches in a string
+        # above code counts number of times the variable 'Source' contained the string 'SAT' OR 'ACT'; 
+        # some prospects purchased by multiple SAT purchases or by multiple ACT purchases; or by at least one SAT purchase and at least one ACT purchase
+        #465231 matches number of rows in lists_df_pivot
+      #lists_df %>% count(Source) %>% print(n=100) 
+        # values of variable source indicate the following: date (or student list purchase?); testing agency purchased from (ACT, SAT); order number of student list purchase
+  # pivot longer step
+    # https://cathblatter.rbind.io/blog/2020/03/16/using-pivot-longer-and-regex-for-data-wrangling/
+    #lists_df_pivot <- lists_df %>% 
+    #  pivot_longer(
+    #    cols = starts_with(c('sat_', 'act_')),
+    #    names_to = c('.value', 'test_num'),
+    #    names_pattern = '(^\\w+)_(\\d+)'
+    #  ) %>%
+    #  select(-test_num) %>% 
+    #  pivot_longer(
+    #    cols = starts_with(c('sat_', 'act_')),
+    #    names_to = c('test_type', '.value'),
+    #    names_sep = '_',
+    #    values_drop_na = T
+    #  ) %>%
+    #  rename(order_num = test, order_date = date) %>% 
+    #  mutate(order_date = mdy(order_date)) %>%
+    #  distinct()      
+      # what first pivot is doing:
+      # what second pivot is doing; 
+    # goal of step: 
+      # go from:  one observation per value of 'Ref' (representing prospect ID) -- but each 'Ref' may be targeted by more than one student list
+      # go to: one observation per each unique comination of 'Ref' and student list purchase number
+        # so now each value of 'Ref' (prospect ID) may appear more than once
+    # check new data structure
+        
+    #    lists_df_pivot %>% group_by(Ref) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # multiple obs per ref
+    #    lists_df_pivot %>% group_by(Ref, order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # multiple obs per ref,order_num (which i didn't expect)
+    #    lists_df_pivot %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # one obs per ref,order_num, order_date
+        
+    #    lists_df_pivot %>% filter(Ref == '595894623') %>% View()
+
+    #    lists_df_pivot %>% count(Source) %>% print(n=100) # for each obs, variable 'Source' might contain: multiple SAT purchases or by multiple ACT purchases; or by at least one SAT purchase and at least one ACT purchase
+    #     lists_df_pivot %>% count(test_type) # can be either SAT or ACT
+         
+  # create df w/ only data from College Board
+      #lists_df_sat <- lists_df_pivot %>% filter(test_type == 'sat')
+      #lists_df_sat %>% glimpse()
+    # data structure
+      #lists_df_sat %>% group_by(Ref) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # multiple obs per ref
+      #lists_df_sat %>% group_by(Ref, order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # multiple obs per ref,order_num (which i didn't expect)
+      #lists_df_sat %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # one obs per ref,order_num, order_date
+         
+
+#### LABEL ALL VARIABLES
+
+# merge in IPEDS vars
+lists_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
+  right_join(lists_df, by = 'univ_id') %>% select(-univ_sector)
 
 
-$edu_aspirations
-$rotc_plans
-$major
+lists_df %>% var_label()
+  
+var_label(lists_df[['student_id']]) <- 'Student id; some universities do not provide student id' # 
+  
+  # urbana, univ_id = 145637
+    #lists_df %>% filter(univ_id == '145637') %>% group_by(student_id, order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs (once we make a minor fix upstream)
 
+  # Stephen F Austin, univid = '228431'; student_id always missing
+    #lists_df %>% filter(univ_id == '228431') %>% count(univ_name,student_id) %>% print(n=100)
+  
+  # Texarkana, univid = '224545'; student_id non-missing
+    #lists_df %>% filter(univ_id == '224545') %>% count(univ_name,student_id) %>% print(n=100)
+    #lists_df %>% filter(univ_id == '224545') %>% group_by(student_id) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identifies obs
+    #lists_df %>% filter(univ_id == '224545') %>% group_by(student_id, order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    
+var_label(lists_df[['city']]) <- 'City of prospect (always home city or sometimes school city?)' # 
+   # alwasy missing in data provided by Stephen F. Austin
 
-#### Investigating data quality
+   #lists_df %>% filter(univ_id == '228431') %>% group_by(univ_name) %>% summarise(na_city = sum(is.na(city)))
+   lists_df %>% group_by(univ_name) %>% summarise(
+     n_obs = sum(n()),
+     n_na_city = sum(is.na(city)),
+     n_city = sum(is.na(city)==0)
+    )
 
+#$ state                 <chr> "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX", "TX~      
+var_label(lists_df[['state']]) <- 'state of prospect' # 
+  # missing most often for UI-Urbana (33,875 NA out of 415,458)
+  # lists_df %>% count(univ_name,) %>% print(n=100)
+   lists_df %>% group_by(univ_name) %>% summarise(
+     n_obs = sum(n()),
+     n_miss = sum(is.na(state)),
+     n_nonmiss = sum(is.na(state)==0)
+    )
 
-# three orders with most variables missing
-  orders_na <- orders_df %>% filter(is.na(num_students)==1)
-  orders_na # three purchases that have NA values for most variables; was this a parsing issue? or were we given incomplete data for these three student list purcahses
-  # looking at the associated order summaries; these purchases do not have "download details" and "file output actuals" at the bottom of the order summary
-orders_df %>% count(zip_code)
-  # CHECK TO MAKE: LOOK AT STUDENT LIST DATA AND TRY TO IDENTIFY WHETHER THESE THREE ORDER NUMBERS ARE ASSOCIATED WITH ANY PROSPECTS
+#$ zip                   <chr> "77498-1804", "79707-4543", "75040-1082", "77059-3139", "75094-4442", "75211-4647", "75205", "75078-7945", "79911-3052", "79423-3629", "77845~      
+var_label(lists_df[['zip']]) <- 'zip code, 5 + 4 digits; sometimes missing' # 
+  #lists_df %>% count() %>% print(n=100)
+  # lists_df %>% count(univ_name,) %>% print(n=100)
+
+  # count frequency of length of zip code
+  #lists_df %>% mutate(zip_len = str_length(zip)) %>% count(univ_name,zip_len) %>% print(n=100) 
+  
+  #lists_df %>% group_by(univ_name) %>% summarise(
+  #   n_obs = sum(n()),
+  #   n_miss = sum(is.na(zip)),
+  #   n_nonmiss = sum(is.na(zip)==0)
+  #  )
+
+var_label(lists_df[['zip_code']]) <- '5 digit zip code; sometimes missing' # 
+  #lists_df %>% count() %>% print(n=100)
+  # lists_df %>% count(univ_name,) %>% print(n=100)
+
+    #lists_df %>% mutate(zip_code_len = str_length(zip_code)) %>% count(univ_name,zip_code_len) %>% print(n=100)
+  
+   #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_code)), n_nonmiss = sum(is.na(zip_code)==0))
+   
+var_label(lists_df[['country']]) <- 'country of prospect' # usually non-missing for the three universities
+  #lists_df %>% count() %>% print(n=100)
+  # lists_df %>% count(univ_name,) %>% print(n=100)
+
+   #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(country)),n_nonmiss = sum(is.na(country)==0))
+
+   #lists_df %>% count(univ_name,country) %>% print(n=300)
+
+#$ geomarket             <chr> "TX16", "TX03", "TX22", "TX17", "TX19", "TX19", "TX19", "TX23", "TX02", "TX01", "TX12", "TX06", "TX16", "TX06", "TX11", "TX03", "TX15", "TX22~
+var_label(lists_df[['geomarket']]) <- 'College Board designated geo market of the prospect; usually non-mising' # interesting variable; 
+  
+  #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(geomarket)))
+  #lists_df %>% count(univ_name,geomarket) %>% print(n=400)
+  #lists_df %>% filter(univ_id == '145637') %>% count(geomarket) %>% print(n=500)
+
+var_label(lists_df[['hs_code']]) <- 'High school code (college board code?)' # 
+  #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(hs_code)))
+  #lists_df %>% count() %>% print(n=100)
+  # lists_df %>% count(univ_name,) %>% print(n=100)
+
+var_label(lists_df[['source']]) <- 'Combination of date, testing vendor, and order number' # non-missing for Urbana only
+  #lists_df %>% count() %>% print(n=100)
+  #lists_df %>% count(univ_name,source) %>% print(n=100)
+  #lists_df %>% filter(univ_id != '145637') %>% count(source)
+
+var_label(lists_df[['order_no']]) <- 'Student list purchase order number' # 
+  #lists_df %>% count() %>% print(n=100)
+  #lists_df %>% count(univ_name,order_no) %>% print(n=200)
+
+var_label(lists_df[['order_date']]) <- 'Student list purchase order date' # non-missing for Urbana only
+
+  #lists_df %>% count(univ_name,order_date) %>% print(n=200)
+
+var_label(lists_df[['univ_id']]) <- 'University IPEDS ID (unitid)' # 
+
+var_label(lists_df[['run_no']]) <- 'Texarkana only' # 
+  #lists_df %>% count(univ_name,run_no) %>% print(n=200)
+
+var_label(lists_df[['run_no']]) <- 'Canadian province, mostly missing' # 
+  #lists_df %>% count(univ_name,province) %>% print(n=200)
+
+var_label(lists_df[['county_code']]) <- 'County code; missing for Urbana' # 
+
+  #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(county_code)))
+
+var_label(lists_df[['post_del']]) <- '??? non-missing for Texarkana and Stephen F. Austin, but dont know what it means' # 
+  #lists_df %>% count(univ_name,post_del) %>% print(n=300)
+
+var_label(lists_df[['post_corr']]) <- '??? non-missing for Texarkana and Stephen F. Austin, but dont know what it means' # 
+
+  #lists_df %>% count(univ_name,post_corr) %>% print(n=300)
+  #lists_df %>% count(univ_name,gender) %>% print(n=300) # missing for Urbana
+
+var_label(lists_df[['is_hispanic_origin']]) <- 'Hispanic origin; Urbana only; character var; about 12%=No; about 13%=yes;about 75%=NA' #
+
+var_label(lists_df[['race']]) <- 'Race; Urbana only; the following categories in isolation or in conjunction with others: American Indian or Alaska Native; Asian; Black or African American; Native Hawaiian or other Pacific Islander; White' # 
+
+var_label(lists_df[['grad_year']]) <- 'High school graduation year' # 
+  #lists_df %>% count(univ_name,grad_year) %>% print(n=300) # missing for Urbana
+
+var_label(lists_df[['major_1']]) <- 'Intended major' # non-missing only for Texarkana
+  #lists_df %>% count(univ_name,major_1) %>% print(n=500) # missing for Urbana
+
+  #lists_df %>% count(univ_name,ap1) %>% print(n=500) # non-missing only for Texarkana
+  #lists_df %>% count(univ_name,satsub1) %>% print(n=500) # non-missing only for Texarkana
+  #lists_df %>% count(univ_name,name_source) %>% print(n=500) # non-missing only for Texarkana; don't know what this var means
+  #lists_df %>% count(univ_name,update_date) %>% print(n=500) # non-missing only for Texarkana; don't know what this var means
+
+var_label(lists_df[['homeschool']]) <- 'Prospect is home schooled; missing for Urbana' # non-missing only for Texarkana
+  #lists_df %>% count(univ_name,homeschool) %>% print(n=500) # non-missing only for Texarkana; don't know what this var means
+
+var_label(lists_df[['low_ses']]) <- 'always missing' # 
+  #lists_df %>% count(univ_name,low_ses) %>% print(n=500) # 
+
+var_label(lists_df[['hs_cluster']]) <- 'always missing' # 
+  #lists_df %>% count(univ_name,hs_cluster) %>% print(n=500) # always missing 
+
+var_label(lists_df[['en_cluster']]) <- 'always missing' # 
+  #lists_df %>% count(univ_name,en_cluster) %>% print(n=500) # always missing 
+
+var_label(lists_df[['nhrp']]) <- 'National Hispanic Recognition Program recipient' # mising for Urbana
+  #lists_df %>% count(univ_name,nhrp) %>% print(n=500) #
+
+var_label(lists_df[['first_gen']]) <- 'First generation college student status. 1 = no college; 2 = some college; 3 = not first generation; 4 = no response' # mising for Urbana
+
+  #lists_df %>% count(univ_name,first_gen) %>% print(n=500) # Numeric; 1 = no college; 2 = some college; 3 = not first generation; 4 = no response
+
+var_label(lists_df[['pltw']]) <- 'always missing' # 
+  #lists_df %>% count(univ_name,pltw) %>% print(n=500) # pretty much always missing
+
+var_label(lists_df[['interest_me']]) <- 'always missing' # 
+#lists_df %>% count(univ_name,interest_me) %>% print(n=500) # 
+
+var_label(lists_df[['pref_inst1']]) <- 'always missing' # 
+#lists_df %>% count(univ_name,pref_inst1) %>% print(n=500) # 
+
+var_label(lists_df[['source_file']]) <- 'name of raw data file for student list data' # 
+  #lists_df %>% count(univ_name,source_file) %>% print(n=500) 
+
+var_label(lists_df[['score_range']]) <- 'SAT score range; non-missing only for Stephen F. Austin' # 
+  #lists_df %>% count(univ_name,score_range) %>% print(n=500) 
 
 
 ## -----------------------------------------------------------------------------
-## LOAD INVESTIGATE STUDENT LIST DATA
+## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
+## -----------------------------------------------------------------------------
+
+  # CENSUS DEFINITIONS OF ETHNICITY AND RACE
+    # https://en.wikipedia.org/wiki/Race_and_ethnicity_in_the_United_States_census
+    # ethnicity
+      # definition: whether person is hispanic/latino or not
+      # categories (Census):  "Hispanic or Latino" and "Not Hispanic or Latino"
+    # race 
+      # definition:
+        # racial categories represent a social-political construct for the race or races that respondents consider themselves to be and, "generally reflect a social definition of race recognized in this country."[3] OMB defines the concept of race as outlined for the U.S. census as not "scientific or anthropological" and takes into account "social and cultural characteristics as well as ancestry", using "appropriate scientific methodologies" that are not "primarily biological or genetic in reference."[4] The race categories include both racial and national-origin groups
+      # categories: white, asian, etc.
+
+  # ETHNICITY AND RACE QUESTIONS ASKED ON COLLEGE BOARD QUESTIONNAIRE
+
+    # link to college board template:
+      # google drive folder for file layouts: https://drive.google.com/drive/u/0/folders/1UyuWxR6wUSkZILYYCpB5gDcirsXewud6
+        # look at file for sat-registration-booklet-students... for different years
+    # QUESTIONS
+    # Please answer both questions about Hispanic origin and about race. For the following questions about your identity, Hispanic origins are not races.
+      # a. Are you of Hispanic, Latino, or Spanish origin? (You may check all that apply.)
+        # a. No, not of Hispanic, Latino, or Spanish origin
+        # b. Yes, Cuban
+        # c. Yes, Mexican
+        # d. Yes, Puerto Rican
+        # e. Yes, another Hispanic, Latino, or Spanish origin
+      # b. What is your race? (You may check all that apply.)
+        # a. American Indian or Alaska Native
+        # b. Asian (including Indian subcontinent and Philippines origin)
+        # c. Black or African American (including African and Afro-Caribbean origin)
+        # d. Native Hawaiian or other Pacific Islander
+        # e. White (including Middle Eastern origin)
+
+  # SAMPLE 
+    # https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZqUE/view
+
+################ HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES; UNIVERSITY ILLINOIS-URBANA 
+
+
+#var_label(lists_df[['race']]) <- 'Race; Urbana only; the following categories in isolation or in conjunction with others: American Indian or Alaska Native; Asian; Black or African American; Native Hawaiian or other Pacific Islander; White' # 
+  # Non-missing only for Urbana; about 25K NA out of 415K
+  #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(race)))
+  #lists_df %>% filter(univ_id == '145637') %>% count(race) %>% print(n=500)
+
+#var_label(lists_df[['is_hispanic_origin']]) <- 'Hispanic origin; Urbana only; character var; about 12%=No; about 13%=yes;about 75%=NA' #
+# breakdown: about 12%=No; about 13%=yes;about 75%=NA
+  # non-missing only for Urbana
+  #lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(is_hispanic_origin)))
+  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin)
+  
+# cross tab of is_haspinic_origin and race for Urbana
+  
+  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin,race) %>% print(n=120)
+  
+  # is_hispanic_origin == 'Yes'; 58053 obs
+  lists_df %>% filter(univ_id == '145637',is_hispanic_origin == 'Yes') %>% count(race) %>% print(n=120) 
+    # white: 33361; 33361/58053*100 = 57.5%
+    # Asian: 1837; 1837/58053*100 = 3.2%
+    # Black: 1745; 1745/58053*100 = 3.0%
+  
+  # is_hispanic_origin == 'No'; 48533 obs
+  lists_df %>% filter(univ_id == '145637',is_hispanic_origin == 'No') %>% count(race) %>% print(n=120) # 48553 obs with is_hispanic_origin == 'No'
+    # white: 23947/48533*100 = 49.3%
+    # Asian: 18144/48533*100 = 37.4%
+    # Black: 3826/48533*100 = 7.9%
+  
+  # is_hispanic_origin == NA; # 308826 obs (assumption is that these prospects are not of hispanic origin?)
+    # white: 173771/308826*100 = 56.3%
+    # Asian: 91458/308826*100 = 29.6%
+    # Black: 13711/308826*100 = 4.4%  
+  lists_df %>% filter(univ_id == '145637',is.na(is_hispanic_origin)) %>% count(race) %>% print(n=120) # 308826 obs with is_hispanic_origin == NA
+  
+################ HISPANIC ORIGIN AND ETHNICITY VARIABLES; TEXARKANA AND STEPHEN F. AUSTIN
+  
+  # hispanic origin [ethnicity]
+  lists_df %>% count(univ_name,cuban) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,mexican) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,puerto_rican) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,other_hispanic) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,non_hispanic) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,ethnicity_no_response) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  
+  
+  # race categries
+  lists_df %>% count(univ_name,american_indian) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,asian) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,black) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,native_hawaiian) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,white) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,other) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+  lists_df %>% count(univ_name,race_no_response) %>% print(n=300) # missing for Urbana; for Texarkana/Austin either 'Y' or NA
+
+  ######### investigating hispanic origin [ethnicity] and race for Texarkana and Stephen F. Austin combined
+  
+    # Stephen F Austin, univid = '228431'; 185349 obs
+    # Texarkana, univid = '224545'; 171601 obs
+    # Austin + Texarkana = 356950 obs
+  
+  # is_hispanic = no response [1.26 pct of obs]
+    # count no ethnicity; 4502 obs
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(ethnicity_no_response)
+    # pct no ethnicity
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(no_eth = if_else(ethnicity_no_response=='Y',1,0, missing= 0)) %>% summarize(pct_no_eth = mean(no_eth)*100)
+  
+  # is_hispanic = non_hispanic [65.7 pct of obs]
+    # count; 234379
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(non_hispanic)
+    # pct no ethnicity
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(non_hisp = if_else(non_hispanic=='Y',1,0, missing= 0)) %>% summarize(pct_non_hisp = mean(non_hisp)*100)
+  
+  # is_hispanic = yes [calculated as saying yes to at least one of the categories]
+    
+    # count:  110011 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0)
+    ) %>% count(is_hispanic_origin)
+   
+  # Note: sum of non_hispanic (234379 obs), ethnicity_no_response (4502 obs), and at least one hispanic group (110011) = 348892, which is less than 356950 total obs in these two universities
+      #234379+ 4502 + 110011
+      #234379+ 4502 + 110011 + 8391 = 357283 total obs
+    # is this due to missing for international? what else?
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+    ) %>% filter(is.na(ethnicity_no_response)==1, is.na(non_hispanic)==1, is_hispanic_origin==0) %>% count() # 8391 obs
+    
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+    ) %>% filter(is.na(ethnicity_no_response)==1, is.na(non_hispanic)==1, is_hispanic_origin==0) %>% View()
+
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+    ) %>% filter(is.na(ethnicity_no_response)==1, is.na(non_hispanic)==1, is_hispanic_origin==0) %>% count(cuban) # all obs NA for all the ethnicity variables
+    
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+    ) %>% filter(is.na(ethnicity_no_response)==1, is.na(non_hispanic)==1, is_hispanic_origin==0) %>% count(univ_name) # pretty balanced
+
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+    ) %>% filter(is.na(ethnicity_no_response)==1, is.na(non_hispanic)==1, is_hispanic_origin==0) %>% count(country) # all US...
+        
+
+  # count number of obs that have value of NA for all ethnicity variables
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(is.na(cuban)==1,is.na(cuban)==1,is.na(mexican)==1,is.na(cuban)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>%
+      count() # 8391 obs
+    
+  # RACE
+    
+    # 234379+ 4502 + 110011 + 8391 = 357283 total obs
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(american_indian) 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(asian) 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(black)
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(native_hawaiian) 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(white) 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(other) 
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response)
+  
+    # count of race by group
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      american_indian = if_else(american_indian == 'Y',1,0, missing = 0),
+      asian = if_else(asian == 'Y',1,0, missing = 0),
+      black = if_else(black == 'Y',1,0, missing = 0),
+      native_hawaiian = if_else(native_hawaiian == 'Y',1,0, missing = 0),
+      white = if_else(white == 'Y',1,0, missing = 0),
+      other = if_else(other == 'Y',1,0, missing = 0),
+      race_no_response = if_else(race_no_response == 'Y',1,0, missing = 0),      
+    ) %>% summarize(
+      american_indian = sum(american_indian),
+      asian = sum(asian),
+      black = sum(black),
+      native_hawaiian = sum(native_hawaiian),
+      white = sum(white),
+      other = sum(other),
+      race_no_response = sum(race_no_response)
+    )
+    
+    # pct who identify w/ race by group
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      american_indian = if_else(american_indian == 'Y',1,0, missing = 0),
+      asian = if_else(asian == 'Y',1,0, missing = 0),
+      black = if_else(black == 'Y',1,0, missing = 0),
+      native_hawaiian = if_else(native_hawaiian == 'Y',1,0, missing = 0),
+      white = if_else(white == 'Y',1,0, missing = 0),
+      other = if_else(other == 'Y',1,0, missing = 0),
+      race_no_response = if_else(race_no_response == 'Y',1,0, missing = 0),      
+    ) %>% summarize(
+      american_indian = mean(american_indian),
+      asian = mean(asian),
+      black = mean(black),
+      native_hawaiian = mean(native_hawaiian),
+      white = mean(white),
+      other = mean(other),
+      race_no_response = mean(race_no_response)
+    )    
+    
+    ##### pct who identify w/ racial group by hispanic origin
+    
+      # at least one hispanic origin category
+      lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+        is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0) 
+      ) %>% filter(is_hispanic_origin==1) %>% mutate(
+      american_indian = if_else(american_indian == 'Y',1,0, missing = 0),
+      asian = if_else(asian == 'Y',1,0, missing = 0),
+      black = if_else(black == 'Y',1,0, missing = 0),
+      native_hawaiian = if_else(native_hawaiian == 'Y',1,0, missing = 0),
+      white = if_else(white == 'Y',1,0, missing = 0),
+      other = if_else(other == 'Y',1,0, missing = 0),
+      race_no_response = if_else(race_no_response == 'Y',1,0, missing = 0),      
+    ) %>% summarize(
+      american_indian = mean(american_indian),
+      asian = mean(asian),
+      black = mean(black),
+      native_hawaiian = mean(native_hawaiian),
+      white = mean(white),
+      other = mean(other),
+      race_no_response = mean(race_no_response)
+    ) 
+    
+    # non_hispanic origin category == 'Y'
+      lists_df %>% filter(univ_id %in% c('228431','224545'), non_hispanic=='Y') %>% mutate(
+      american_indian = if_else(american_indian == 'Y',1,0, missing = 0),
+      asian = if_else(asian == 'Y',1,0, missing = 0),
+      black = if_else(black == 'Y',1,0, missing = 0),
+      native_hawaiian = if_else(native_hawaiian == 'Y',1,0, missing = 0),
+      white = if_else(white == 'Y',1,0, missing = 0),
+      other = if_else(other == 'Y',1,0, missing = 0),
+      race_no_response = if_else(race_no_response == 'Y',1,0, missing = 0),      
+    ) %>% summarize(
+      american_indian = mean(american_indian),
+      asian = mean(asian),
+      black = mean(black),
+      native_hawaiian = mean(native_hawaiian),
+      white = mean(white),
+      other = mean(other),
+      race_no_response = mean(race_no_response)
+    )       
+    
+
+
+
+
+## -----------------------------------------------------------------------------
+## RESEARCH QUESTION 1: RQ1, What are the characteristics of student list purchases
+## -----------------------------------------------------------------------------
+
+      
+## -----------------------------------------------------------------------------
+## RESEARCH QUESTION 2: WHAT ARE THE CHARACTERISTICS OF PROSPECTS PURCHASED BY STUDENT LISTS? HOW DO THESE CHARACTERISTICS DIFFER ACROSS UNIVERSITY TYPE, GEOGRAPHIC FOCUS, AND ACROSS FILTER CRITERIA
+## -----------------------------------------------------------------------------
+      
+# CREATE DATA FRAME THAT MERGES ORDER SUMMARY DATA AND LIST DATA
+  
+  # INVESTIGATE DATA STRUCTURE 
+  #order summary, data structure
+    orders_df  %>% group_by(univ_id, order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    orders_df  %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
+    
+    orders_df %>% filter(univ_id == '145637') %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
+    
+    # urbana
+    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() # returns vector with all distinct values of order_num; one element per each distinct value
+    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() %>% count() # counts the number of distinct values; 80
+    # texarkana
+    orders_df %>% filter(univ_id == '224545') %>% select(order_num) %>% distinct() %>% count() # 91 distinct values of order_num
+    # Stephen F. Austin
+    orders_df %>% filter(univ_id == '228431') %>% select(order_num) %>% distinct() %>% count() # 16 distinct values of order_num
+      
+  # student list, data structure
+    # Urbana
+      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id, order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+      lists_df %>% filter(univ_id == '145637') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 92 orders; 90 lines (obs; some have n=2)
+    
+      lists_df %>% filter(univ_id == '145637') %>% select(order_no) %>% distinct() %>% count() # 92 distinct values of order_no
+    # texarkana
+      #lists_df %>% filter(univ_id == '224545') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 87 different orders
+      lists_df %>% filter(univ_id == '224545') %>% select(order_no) %>% distinct() %>% count() # 91 distinct values of order_no
+    
+    # stephen F. Austin
+      #lists_df %>% filter(univ_id == '228431') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 15 different orders
+      lists_df %>% filter(univ_id == '228431') %>% select(order_no) %>% distinct() %>% count() # 15 distinct values of order_no
+
+  # MERGE; BY UNIV_ID AND ORDER_NO
+      
+lists_df %>% glimpse()
+
+orders_df %>% glimpse()
+
+orders_df %>% count(univ_name,major) %>% print(n=100)
+
+orders_df %>% 
+  # bulk rename columns that start with "order"
+  rename_with(.fn = function(x){str_replace(pattern = "order",replacement = "ord", x)}, .cols = starts_with('order')) %>% 
+  # bulk rename columns that don't start with "univ" or "order"
+  rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('ord'))) %>% 
+  # select specific vars
+  select(starts_with('univ'),ord_num,ord_title,ord_cost,ord_po_num,ord_date_start,ord_hs_grad_class,ord_zip_code,ord_zip_code_file,ord_segment,ord_state_name,
+         ord_state_name,ord_cbsa_name,ord_geomarket,ord_intl_region,ord_sat_score_min,ord_sat_score_max,ord_psat_score_min,ord_psat_score_max,ord_gpa_low,ord_gpa_high,ord_rank_low,ord_rank_high,
+         ord_gender,ord_race_ethnicity) %>%  glimpse()
+
+  # order filters not included for now
+    #$ ord_college_type       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_edu_aspirations    <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_rotc_plans         <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_major              <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+
+START HERE ON FRIDAY: MERGE WITH STUDENT_LIST DATA
+
+orders_df %>% rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('order'))) %>% glimpse()
+
+mtcars %>% rename_with(.cols = hp:wt, function(x){paste0("cars.", x)}) # v.1.0.4.
+
+orders_df %>% select(starts_with('univ'),order_num) %>% 
+  left_join(lists_df %>% select(univ_id,order_no,student_id), by = c('univ_id', 'order_num' = 'order_no'))
+
+
+c("a" = "b", "c" = "d")
+
+      lists_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
+  right_join(lists_df, by = 'univ_id') %>% select(-univ_sector)
+
+
+
+
+
+## -----------------------------------------------------------------------------
+## RESEARCH QUESTION 3: WHAT ARE THE CHARACTERISTICS OF PROSPECTS/SCHOOLS/COMMUNITIES INCLUDED VERSUS EXCLUDED FROM STUDENT LIST PURCHASES?
 ## -----------------------------------------------------------------------------
 
 #load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/145637_orders.RData'))
