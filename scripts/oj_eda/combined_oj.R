@@ -430,6 +430,232 @@ var_label(lists_df[['source_file']]) <- 'name of raw data file for student list 
 var_label(lists_df[['score_range']]) <- 'SAT score range; non-missing only for Stephen F. Austin' # 
   #lists_df %>% count(univ_name,score_range) %>% print(n=500) 
 
+var_label(lists_df[['satsub1']]) <- 'Numeric code of SAT subject test taken by prospect, for subject test 1' # 
+  #lists_df %>% count(univ_name,satsub1) %>% print(n=500) 
+  # key linking code to subject test
+    #SAT Subject Test Code	SAT Subject Test
+    #39	U.S. History
+    #40	World History
+    #41	Literature
+    #43	Chemistry
+    #44	Physics
+    #45	Latin
+    #46	Modern Hebrew
+    #47	French
+    #48	German
+    #49	Italian
+    #51	Spanish
+    #52	Mathematics Level 2
+    #54	Chinese with Listening
+    #55	French with Listening
+    #56	German with Listening
+    #57	Japanese with Listening
+    #58	Spanish with Listening
+    #59	Korean with Listening
+    #61	Mathematics Level 1
+    #62	Biology E
+    #63	Biology M
+
+var_label(lists_df[['ap1']]) <- 'Numeric code of AP test taken by prospect, for AP test 1 (dont have a table that tells me what these codes mean)' # 
+
+
+
+    
+
+
+
+
+## -----------------------------------------------------------------------------
+## RESEARCH QUESTION 1: RQ1, What are the characteristics of student list purchases
+## -----------------------------------------------------------------------------
+
+      
+## -----------------------------------------------------------------------------
+## RESEARCH QUESTION 2: WHAT ARE THE CHARACTERISTICS OF PROSPECTS PURCHASED BY STUDENT LISTS? HOW DO THESE CHARACTERISTICS DIFFER ACROSS UNIVERSITY TYPE, GEOGRAPHIC FOCUS, AND ACROSS FILTER CRITERIA
+## -----------------------------------------------------------------------------
+      
+# CREATE DATA FRAME THAT MERGES ORDER SUMMARY DATA AND LIST DATA
+  
+  # INVESTIGATE DATA STRUCTURE 
+  #order summary, data structure
+    orders_df  %>% group_by(univ_id, order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    orders_df  %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
+    
+    orders_df %>% filter(univ_id == '145637') %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
+    
+    # urbana
+    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() # returns vector with all distinct values of order_num; one element per each distinct value
+    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() %>% count() # counts the number of distinct values; 80
+    # texarkana
+    orders_df %>% filter(univ_id == '224545') %>% select(order_num) %>% distinct() %>% count() # 91 distinct values of order_num
+    # Stephen F. Austin
+    orders_df %>% filter(univ_id == '228431') %>% select(order_num) %>% distinct() %>% count() # 16 distinct values of order_num
+      
+  # student list, data structure
+    # Urbana
+      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id, order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+      lists_df %>% filter(univ_id == '145637') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 92 orders; 90 lines (obs; some have n=2)
+    
+      lists_df %>% filter(univ_id == '145637') %>% select(order_no) %>% distinct() %>% count() # 92 distinct values of order_no
+    # texarkana
+      #lists_df %>% filter(univ_id == '224545') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 87 different orders
+      lists_df %>% filter(univ_id == '224545') %>% select(order_no) %>% distinct() %>% count() # 91 distinct values of order_no
+    
+    # stephen F. Austin
+      #lists_df %>% filter(univ_id == '228431') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 15 different orders
+      lists_df %>% filter(univ_id == '228431') %>% select(order_no) %>% distinct() %>% count() # 15 distinct values of order_no
+
+  # MERGE; BY UNIV_ID AND ORDER_NO
+      
+lists_df %>% glimpse()
+
+orders_df %>% glimpse()
+
+orders_df %>% count(univ_name,major) %>% print(n=100)
+
+lists_orders_df <- orders_df %>% 
+  # bulk rename columns that start with "order"
+  rename_with(.fn = function(x){str_replace(pattern = "order",replacement = "ord", x)}, .cols = starts_with('order')) %>% 
+  # bulk rename columns that don't start with "univ" or "order"
+  rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('ord'))) %>% 
+  # select specific vars
+  select(starts_with('univ'),ord_num,ord_title,ord_cost,ord_po_num,ord_date_start,ord_hs_grad_class,ord_zip_code,ord_zip_code_file,ord_segment,ord_state_name,
+         ord_state_name,ord_cbsa_name,ord_geomarket,ord_intl_region,ord_sat_score_min,ord_sat_score_max,ord_psat_score_min,ord_psat_score_max,ord_gpa_low,ord_gpa_high,ord_rank_low,ord_rank_high,
+         ord_gender,ord_race_ethnicity)  %>% mutate(one=1) %>% 
+  # merge in student list data
+  right_join(y = (lists_df %>% select(univ_id,student_id,city,state,zip,zip_code,country,geomarket,race,is_hispanic_origin,hs_code,order_no,county_code,post_del,post_corr,
+                    gender,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,american_indian,asian,black,native_hawaiian,white,other,race_no_response,ethnicity_no_response,
+                    grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen,score_range) %>% # deleted these vars order_date,update_date, note that "order_date" is specific to Urbana, taken from the "source" column in raw data
+  rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|univ_id))), by = c('univ_id', 'ord_num' = 'order_no')) %>% # note: same result of you merge just by order number
+  # create indicator of whether order summary data missing
+  mutate(na_ord_summ = if_else(is.na(one),1,0)) %>% select(-one)
+
+  # order filters not included for now
+    #$ ord_college_type       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_edu_aspirations    <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_rotc_plans         <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    #$ ord_major              <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+
+# Investigating observations that do not merge
+  # 5 observations (order numbers) from orders_df that did not merge to lists_df\
+    orders_df %>% anti_join(lists_df, by = c('univ_id', 'order_num' = 'order_no')) 
+    # 3 orders from Urbana; 1 order from Texarkana; 1 order from Stephen F. Austin
+    orders_df %>% anti_join(lists_df, by = c('univ_id', 'order_num' = 'order_no')) %>% select(order_num, univ_name)
+  # observations from lists_df (prospects) where the order_no does not match to a corresponding order_num in orders_df
+    # 113,000 obs (prospects) that have an order_no that does not match to orders_df
+      # 107,541 obs from Urbana
+      # 5,520 obs from Texarkana
+    lists_df %>% anti_join(orders_df, by = c('order_no' = 'order_num')) %>% count(univ_name)
+    # 16 order numbers from lists_df do not have a match in orders_df; 15 from Urbana-Illinois; 1 from Texarkana
+    lists_df %>% anti_join(orders_df, by = c('order_no' = 'order_num')) %>% select(order_no,univ_name) %>% distinct()
+    
+######################
+# NEXT STEPS ON DATA MANIPULATION
+  # CREATE A RACE/ETHNICITY VARIABLE
+  # MERGE IN SECONDARY DATA ABOUT ZIP-CODES
+  # MERGE IN SECONDARY DATA ON SCHOOLS
+######################
+
+lists_df %>% glimpse()
+###################### CREATE RACE/ETHNICITY VARIABLE THAT IS CONSISTENT ACROSS UNIVERSITIES
+
+    
+lists_df %>% mutate(
+  is_hisp_common = case_when(
+    # U. Illinois-Urbana
+    univ_id == '145637' & is_hispanic_origin == 'Yes' ~ 1,
+    univ_id == '145637' & (is_hispanic_origin %in% c('No')| is.na(is_hispanic_origin)==1) ~ 0,
+    # Texarkana and Stephen F. Austin, rules:
+    univ_id %in% c('228431','224545') & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
+    univ_id %in% c('228431','224545') & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0   # == 0 if non_hispanic == 1 and all four categories == NA
+    # Note: variable is_hisp_common is NA for 12893 obs for following reasons:
+      # all ethnicity variables [including ethnicity_no_respone] == NA ; 8391 obs
+      # ethnicity_no_response== 'Y'; 4502 obs
+  )) %>% filter(univ_id %in% c('228431','224545')) %>% count(univ_name,is_hisp_common)
+
+
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0)
+    ) %>% count(is_hispanic_origin)
+    
+
+    
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
+      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0)
+    ) %>% select(univ_name,student_id,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,ethnicity_no_response,is_hispanic_origin) %>% print(n=100)
+
+  # INVESTIGATIONS OF TEXARKANA AND STEPHEN F. AUSTIN DATA
+
+  # count number of prospects that identify as "non_hispanic"
+    # 234379 obs
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(non_hispanic == 'Y') %>% count()
+    
+  # count number of prospects that identify as "non_hispanic" and the other four ethnicity variables all equal NA
+    # 234046 obs
+  lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(non_hispanic=='Y', is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1) %>%
+      count() # 
+    
+  # count number of prospects that identify as "non_hispanic" AND also identify as at least one hispanic
+    # 333 obs
+    #234046 + 333
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(non_hispanic=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y')) %>%
+      #count() 
+      select(univ_name,student_id,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,ethnicity_no_response) %>% print(n=400)
+    
+  # count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
+    # 12893 obs
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1) %>%
+      count() # 8391 obs        
+# count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
+    # 8391 obs    
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>%
+      count() # 8391 obs    
+  
+  # count number of obs where ethnicity_no_response=='Y'
+    # 4502 obs
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(ethnicity_no_response == 'Y') %>% count()
+    
+  # count number of obs that have ethnicity_no_response == 'Y' and have at least one 'Y' for one of the five ethnicity variables
+    # 0 obs
+  lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(ethnicity_no_response=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y' | non_hispanic=='Y')) %>%
+      count()
+    
+    
+    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
+      filter(is.na(cuban)==1,is.na(cuban)==1,is.na(mexican)==1,is.na(cuban)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>%
+      count() # 8391 obs
+        
+%>% count(univ_name, is_hisp_common,is_hispanic_origin)
+
+
+lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin)
+
+
+
+  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin)
+  
+# cross tab of is_haspinic_origin and race for Urbana
+  
+  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin,race) %>% print(n=120)
+  
+  # is_hispanic_origin == 'Yes'; 58053 obs
+  lists_df %>% filter(univ_id == '145637',is_hispanic_origin == 'Yes') %>% count(race) %>% print(n=120) 
+
+
+
+
+%>%
+  glimpse()
+
+
 
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
@@ -465,8 +691,21 @@ var_label(lists_df[['score_range']]) <- 'SAT score range; non-missing only for S
         # d. Native Hawaiian or other Pacific Islander
         # e. White (including Middle Eastern origin)
 
-  # SAMPLE 
+  # DERIVED AGGREGATE RACE/ETHNICITY VARIABLE COLLEGE BOARD CREATES FROM SEPARATE VARS FOR ETHNICITY (HISPANIC ORIGIN) ABND RACE
+    #Code Description
+    #0    No Response
+    #1    American Indian/Alaska Native
+    #2    Asian
+    #3    Black/African American
+    #4    Hispanic/Latino
+    #8    Native Hawaiian or Other Pacific Islander
+    #9    White
+    #10   Other
+    #12   Two Or More Races, Non-Hispanic
+
+  # SAMPLE FILE LAYOUT OF A COLLEGE BOARD STUDENT LIST
     # https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZqUE/view
+
 
 ################ HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES; UNIVERSITY ILLINOIS-URBANA 
 
@@ -669,77 +908,54 @@ var_label(lists_df[['score_range']]) <- 'SAT score range; non-missing only for S
       other = mean(other),
       race_no_response = mean(race_no_response)
     )       
-    
 
 
 
 
-## -----------------------------------------------------------------------------
-## RESEARCH QUESTION 1: RQ1, What are the characteristics of student list purchases
-## -----------------------------------------------------------------------------
 
-      
-## -----------------------------------------------------------------------------
-## RESEARCH QUESTION 2: WHAT ARE THE CHARACTERISTICS OF PROSPECTS PURCHASED BY STUDENT LISTS? HOW DO THESE CHARACTERISTICS DIFFER ACROSS UNIVERSITY TYPE, GEOGRAPHIC FOCUS, AND ACROSS FILTER CRITERIA
-## -----------------------------------------------------------------------------
-      
-# CREATE DATA FRAME THAT MERGES ORDER SUMMARY DATA AND LIST DATA
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   
-  # INVESTIGATE DATA STRUCTURE 
-  #order summary, data structure
-    orders_df  %>% group_by(univ_id, order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-    orders_df  %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
-    
-    orders_df %>% filter(univ_id == '145637') %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # also uniquely identifies obs
-    
-    # urbana
-    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() # returns vector with all distinct values of order_num; one element per each distinct value
-    orders_df %>% filter(univ_id == '145637') %>% select(order_num) %>% distinct() %>% count() # counts the number of distinct values; 80
-    # texarkana
-    orders_df %>% filter(univ_id == '224545') %>% select(order_num) %>% distinct() %>% count() # 91 distinct values of order_num
-    # Stephen F. Austin
-    orders_df %>% filter(univ_id == '228431') %>% select(order_num) %>% distinct() %>% count() # 16 distinct values of order_num
-      
-  # student list, data structure
-    # Urbana
-      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id, order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-      lists_df %>% filter(univ_id == '145637') %>% group_by(student_id) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-      lists_df %>% filter(univ_id == '145637') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 92 orders; 90 lines (obs; some have n=2)
-    
-      lists_df %>% filter(univ_id == '145637') %>% select(order_no) %>% distinct() %>% count() # 92 distinct values of order_no
-    # texarkana
-      #lists_df %>% filter(univ_id == '224545') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 87 different orders
-      lists_df %>% filter(univ_id == '224545') %>% select(order_no) %>% distinct() %>% count() # 91 distinct values of order_no
-    
-    # stephen F. Austin
-      #lists_df %>% filter(univ_id == '228431') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 15 different orders
-      lists_df %>% filter(univ_id == '228431') %>% select(order_no) %>% distinct() %>% count() # 15 distinct values of order_no
 
-  # MERGE; BY UNIV_ID AND ORDER_NO
-      
+
+
+
+lists_df %>% select(univ_id,student_id,city,state,zip,zip_code,country,geomarket,race,is_hispanic_origin,hs_code,order_no,order_date,update_date,county_code,post_del,post_corr,
+                    gender,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,american_indian,asian,black,native_hawaiian,white,other,race_no_response,ethnicity_no_response,
+                    grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen,score_range) %>%
+  rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|univ_id)) %>% glimpse()
+
+
+
+
+
+orders_df %>% select(contains('date')) %>% glimpse()
+lists_df %>% select(contains('date')) %>% glimpse()
+
+
+lists_df %>% count(univ_name,name_source) %>% print(n=500)
+lists_df %>% count(univ_name,update_date) %>% print(n=500)
+
+
+
+
+
 lists_df %>% glimpse()
 
-orders_df %>% glimpse()
 
-orders_df %>% count(univ_name,major) %>% print(n=100)
-
-orders_df %>% 
-  # bulk rename columns that start with "order"
-  rename_with(.fn = function(x){str_replace(pattern = "order",replacement = "ord", x)}, .cols = starts_with('order')) %>% 
-  # bulk rename columns that don't start with "univ" or "order"
-  rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('ord'))) %>% 
-  # select specific vars
-  select(starts_with('univ'),ord_num,ord_title,ord_cost,ord_po_num,ord_date_start,ord_hs_grad_class,ord_zip_code,ord_zip_code_file,ord_segment,ord_state_name,
-         ord_state_name,ord_cbsa_name,ord_geomarket,ord_intl_region,ord_sat_score_min,ord_sat_score_max,ord_psat_score_min,ord_psat_score_max,ord_gpa_low,ord_gpa_high,ord_rank_low,ord_rank_high,
-         ord_gender,ord_race_ethnicity) %>%  glimpse()
-
-  # order filters not included for now
-    #$ ord_college_type       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
-    #$ ord_edu_aspirations    <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
-    #$ ord_rotc_plans         <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
-    #$ ord_major              <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
-
-START HERE ON FRIDAY: MERGE WITH STUDENT_LIST DATA
 
 orders_df %>% rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('order'))) %>% glimpse()
 
