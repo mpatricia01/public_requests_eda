@@ -508,11 +508,7 @@ var_label(lists_df[['ap1']]) <- 'Numeric code of AP test taken by prospect, for 
 
   # MERGE; BY UNIV_ID AND ORDER_NO
       
-lists_df %>% glimpse()
 
-orders_df %>% glimpse()
-
-orders_df %>% count(univ_name,major) %>% print(n=100)
 
 lists_orders_df <- orders_df %>% 
   # bulk rename columns that start with "order"
@@ -557,11 +553,39 @@ lists_orders_df <- orders_df %>%
   # MERGE IN SECONDARY DATA ON SCHOOLS
 ######################
 
+    
 lists_df %>% glimpse()
+
 ###################### CREATE RACE/ETHNICITY VARIABLE THAT IS CONSISTENT ACROSS UNIVERSITIES
 
+  # INVESTIGATIONS OF ETHNICITY VARIABLES FOR TEXARKANA AND STEPHEN F. AUSTIN DATA
+    # count number of prospects that identify as "non_hispanic"
+      # 234379 obs
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>%filter(non_hispanic == 'Y') %>% count()
+    # count number of prospects that identify as "non_hispanic" and the other four ethnicity variables all equal NA
+      # 234046 obs
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(non_hispanic=='Y', is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1) %>% count() # 
+    # count number of prospects that identify as "non_hispanic" AND also identify as at least one hispanic
+      # 333 obs
+      #234046 + 333
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(non_hispanic=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y')) %>%
+        #count() 
+        #select(univ_name,student_id,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,ethnicity_no_response) %>% print(n=400)
+    # count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
+      # 12893 obs
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1) %>% count() # 8391 obs
+    # count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
+      # 8391 obs    
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>% count() # 8391 obs    
+    # count number of obs where ethnicity_no_response=='Y'
+      # 4502 obs
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(ethnicity_no_response == 'Y') %>% count()
+    # count number of obs that have ethnicity_no_response == 'Y' and have at least one 'Y' for one of the five ethnicity variables
+      # 0 obs
+      #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% filter(ethnicity_no_response=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y' | non_hispanic=='Y')) %>% count()    
     
-lists_df %>% mutate(
+lists_df <- lists_df %>% mutate(
+  # create common measure of hispanic origin
   is_hisp_common = case_when(
     # U. Illinois-Urbana
     univ_id == '145637' & is_hispanic_origin == 'Yes' ~ 1,
@@ -572,91 +596,190 @@ lists_df %>% mutate(
     # Note: variable is_hisp_common is NA for 12893 obs for following reasons:
       # all ethnicity variables [including ethnicity_no_respone] == NA ; 8391 obs
       # ethnicity_no_response== 'Y'; 4502 obs
-  )) %>% filter(univ_id %in% c('228431','224545')) %>% count(univ_name,is_hisp_common)
+  ))
 
+  # %>% filter(univ_id %in% c('228431','224545')) 
 
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
-      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0)
-    ) %>% count(is_hispanic_origin)
-    
-
-    
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% mutate(
-      is_hispanic_origin = if_else((cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y'),1,0, missing = 0)
-    ) %>% select(univ_name,student_id,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,ethnicity_no_response,is_hispanic_origin) %>% print(n=100)
-
-  # INVESTIGATIONS OF TEXARKANA AND STEPHEN F. AUSTIN DATA
-
-  # count number of prospects that identify as "non_hispanic"
-    # 234379 obs
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(non_hispanic == 'Y') %>% count()
-    
-  # count number of prospects that identify as "non_hispanic" and the other four ethnicity variables all equal NA
-    # 234046 obs
-  lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(non_hispanic=='Y', is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1) %>%
-      count() # 
-    
-  # count number of prospects that identify as "non_hispanic" AND also identify as at least one hispanic
-    # 333 obs
-    #234046 + 333
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(non_hispanic=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y')) %>%
-      #count() 
-      select(univ_name,student_id,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,ethnicity_no_response) %>% print(n=400)
-    
-  # count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
-    # 12893 obs
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1) %>%
-      count() # 8391 obs        
-# count number of obs that have value of NA for all ethnicity variables [including ethnicity_no_response]
-    # 8391 obs    
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(is.na(cuban)==1,is.na(mexican)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>%
-      count() # 8391 obs    
-  
-  # count number of obs where ethnicity_no_response=='Y'
-    # 4502 obs
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(ethnicity_no_response == 'Y') %>% count()
-    
-  # count number of obs that have ethnicity_no_response == 'Y' and have at least one 'Y' for one of the five ethnicity variables
-    # 0 obs
-  lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(ethnicity_no_response=='Y' & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y' | non_hispanic=='Y')) %>%
-      count()
-    
-    
-    lists_df %>% filter(univ_id %in% c('228431','224545')) %>% 
-      filter(is.na(cuban)==1,is.na(cuban)==1,is.na(mexican)==1,is.na(cuban)==1,is.na(puerto_rican)==1, is.na(other_hispanic)==1, is.na(non_hispanic)==1, is.na(ethnicity_no_response)==1) %>%
-      count() # 8391 obs
         
-%>% count(univ_name, is_hisp_common,is_hispanic_origin)
-
-
-lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin)
-
-
-
-  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin)
+###################### CREATE INPUT VARIABLE RACE (FOR URBANA) THAT REMOVES DUPLICATE RACE CATEGORIES (E.G., "ASIAN, ASIAN" BECOMES "ASIAN")
+    
   
-# cross tab of is_haspinic_origin and race for Urbana
+  # create vectorized version of the unique() function, so that it works within elements
+    vunique <- Vectorize(unique)
   
-  lists_df %>% filter(univ_id == '145637') %>% count(is_hispanic_origin,race) %>% print(n=120)
+    #c('a','a','b','c','c') %>% unique()
+    #c('a','a','b','c','c') %>% vunique() 
   
-  # is_hispanic_origin == 'Yes'; 58053 obs
-  lists_df %>% filter(univ_id == '145637',is_hispanic_origin == 'Yes') %>% count(race) %>% print(n=120) 
+    #list(c('a','a','b','c','c'),c('d','e','f')) %>% str()
+  
+    #list(c('a','a','b','c','c'),c('d','e','f')) %>% unique()
+    #list(c('a','a','b','c','c'),c('d','e','f'),c('q')) %>% vunique()
+  
+  # create object that is list of length = number of obs in student list; each element is a character vector w/ length = number of race groups in variable 'race'
+    race_groups_list <- str_extract_all(string = lists_df$race, pattern = '(\\w+[\\w|\\s]+)')
+    
+  # create list object that removes duplicate race categories within an element
+    race_groups_list_unique <- race_groups_list %>% vunique()  
+  
+  # add create character vector version of list object as variable within lists_df data frame
+    
+    lists_df$race2 <- race_groups_list_unique %>% str_c()  
+    #lists_df %>% glimpse()
+    
+  # remove the following characters from variable race2: c(" , " , ")
+  lists_df <- lists_df %>% mutate(
+    race2 = str_replace_all(race2,'c\\(\\"',''),
+    race2 = str_replace_all(race2,'\\"\\)',''),
+    race2 = str_replace_all(race2,'\\"',''),
+    race2 = tolower(race2),
+    # create variable that is the number of different racial groups in variable race
+    ct_race_groups_urbana=1 + str_count(race2,',')
+  ) #%>% select(-race) %>% rename(race=race2)
+  # checks
+    #lists_df %>% count(race) %>% print(n=100)
+    #lists_df %>% count(race2) %>% print(n=100)
+    #lists_df %>% count(ct_race_groups) %>% print(n=100)
+    #lists_df %>% filter(univ_id == '145637') %>% select(student_id,race,race2,ct_race_groups) %>% View()
+  
+  # create indicator for having two or more race groups, for urbana
+  lists_df <- lists_df %>% mutate(
+    multi_race_urbana = if_else(ct_race_groups_urbana >=2,1,0, missing = NULL)
+  ) 
+  # checks
+    # lists_df %>% count(multi_race)
+    #lists_df %>% count(univ_name,multi_race)
+    #lists_df  %>% filter(univ_id == '145637') %>% count(race) %>% print(n=100)
+    #lists_df %>% filter(univ_id == '145637') %>% select(student_id,race,race2,ct_race_groups,multi_race) %>% View()
+  
+###################### 0/1 CREATE RACE-SPECIFIC INDICATORS FOR URBANA
+  
+  lists_df <- lists_df %>% mutate(
+    american_indian_urbana = if_else(str_detect(race2, 'indian')==1,1,0, missing = NULL),
+    asian_urbana = if_else(str_detect(race2, 'asian')==1,1,0, missing = NULL),
+    black_urbana = if_else(str_detect(race2, 'black')==1,1,0, missing = NULL),
+    native_hawaiian_urbana = if_else(str_detect(race2, 'hawaiian')==1,1,0, missing = NULL),
+    white_urbana = if_else(str_detect(race2, 'white')==1,1,0, missing = NULL),
+    race_no_response_urbana = case_when(
+      univ_id == '145637' & is.na(race2)==1 ~ 1,
+      univ_id == '145637' & is.na(race2)==0 ~ 0,      
+    )
+  ) # %>% count(univ_name,race_no_response_urbana)
+  
+START HERE TUESDAY!!!!!!!
+  CREATE MULTI RACE MEASURE FOR TEXARKANA/STEPHEN F AUSTIN BASED ON THE 0/1 MEASURES YOU CREATE BELOW
+  
 
+###################### 0/1 CREATE RACE-SPECIFIC INDICATORS FOR OTHER UNIVERSITIES
+  
 
+  lists_df <- lists_df %>% mutate(
+    american_indian_common = case_when(
+      univ_id == '145637'  ~ american_indian_urbana,
+      univ_id %in% c('228431','224545') & american_indian =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(american_indian) & is.na(race_no_response) ~ 0,
+    ),
+    asian_common = case_when(
+      univ_id == '145637'  ~ asian_urbana,
+      univ_id %in% c('228431','224545') & asian =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(asian) & is.na(race_no_response) ~ 0,
+    ),
+    black_common = case_when(
+      univ_id == '145637'  ~ black_urbana,
+      univ_id %in% c('228431','224545') & black =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(black) & is.na(race_no_response) ~ 0,
+    ),
+    native_hawaiian_common = case_when(
+      univ_id == '145637'  ~ native_hawaiian_urbana,
+      univ_id %in% c('228431','224545') & native_hawaiian =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
+    ),
+    white_common = case_when(
+      univ_id == '145637'  ~ white_urbana,
+      univ_id %in% c('228431','224545') & white =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(white) & is.na(race_no_response) ~ 0,
+    ),
+    race_no_response_common = case_when(
+      univ_id == '145637'  ~ race_no_response_urbana,
+      univ_id %in% c('228431','224545') & race_no_response =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(race_no_response) ~ 0,
+    ),
+    multi_race_common = case_when(
+      univ_id == '145637'  ~ multi_race_urbana,
+      univ_id %in% c('228431','224545') & white =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(white) & is.na(race_no_response) ~ 0,
+    ),
+    other_common = case_when( # confused about this variable; not sure which boxes respondent could have checked to get this; 
+      # no relevant input var for urbana; for Texarkana/SF Austin there are 152 total cases; not sure where they come from
+      univ_id == '145637'  ~ 0,
+      univ_id %in% c('228431','224545') & other =='Y' ~ 1,
+      univ_id %in% c('228431','224545') & is.na(other) & is.na(race_no_response) ~ 0,
+    ),
+    
+  )
+  
+  
+  # checks
+    #lists_df %>% count(univ_name,other_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,other_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(other,other_common)
+    
+    #lists_df %>% count(univ_name,race_no_response_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,race_no_response_common)
+  
+    
+    #lists_df %>% count(univ_name,white_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,white_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(white,white_common)
+    
+    #lists_df %>% count(univ_name,native_hawaiian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,native_hawaiian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(native_hawaiian,native_hawaiian_common)
+    
+    
+    #lists_df %>% count(univ_name,black_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,black_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(black,black_common)
+    
+    #lists_df %>% count(univ_name,asian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,asian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(asian,asian_common)
+      
+    #lists_df %>% count(univ_name,american_indian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(race_no_response,american_indian_common)
+    #lists_df %>% filter(univ_id %in% c('228431','224545')) %>% count(american_indian_common)
 
-
-%>%
-  glimpse()
-
-
-
+  # measure of 'other'; this variable only exists for non-urbana universities
+    #lists_df %>% filter(univ_id %in% c('228431','224545'), other=='Y') %>% count(univ_name)
+    #lists_df %>% filter(univ_id %in% c('228431','224545'), other=='Y') %>% count(race_no_response)
+    #lists_df %>% filter(univ_id %in% c('228431','224545'), other=='Y') %>% count(white)
+    #lists_df %>% filter(univ_id %in% c('228431','224545'), other=='Y') %>% count(grad_year)
+  
+# CREATE COLLEGE BOARD DERIVED AGGREGATE RACE/ETHNICITY VARIABLE COLLEGE BOARD CREATES FROM SEPARATE VARS FOR ETHNICITY (HISPANIC ORIGIN) ABND RACE
+    #Code Description
+    #0    No Response
+    #1    American Indian/Alaska Native
+    #2    Asian
+    #3    Black/African American
+    #4    Hispanic/Latino
+    #8    Native Hawaiian or Other Pacific Islander
+    #9    White
+    #10   Other
+    #12   Two Or More Races, Non-Hispanic
+    
+lists_df <- lists_df %>% mutate(
+    race_cb = case_when(
+      ~ 0 #0    No Response
+    #1    American Indian/Alaska Native
+    #2    Asian
+    #3    Black/African American
+    #4    Hispanic/Latino
+    #8    Native Hawaiian or Other Pacific Islander
+    #9    White
+    #10   Other
+    #12   Two Or More Races, Non-Hispanic      
+    ),
+    
+lists_df %>% count(is_hisp_common)
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
 ## -----------------------------------------------------------------------------
