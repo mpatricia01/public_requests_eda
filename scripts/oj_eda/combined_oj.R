@@ -75,11 +75,31 @@ add_testtakers_cols <- function(sat_df) {
 
 # 
 zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+  
+  #zip_cbsa_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  #zip_cbsa_data %>% glimpse() # one observation per zip-code; for each zip-code indicates which CBSA(s) that zip code belongs to
+  
 hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+  
+  #hs_data %>% glimpse() # 
+  #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
+  #hs_data %>% count(school_type) # public and private
 
 ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
+
+  # this dataset is a crosswalk between nces school code and ceeb code (college board school code)
+  #ceeb_nces %>% glimpse() # two variables: ceeb code (college board school code); ncessch code
+  #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+
 cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
   # note: because using readr version 2.0, must use readr::with_edition() to overcome this error: The size of the connection buffer (131072) was not large enough to fit a complete line: * Increase it by setting `Sys.setenv("VROOM_CONNECTION_SIZE")`
+
+  # This seems to be data about California public schools
+  cds_nces %>% glimpse()
+  cds_nces %>% group_by(CDSCode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  cds_nces %>% count(SOCType)
+  cds_nces %>% count(State) # california or missing
 
 
 # load 2017-18 University data from IPEDS
@@ -808,23 +828,25 @@ lists_df %>% glimpse()
       #lists_df %>% filter(univ_id == '228431') %>% select(order_no) %>% distinct() %>% count() # 15 distinct values of order_no
 
   # MERGE; BY UNIV_ID AND ORDER_NO
-      
 lists_orders_df <- orders_df %>% 
   # bulk rename columns that start with "order"
   rename_with(.fn = function(x){str_replace(pattern = "order",replacement = "ord", x)}, .cols = starts_with('order')) %>% 
   # bulk rename columns that don't start with "univ" or "order"
   rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('ord'))) %>% 
   # select specific vars
-  select(starts_with('univ'),ord_num,ord_title,ord_cost,ord_po_num,ord_date_start,ord_hs_grad_class,ord_zip_code,ord_zip_code_file,ord_segment,ord_state_name,
+  #starts_with('univ'),
+  select(univ_id,ord_num,ord_title,ord_cost,ord_po_num,ord_date_start,ord_hs_grad_class,ord_zip_code,ord_zip_code_file,ord_segment,ord_state_name,
          ord_state_name,ord_cbsa_name,ord_geomarket,ord_intl_region,ord_sat_score_min,ord_sat_score_max,ord_psat_score_min,ord_psat_score_max,ord_gpa_low,ord_gpa_high,ord_rank_low,ord_rank_high,
          ord_gender,ord_race_ethnicity)  %>% mutate(one=1) %>% 
   # merge in student list data
-  right_join(y = (lists_df %>% select(univ_id,student_id,city,state,zip,zip_code,country,geomarket,hs_code,order_no,county_code,post_del,post_corr,gender,
+  right_join(y = (lists_df %>% select(starts_with('univ'),student_id,city,state,zip,zip_code,country,geomarket,hs_code,order_no,county_code,post_del,post_corr,gender,
                     is_hisp_common,american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,race_no_response_common,other_common,ct_race_groups_common,multi_race_common,race_cb,
                     grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen,score_range) %>% # deleted these vars order_date,update_date, note that "order_date" is specific to Urbana, taken from the "source" column in raw data
-  rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|univ_id))), by = c('univ_id', 'ord_num' = 'order_no')) %>% # note: same result of you merge just by order number
+  rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|starts_with('univ')))), by = c('univ_id', 'ord_num' = 'order_no')) %>% # note: same result of you merge just by order number
   # create indicator of whether order summary data missing
-  mutate(na_ord_summ = if_else(is.na(one),1,0)) %>% select(-one)
+  mutate(na_ord_summ = if_else(is.na(one),1,0)) %>% select(-one) %>%
+  mutate(stu_country = tolower(stu_country))
+
 
   # order filters not included for now
     #$ ord_college_type       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
@@ -847,13 +869,128 @@ lists_orders_df <- orders_df %>%
  
 lists_orders_df %>% glimpse()
     
-######################
+###################### MERGE IN SECONDARY DATA
+
+###### LOAD CENSUS ZIP-CODE LEVEL DATA
+  
+  # load ACS data w/ zipcode-level data on population and median household income; one obs per zip-code 
+  acs_race_zipcode <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv')) %>% arrange(zipcode)
+  
+    #acs_race_zipcode %>% glimpse()
+    #acs_race_zipcode %>% group_by(zipcode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
+    # create numeric zip code
+    acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11))
+    #acs_race_zipcode %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
+  
+  # load different ACS data w/ zip-code level data; 
+  zip_to_state <- read_csv(file.path(data_dir, 'zip_to_state.csv')) %>% arrange(zip_code)
+  
+    #zip_to_state %>% glimpse()
+    #zip_to_state %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    zip_to_state <- zip_to_state %>% select(state_code, zip_code)
+  
+  # add variable state_code to acs_race_zipcode
+  acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
+    #acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
+  
+
+#### Merge zip-code level data to data frame w/ student_list/order summary data frame
+  
+lists_orders_df %>% glimpse()
+
+  #lists_orders_df %>% select(contains('stu_zip')) %>% var_label()
+  #lists_orders_df %>% select(contains('stu_zip')) %>% glimpse() # character
+
+  # investigate var = stu_zip_code [5 digit]
+    #lists_orders_df %>% mutate(stu_zip_code_len = str_length(stu_zip_code)) %>% count(univ_name,stu_zip_code_len) %>% print(n=100)
+    # very small number of missing when student country restricted to united states
+    #lists_orders_df %>% filter(stu_country == 'united states') %>% mutate(stu_zip_code_len = str_length(stu_zip_code)) %>% count(univ_name,stu_zip_code_len) %>% print(n=100)
+    
+  # investigate var = stu_zip [5+4 dogots]
+    #lists_orders_df %>% mutate(stu_zip_len = str_length(stu_zip)) %>% count(univ_name,stu_zip_len) %>% print(n=100) # yuk
+    # when restricted to united states
+    #lists_orders_df %>% filter(stu_country == 'united states') %>% mutate(stu_zip_len = str_length(stu_zip)) %>% count(univ_name,stu_zip_len) %>% print(n=100) # obs that are missing in 5-digit zip code are also missing in 5+4 digit zip code
+
+    #lists_orders_df %>% count(stu_country) %>% print(n=400)
+    
+# DECIDE WHICH VARIABLES FROM ACS DATASET TO KEEP
+
+
+lists_orders_zip_df <- lists_orders_df %>% 
+  left_join(y=acs_race_zipcodev2 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% mutate(one=1),by = c('stu_zip_code' = 'zip_code')) %>%
+  mutate(na_zip_acs = if_else(is.na(one),1,0)) %>% select(-one) 
+
+  # INVESTIGATE MERGE
+  lists_orders_zip_df %>% count(na_zip_acs)
+  lists_orders_zip_df %>% filter(stu_country == 'united states') %>% count(na_zip_acs)
+
+  
+START HERE ON WEDNESDAY
+
+acs_race_zipcodev2 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% 
+  glimpse()
+
+   lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_code)), n_nonmiss = sum(is.na(zip_code)==0))
+
+
+  lists_df %>% count(univ_name,) %>% print(n=100)
+
+  # count frequency of length of zip code
+  #lists_df %>% mutate(zip_len = str_length(zip)) %>% count(univ_name,zip_len) %>% print(n=100) 
+  
+  #lists_df %>% group_by(univ_name) %>% summarise(
+  #   n_obs = sum(n()),
+  #   n_miss = sum(is.na(zip)),
+  #   n_nonmiss = sum(is.na(zip)==0)
+  #  )
+
+
+
+
+ziplist$zip_code <- as.character(ziplist$zip)
+ziplist$purchased_num <- ziplist$n
+
+
+ziplist <- ziplist %>% filter(zip_code!="-") 
+
+acs_race_zipcodev2 <- left_join(acs_race_zipcode, ziplist, by= "zip_code")
+
+
+
 # NEXT STEPS ON DATA MANIPULATION
   # MERGE IN SECONDARY DATA ABOUT ZIP-CODES
   # MERGE IN SECONDARY DATA ON SCHOOLS
 ######################
 
 
+zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+  
+  #zip_cbsa_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  #zip_cbsa_data %>% glimpse() # one observation per zip-code; for each zip-code indicates which CBSA(s) that zip code belongs to
+  
+hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+  
+  #hs_data %>% glimpse() # 
+  #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
+  #hs_data %>% count(school_type) # public and private
+
+ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
+
+  # this dataset is a crosswalk between nces school code and ceeb code (college board school code)
+  #ceeb_nces %>% glimpse() # two variables: ceeb code (college board school code); ncessch code
+  #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+
+cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
+  
+  # This seems to be data about California public schools
+  cds_nces %>% glimpse()
+  cds_nces %>% group_by(CDSCode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  cds_nces %>% count(SOCType)
+  cds_nces %>% count(State) # california or missing
 
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
