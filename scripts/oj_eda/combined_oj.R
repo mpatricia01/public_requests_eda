@@ -113,7 +113,8 @@ univ_data <- readRDS('./data/ipeds_1718.RDS') %>%
          -act,tuition1,fee1,tuit_fees_instate,tuit_fees_outstate) %>% 
   rename(tuit_indist = tuition1, fee_indist = fee1, tuit_fee_instate = tuit_fees_instate, tuit_fee_outstate = tuit_fees_outstate) %>%
   mutate(tuit_fee_indist = tuit_indist + fee_indist)
-  
+
+state_codes <- c('AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY')  
 ## -----------------------------------------------------------------------------
 ## LOAD/INVESTIGATE ORDER SUMMARY DATA AND LIST DATA
 ## -----------------------------------------------------------------------------
@@ -845,9 +846,29 @@ lists_orders_df <- orders_df %>%
   rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|starts_with('univ')))), by = c('univ_id', 'ord_num' = 'order_no')) %>% # note: same result of you merge just by order number
   # create indicator of whether order summary data missing
   mutate(na_ord_summ = if_else(is.na(one),1,0)) %>% select(-one) %>%
-  mutate(stu_country = tolower(stu_country))
+  # other variables used later
+  mutate(
+    # indicator variable for whether student is in 50 US states + DC [note: variable stu_country sometimes missing/unreliable]
+    stu_country = tolower(stu_country),
+    #stu_in_us = if_else(stu_country == 'united states' & str_length(stu_state)==2 & !(stu_state %in% c('AA','AE','AP','MH','PR')),1,0, missing = NULL),
+    #stu_in_us = if_else(stu_country == 'united states' & stu_state %in% state_codes,1,0, missing = NULL)
+    stu_in_us = if_else(stu_state %in% state_codes,1,0, missing = NULL)
+  )
 
 
+
+var_label(lists_orders_df[['stu_in_us']]) <- '0/1 measure of whether prospect has country == united staes and state is one of 50 states or DC'
+
+  #lists_orders_df %>% count(stu_in_us)
+
+  #lists_orders_df %>% filter(is.na(stu_state)) %>% count(stu_in_us)
+  #lists_orders_df %>% count(stu_state) %>% print(n=200)
+
+  #lists_orders_df %>% filter(is.na(stu_in_us)) %>% count(stu_country)
+  #lists_orders_df %>% filter(is.na(stu_in_us)) %>% count(stu_state)
+
+
+  
   # order filters not included for now
     #$ ord_college_type       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
     #$ ord_edu_aspirations    <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
@@ -880,9 +901,23 @@ lists_orders_df %>% glimpse()
     #acs_race_zipcode %>% group_by(zipcode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
   
     # create numeric zip code
-    acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11))
+    acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11)) %>%
+    mutate(
+      # turn negative values of median household income to NA
+      median_household_income = if_else(median_household_income >0,median_household_income,NA_real_, missing = NULL),
+      # turn character pct race variables into numeric  
+      pop_white_15_19_pct = as.numeric(pop_white_15_19_pct),
+      pop_black_15_19_pct = as.numeric(pop_black_15_19_pct),
+      pop_asian_15_19_pct = as.numeric(pop_asian_15_19_pct),
+      pop_amerindian_15_19_pct = as.numeric(pop_amerindian_15_19_pct),
+      pop_nativehawaii_15_19_pct = as.numeric(pop_nativehawaii_15_19_pct),
+      pop_otherrace_15_19_pct = as.numeric(pop_otherrace_15_19_pct),
+      pop_tworaces_15_19_pct = as.numeric(pop_tworaces_15_19_pct),
+      pop_hispanic_15_19_pct = as.numeric(pop_hispanic_15_19_pct)      
+    )
     #acs_race_zipcode %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  
+    #acs_race_zipcode %>% count(median_household_income) %>% print(n=100)
+    #acs_race_zipcode %>% filter(is.na(median_household_income)) %>% count()
   
   # load different ACS data w/ zip-code level data; 
   zip_to_state <- read_csv(file.path(data_dir, 'zip_to_state.csv')) %>% arrange(zip_code)
@@ -895,14 +930,14 @@ lists_orders_df %>% glimpse()
   acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
     #acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
   
-  
+  # check on weird values of median household income
+  acs_race_zipcodev2 %>% count(median_household_income) %>% print(n=100)
 
 #### Merge zip-code level data to data frame w/ student_list/order summary data frame
   
-lists_orders_df %>% glimpse()
-
-  #lists_orders_df %>% select(contains('stu_zip')) %>% var_label()
-  #lists_orders_df %>% select(contains('stu_zip')) %>% glimpse() # character
+  # which zip-code variable to use from lists_orders_df dataframe
+    #lists_orders_df %>% select(contains('stu_zip')) %>% var_label()
+    #lists_orders_df %>% select(contains('stu_zip')) %>% glimpse() # character
 
   # investigate var = stu_zip_code [5 digit]
     #lists_orders_df %>% mutate(stu_zip_code_len = str_length(stu_zip_code)) %>% count(univ_name,stu_zip_code_len) %>% print(n=100)
@@ -916,82 +951,339 @@ lists_orders_df %>% glimpse()
 
     #lists_orders_df %>% count(stu_country) %>% print(n=400)
     
-# DECIDE WHICH VARIABLES FROM ACS DATASET TO KEEP
-
-
 lists_orders_zip_df <- lists_orders_df %>% 
   left_join(y=acs_race_zipcodev2 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% mutate(one=1),by = c('stu_zip_code' = 'zip_code')) %>%
-  mutate(na_zip_acs = if_else(is.na(one),1,0)) %>% select(-one) 
+  mutate(na_zip_acs = if_else(is.na(one),1,0)) %>% select(-one)
 
   # INVESTIGATE MERGE
-  lists_orders_zip_df %>% count(na_zip_acs)
-  lists_orders_zip_df %>% filter(stu_country == 'united states') %>% count(na_zip_acs)
-
+    #lists_orders_zip_df %>% count(na_zip_acs)
+    #lists_orders_zip_df %>% filter(stu_country == 'united states') %>% count(na_zip_acs)
   
-START HERE ON WEDNESDAY
-
-acs_race_zipcodev2 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% 
-  glimpse()
-
-   lists_df %>% group_by(univ_name) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_code)), n_nonmiss = sum(is.na(zip_code)==0))
-
-
-  lists_df %>% count(univ_name,) %>% print(n=100)
-
-  # count frequency of length of zip code
-  #lists_df %>% mutate(zip_len = str_length(zip)) %>% count(univ_name,zip_len) %>% print(n=100) 
+    lists_orders_zip_anti <- lists_orders_df %>% filter(stu_country == 'united states') %>% anti_join(acs_race_zipcodev2, by = c('stu_zip_code' = 'zip_code'))
+    
+    #lists_orders_zip_anti %>% count(stu_state) %>% print(n=100)
+    #lists_orders_zip_anti %>% count(stu_zip_code) %>% print(n=500)
+    #lists_orders_zip_anti %>% count(ord_hs_grad_class) %>% print(n=500) # missing mostly from 2019, 2020, 2021 HS classes
+    #lists_orders_zip_df %>% count(ord_hs_grad_class) %>% print(n=500)
+    #lists_orders_zip_anti %>% count(ord_date_start) %>% print(n=500) #
+    
+    #lists_orders_zip_anti %>% mutate(ord_year = year(ord_date_start)) %>% count(ord_year) %>% print(n=500) # 
+    #lists_orders_zip_df %>% mutate(ord_year = year(ord_date_start)) %>% count(ord_year) %>% print(n=500) # 
+    
+    #lists_orders_zip_anti %>% mutate(ord_year = year(ord_date_start)) %>% filter(is.na(ord_year)==0) %>% count(ord_year) %>% mutate(freq = (n / sum(n)) * 100)
+    #lists_orders_zip_df %>% mutate(ord_year = year(ord_date_start)) %>% filter(is.na(ord_year)==0) %>% count(ord_year) %>% mutate(freq = (n / sum(n)) * 100)
   
-  #lists_df %>% group_by(univ_name) %>% summarise(
-  #   n_obs = sum(n()),
-  #   n_miss = sum(is.na(zip)),
-  #   n_nonmiss = sum(is.na(zip)==0)
-  #  )
-
-
-
-
-ziplist$zip_code <- as.character(ziplist$zip)
-ziplist$purchased_num <- ziplist$n
-
-
-ziplist <- ziplist %>% filter(zip_code!="-") 
-
-acs_race_zipcodev2 <- left_join(acs_race_zipcode, ziplist, by= "zip_code")
-
-
-
-# NEXT STEPS ON DATA MANIPULATION
-  # MERGE IN SECONDARY DATA ABOUT ZIP-CODES
-  # MERGE IN SECONDARY DATA ON SCHOOLS
-######################
-
-
-zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
+    rm(lists_orders_zip_anti)
+    
+    # summary of investigation
+      # a little over 6K prospects w/ stu_country == 'united states' that don't merge
+      # some are in US territories rather than states
+        # note that ACS zip-code file only contains the 50 states, DC, and Puerto Rico
+      # vast majority seem to be prospects in US states with zip-codes that appear legit based on spot checks from Google maps
+      # about 5,700 obs that don't merge are from TX
+      # compared to all prospects, the ones that don't merge are a little more likely to be from orders made in 2019
+      # DECISION: need to improve the ACS zip-code file; seems to be missing legit zip-codes
+        # is the problem that these are new zip codes? 
+        # is the problem that these are zip codes that have been around for a while but were excluded from ACS for some reason?
   
-  #zip_cbsa_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  #zip_cbsa_data %>% glimpse() # one observation per zip-code; for each zip-code indicates which CBSA(s) that zip code belongs to
-  
-hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
-  
+   # check out missingness of median household income
+    
+    #lists_orders_zip_df %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0))
+    
+    #lists_orders_zip_df %>% filter(stu_in_us==1) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0),mean_med_inc = mean(zip_median_household_income, na.rm = TRUE))
+    
+    # compare to acs zip-code level data (all zip codes)
+    #acs_race_zipcodev2 %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(median_household_income)),n_nonmiss = sum(is.na(median_household_income)==0),mean_med_inc = mean(median_household_income, na.rm = TRUE))    
+
+#### Merge in secondary data on schools
+
+# investigate high school data [from NCES common core for public schools and PSS for private schools]
+
   #hs_data %>% glimpse() # 
   #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
   #hs_data %>% count(school_type) # public and private
-
-ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
-
-  # this dataset is a crosswalk between nces school code and ceeb code (college board school code)
-  #ceeb_nces %>% glimpse() # two variables: ceeb code (college board school code); ncessch code
-  #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-  #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-
-cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
   
-  # This seems to be data about California public schools
-  cds_nces %>% glimpse()
-  cds_nces %>% group_by(CDSCode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  cds_nces %>% count(SOCType)
-  cds_nces %>% count(State) # california or missing
+# investigate ceeb code on ceeb_nces crosswalk, merge w/ nces hs data
 
+  #ceeb_nces %>% glimpse()
+    # script that created this crosswalk: https://github.com/ksalazar3/public_requests/blob/master/ceeb_nces_crosswalk.R
+      # based on three sources:
+        # 1. a crosswalk available online: https://ire.uncg.edu/research/NCES_CEEB_Table/ 
+        # 2. crosswalk from CU-Boulder: https://github.com/cu-boulder/ceeb_nces_crosswalk
+        # 3. NICHE high school rankings
+  
+  # duplicate obs per ceeb code and duplicate obs per NCES code; because crosswalk created by aggregating across several sources
+    #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+    #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  
+  # ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% count(ceeb_len)
+   #ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% arrange(desc(ceeb_len),ceeb) %>% View()
+  
+
+# merge NCES high school data to ceeb code crosswalk
+  
+  ceeb_hs <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
+    # lots of obs that don't merge; will have to improve quality of ceeb_nces crosswalk
+  #glimpse(ceeb_hs)
+  #ceeb_hs %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  
+  #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs; 
+  
+  # investigate obs where there are two observations for one ceeb code (each ceeb code associated with a different NCES code)
+    #ceeb_hs %>% group_by(ceeb) %>% mutate(n_per_ceeb = n()) %>% ungroup() %>% filter(n_per_ceeb==2) %>% arrange(ceeb,ncessch) %>% View()
+
+    # when merging this to student list data a ceeb code that is associated with two different nces codes will have two observations in ceeb_hs and will cause students to be counted twice once you merge to student list data
+  
+    # when there are two nces codes associated with one ceeb, keep the obs w/ higher number of students [FOR NOW]
+    ceeb_hs <- ceeb_hs %>% arrange(ceeb,desc(total_students)) %>% group_by(ceeb) %>% filter(row_number()==1) %>% ungroup()
+    
+    #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # now, uniquely identifies obs
+    
+
+# investigate/ ceeb code on student list data
+    
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
+  
+  # stu_hs_code length==1; 648 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_state) %>% print(n=100)
+  
+  # stu_hs_code length==3; 3 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% count(stu_hs_code) %>% print(n=100)
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  
+  # stu_hs_code length==4; 143 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
+  
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_hs_code) # values are either 3 or 4
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
+
+  # stu_hs_code length ==7
+    # always Urbana; 
+    # stu_hs_code starts with "E00"...; don't think these would merge to CEEB if we deleted the "E"
+    #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==7) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+    
+  # summary of investigation
+    # lowest value of ceeb code on ceeb_nces crosswalk is '010000'
+    # this means that adding a leading zero will only work for stu_hs_code that have length of 5
+    # for stu_hs_code w/ length==7, all of these obs starts with "E00" (e.g., 'E003798'); 
+      # if we remove the leading "E", the highest value would be 00XXXX which is lower than lowest value of ceeb on ceeb_nces crosswalk ('010000')
+      # so these obs also will not merge w/ ceeb code
+  # decision for creation of ceeb code:
+    # for obs where stu_hs_code length==5, add a leading '0'
+    # for obs where stu_hs_code length==6, leave unchanged
+    # for all other obs, ceeb should be NA
+  
+# create ceeb code on student list data
+    
+
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)  
+  #lists_orders_zip_df %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
+
+  lists_orders_zip_df <- lists_orders_zip_df %>%  mutate(
+    stu_hs_code_len = str_length(stu_hs_code),
+    stu_ceeb = case_when(
+      stu_hs_code_len == 5 ~ str_pad(stu_hs_code, width = 6, pad = '0', side = 'left'),
+      stu_hs_code_len == 6 ~ stu_hs_code
+    ),
+    stu_ceeb_len = str_length(stu_ceeb)
+  )
+  # checks on variable stu_ceeb
+  #lists_orders_zip_df %>% filter(!(stu_hs_code_len %in% c(5,6))) %>% count(stu_hs_code_len)
+  #lists_orders_zip_df %>% filter(!(stu_hs_code_len %in% c(5,6))) %>% count(stu_ceeb) # always NA
+  
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% count(stu_ceeb_len)
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% count(stu_hs_code_len,stu_ceeb_len)
+  
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_in_us==1) %>% count(stu_ceeb_len) 
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_in_us==0) %>% count(stu_ceeb_len) 
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_country != 'united states') %>% count(stu_ceeb_len) 
+  #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_in_us==0) %>% select(stu_hs_code,stu_hs_code_len,stu_ceeb,stu_ceeb_len,stu_country,stu_state,stu_city,stu_zip_code,univ_name,ord_num) %>% View()
+
+# merge student list data (left) to high school data (right) by ceeb code
+  
+  lists_orders_zip_hs_df <- lists_orders_zip_df %>% 
+    left_join(y= (ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1)), by = c('stu_ceeb' = 'ceeb')) %>%
+    mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one)
+  
+  # INVESTIGATE MERGE
+    # SUMMARY OF INVESTIGATION
+      # prospects w/ missing hs_level data somewhat more likely to be hispanic/black, somewhat less likely to be white
+      # don't see other huge differences
+  
+    #lists_orders_zip_hs_df %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 85.4% of students merge
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 89.4% of students merge
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!is.na(stu_ceeb)) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 89.8% of students merge
+    
+  # anti-merge
+    lists_orders_zip_hs_anti <- lists_orders_zip_df %>% anti_join(ceeb_hs, by = c('stu_ceeb' = 'ceeb')) #112,867 obs
+    lists_orders_zip_hs_anti <- lists_orders_zip_hs_anti %>% filter(!is.na(stu_ceeb)) # 102,583 obs that have a 6 digit ceeb code
+    
+    #lists_orders_zip_hs_anti %>% glimpse() 
+    #lists_orders_zip_hs_anti %>% count(stu_in_us) %>% mutate(freq = (n / sum(n)) * 100) # 72.9% in US
+    
+    #lists_orders_zip_hs_anti %>% count(univ_name) %>% mutate(freq = (n / sum(n)) * 100) #
+    #lists_orders_zip_hs_df %>% count(univ_name) %>% mutate(freq = (n / sum(n)) * 100) #
+    
+    # investigate obs that don't merge where student is in us
+    #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% count(stu_state) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100) # compared to all prospects, disproportion number of missing hs data are from TX
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(stu_state) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100)
+    
+    #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% mutate(ord_year = year(ord_date_start)) %>% filter(is.na(ord_year)==0) %>% count(ord_year) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100) # no huge pattern
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(ord_year = year(ord_date_start)) %>% filter(is.na(ord_year)==0) %>% count(ord_year) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100) # 
+    
+    # student race/ethnicity
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) # 
+    #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) # missing hs data slightly more likely to be hispanic, and less likely to be white
+    
+    # zip_median_household_income [missing actually has higher avg median income]
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0),mean_med_inc = mean(zip_median_household_income, na.rm = TRUE))
+    #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0),mean_med_inc = mean(zip_median_household_income, na.rm = TRUE))
+    
+    # zip code-level race
+      # all prospects
+      #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% summarise(
+      #  n_obs = sum(n()),
+      #  n_nonmiss_pct_white = sum(is.na(zip_pop_white_15_19_pct)==0),
+      #  mean_pct_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+      #  mean_pct_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+      #  mean_pct_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+      #  mean_pct_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+      #  mean_pct_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+      #  mean_pct_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+      #  mean_pct_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      #  mean_pct_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+      #)
+        #48.1  +         10.2    +       8.73      +         0.420   +             0.0950    +           4.53      +        4.46   +           23.5
+      
+      # all prospects with missing hs data
+      #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% summarise(
+      #  n_obs = sum(n()),
+      #  n_nonmiss_pct_white = sum(is.na(zip_pop_white_15_19_pct)==0),
+      #  mean_pct_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+      #  mean_pct_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+      #  mean_pct_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+      #  mean_pct_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+      #  mean_pct_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+      #  mean_pct_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+      #  mean_pct_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      #  mean_pct_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+      #)
+      # prospects w/ missing hs data live in zip-codes with lower pct white, and somewhat higher pct black, higher pct asian, higher pct hispanic
+    
+    rm(lists_orders_zip_hs_anti)
+
+    
+## -----------------------------------------------------------------------------
+## EQUALITY OF RACE/ETHNICITY VARIABLES ACROSS DATA SOURCES (prospect level; prospect zip-code; prospect high school)
+## -----------------------------------------------------------------------------
+    
+# student level
+  # 0/1 variables [generally, not exclusive]
+    
+    #stu_is_hisp_common, stu_american_indian_common,stu_asian_common, stu_black_common, stu_native_hawaiian_common, stu_white_common, stu_race_no_response_common, stu_other_common, stu_ct_race_groups_common, stu_multi_race_common
+
+  # categorical
+    #stu_race_cb
+    lists_orders_zip_hs_df %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
+    lists_orders_zip_hs_df %>% filter(!(stu_race_cb %in% (0) | is.na(stu_race_cb))) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
+    
+# zip code level [ACS]
+  # zip_pop_white_15_19_pct
+  # zip_pop_black_15_19_pct
+  # zip_pop_asian_15_19_pct
+  # zip_pop_amerindian_15_19_pct
+  # zip_pop_nativehawaii_15_19_pct
+  # zip_pop_otherrace_15_19_pct
+  # zip_pop_tworaces_15_19_pct
+  # zip_pop_hispanic_15_19_pct
+    
+# high-school level    
+  # hs_pct_white
+  # hs_pct_black
+  # hs_pct_hispanic
+  # hs_pct_asian
+  # hs_pct_amerindian
+  # hs_pct_other
+    
+# questions:
+    # does the ACS/zipcode variable for "tworaces" include students who identify as hispanic? the student-level measure of two or more races excludes students who identify as two or more races
+
+    
+## -----------------------------------------------------------------------------
+## RQ2A: WHAT ARE THE CHARACTERISTICS OF PROSPECTS PURCHASED BY STUDENT LISTS? HOW DO THESE CHARACTERISTICS DIFFER ACROSS UNIVERSITY TYPE, GEOGRAPHIC FOCUS, AND ACROSS FILTER CRITERIA
+## -----------------------------------------------------------------------------
+
+lists_orders_zip_hs_df %>% glimpse()
+# potential tables/figures to create
+  # from EDA google doc: https://docs.google.com/document/d/17XGsoYYmqODmdUik-5q5-0GuBc0LNb6KOrs_lhAYUpU/edit# 
+    
+  #Row1: characteristics of all prospects purchased from all lists across all universities
+  #Columns: number of students by race, average income in zip-code, average share of race by zip-code, etc
+  #Row2: in-state prospects
+  #Row3: out-of-state prospects
+  #Other rows
+  #Regional university; research university
+  #Table of student characteristics by filter?
+#Show results via map too?
+    
+# prospect characteristics of potential interest
+    # number of students
+    # number/percent of students by race
+    # number of students by public/private high school
+    # median income of zip-code where student lives
+    # racial composition of high school student attend
+    # 
+    
+# university characteristics. how do prospect characteristics differ by following university characteristics
+    # university (e.g., univ_id)
+      # in-state vs. out-of-state purchases (but this is technically a filter)
+    # university carnegie type
+    
+# student list purchase filters. how do prospect characteristics differ by the following filters (individually and/or in conjunction) chosen for the student list purchase
+    # in-state vs. out-of-state
+    # international
+    # Segment analysis [0/1]
+    # Score range
+    # 
+
+lists_orders_zip_hs_df %>% glimpse()
+######### EDA
+    
+# in-state vs. out-of-steate [focusing on state of the prospect rather than states of the order]    
+  
+  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(univ_state)
+  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(stu_state) %>% print(n=100)
+  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>% count(stu_out_st)
+
+  # income
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+    )
+
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(univ_name,stu_out_st) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+    )
+
+  # prospect race [stark results]
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
+  
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(univ_name,stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100)
+
+  
+START HERE:
+  NEXT FIND THOSE FILTER CRITERUA (VARIABLES STARTING W/ ORD_) THAT ARE ASSOCIATED WITH SYSTEMIC RACE/CLASS INEQUALITY
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
 ## -----------------------------------------------------------------------------
