@@ -1333,7 +1333,7 @@ lists_orders_zip_df <- lists_orders_df %>%
 
     
 ## -----------------------------------------------------------------------------
-## EQUALITY OF RACE/ETHNICITY VARIABLES ACROSS DATA SOURCES (prospect level; prospect zip-code; prospect high school)
+## INVESTIGATING EQUALITY OF RACE/ETHNICITY CATEGORIES ACROSS DATA SOURCES (prospect level; prospect zip-code; prospect high school)
 ## -----------------------------------------------------------------------------
     
 # student level
@@ -1364,6 +1364,44 @@ lists_orders_zip_df <- lists_orders_df %>%
     #9 [white]                            346641
     #12 [two or more races, non-Hispanic]   3366
     
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+    )
+  
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)  
+  
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>%
+    mutate(
+      stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL),
+      stu_white = if_else(stu_race_cb==9,1,0,missing=NULL),
+      stu_asian = if_else(stu_race_cb==2,1,0,missing=NULL),
+      stu_black = if_else(stu_race_cb==3,1,0,missing=NULL),
+      stu_hispanic = if_else(stu_race_cb==4,1,0,missing=NULL),
+      stu_amerindian = if_else(stu_race_cb==1,1,0,missing=NULL),
+      stu_nativehawaii = if_else(stu_race_cb==8,1,0,missing=NULL),
+      stu_tworaces = if_else(stu_race_cb==12,1,0,missing=NULL),
+      stu_unknown = if_else(stu_race_cb==0,1,0,missing=NULL),
+    ) %>%
+    group_by(stu_out_st) %>%
+     summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+     pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+     pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+     pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+     pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+     pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+     pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+     pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+     pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+     
+    )
+
+  
 # zip code level [ACS]
     # https://www.census.gov/quickfacts/fact/note/US/RHI625219
   # zip_pop_white_15_19_pct
@@ -1374,15 +1412,62 @@ lists_orders_zip_df <- lists_orders_df %>%
   # zip_pop_otherrace_15_19_pct
   # zip_pop_tworaces_15_19_pct
   # zip_pop_hispanic_15_19_pct
-    
+
+  #group_by(stu_out_st) %>% 
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
+      pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+      pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+      pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+      pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+      pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+      pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+      pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+      pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+    )
+
 # high-school level    
   # hs_pct_white
   # hs_pct_black
   # hs_pct_hispanic
   # hs_pct_asian
   # hs_pct_amerindian
-  # hs_pct_other
+  # hs_pct_nativehawaii
+  # hs_pct_tworaces
+  # hs_pct_unknown
     
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+      pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+      pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+      pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+      pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+      pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+      pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+      pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+      pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+    )
+  
+    ceeb_hs %>% glimpse()
+    
+    ceeb_hs %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+      pct_hs_white = mean(pct_white, na.rm = TRUE),
+      pct_hs_asian = mean(pct_asian, na.rm = TRUE),
+      pct_hs_black = mean(pct_black, na.rm = TRUE),
+      pct_hs_hispanic = mean(pct_hispanic, na.rm = TRUE),
+      pct_hs_amerindian = mean(pct_amerindian, na.rm = TRUE),
+      pct_hs_nativehawaii = mean(pct_nativehawaii, na.rm = TRUE),
+      pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
+      pct_hs_unknown = mean(pct_unknown, na.rm = TRUE),      
+      
+    )
+  
 # questions:
     # does the ACS/zipcode variable for "tworaces" include students who identify as hispanic? the student-level measure of two or more races excludes students who identify as two or more races
 
