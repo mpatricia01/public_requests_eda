@@ -69,21 +69,207 @@ add_testtakers_cols <- function(sat_df) {
 
 #df_sat_ca_20 <- add_testtakers_cols(df_sat_ca_20)
 #df_sat_ca_19 <- add_testtakers_cols(df_sat_ca_19)
+
 ## -----------------------------------------------------------------------------
-## SECONDARY DATA
+## OZAN THINGS TO DO, SECONDARY DATA
 ## -----------------------------------------------------------------------------
 
-# 
+# high school data
+  # load updated public high school data; run script to clean
+    # revise race/ethnicity
+  # load updated private high school data; run script to clean
+    # revise race/ethnicity
+  # append public and private high school data
+    
+# Census ACS data
+  # document definition of race categories; make sure race categories add up to 100
+
+## -----------------------------------------------------------------------------
+## SECONDARY DATA, CENSUS ACS DATA
+## -----------------------------------------------------------------------------
+
+###### LOAD CENSUS ZIP-CODE LEVEL DATA
+  
+  # load ACS data w/ zipcode-level data on population and median household income; one obs per zip-code 
+  acs_race_zipcode <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv')) %>% arrange(zipcode)
+    # based on 2019 5-year ACS
+    # script: C:\Users\ozanj\Documents\public_requests_eda\scripts\acs_collect_via_API.py
+    # definitions for race
+      # 2016 ACS: https://www.socialexplorer.com/data/ACS2016_5yr/metadata/?ds=ACS16_5yr&table=B03002
+        # detailed info on ethnicity/race: https://www.socialexplorer.com/data/ACS2016_5yr/metadata/?ds=ACS16_5yr&table=B03002 
+      # 2019 ACS: https://www.socialexplorer.com/data/ACS2019_5yr/metadata/?ds=ACS19_5yr
+  
+  
+    #acs_race_zipcode %>% glimpse()
+    #acs_race_zipcode %>% group_by(zipcode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
+    # create numeric zip code
+    acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11)) %>%
+    mutate(
+      # turn negative values of median household income to NA
+      median_household_income = if_else(median_household_income >0,median_household_income,NA_real_, missing = NULL),
+      # turn character pct race variables into numeric  
+      pop_white_15_19_pct = as.numeric(pop_white_15_19_pct),
+      pop_black_15_19_pct = as.numeric(pop_black_15_19_pct),
+      pop_asian_15_19_pct = as.numeric(pop_asian_15_19_pct),
+      pop_amerindian_15_19_pct = as.numeric(pop_amerindian_15_19_pct),
+      pop_nativehawaii_15_19_pct = as.numeric(pop_nativehawaii_15_19_pct),
+      pop_otherrace_15_19_pct = as.numeric(pop_otherrace_15_19_pct),
+      pop_tworaces_15_19_pct = as.numeric(pop_tworaces_15_19_pct),
+      pop_hispanic_15_19_pct = as.numeric(pop_hispanic_15_19_pct)      
+    )
+    #acs_race_zipcode %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    #acs_race_zipcode %>% count(median_household_income) %>% print(n=100)
+    #acs_race_zipcode %>% filter(is.na(median_household_income)) %>% count()
+  
+  # load different ACS data w/ zip-code level data; 
+  zip_to_state <- read_csv(file.path(data_dir, 'zip_to_state.csv')) %>% arrange(zip_code)
+  
+    #zip_to_state %>% glimpse()
+    #zip_to_state %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    zip_to_state <- zip_to_state %>% select(state_code, zip_code)
+  
+  # add variable state_code to acs_race_zipcode
+  acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
+    #acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
+  # check on weird values of median household income
+  acs_race_zipcodev2 %>% count(median_household_income) %>% print(n=100)
+  
+  # check what race/ethnicity variables add up to [**** basically, always = 100!*****]
+  acs_race_zipcodev2 %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
+    select(state_code,zip_code,contains('pct')) %>% count(tot_pct) 
+  #acs_race_zipcodev2 %>% glimpse()
+
 zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
   
   #zip_cbsa_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
   #zip_cbsa_data %>% glimpse() # one observation per zip-code; for each zip-code indicates which CBSA(s) that zip code belongs to
+
+
+## -----------------------------------------------------------------------------
+## SECONDARY DATA, HIGH SCHOOL DATA
+## -----------------------------------------------------------------------------
+
+# PUBLIC HIGH SCHOOL DATA
+    
+  pubhs_data_1718 <- readRDS(file.path(data_dir, 'ccd_1718.RDS'))
+
+# public high school data used for the private school chapter    
+      # CCD script: https://github.com/cyouh95/recruiting-chapter/blob/master/scripts/ccd_data_saving.R#L176-L193
+
+# public high school race categories
+  #$ g11_white           <int> 0, 180, 0, 0, 0, 0, 0, 35, 0, 0, 94, 0, 99, 0, 0, 0, 0, NA, 69, 0, 0, 0, 0, 0, 419, 1, 0, 0, 245, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 270, 0,~
+  #$ g12_amerindian      <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0,~
+  #$ g12_asian           <int> 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 43, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 38, 0, 0, 0, 0,~
+  #$ g12_black           <int> 0, 9, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 1, 0, 0, 0, 0, NA, 4, 0, 0, 0, 0, 0, 201, 0, 0, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 110, 0, 0, 0, ~
+  #$ g12_hispanic        <int> 0, 126, 0, 0, 0, 0, 0, 19, 0, 0, 34, 0, 1, 0, 0, 0, 0, NA, 4, 0, 0, 0, 0, 0, 44, 0, 0, 0, 19, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0~
+  #$ g12_nativehawaii    <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0,~
+  #$ g12_tworaces        <int> 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0,~
+  #$ g12_unknown         <int> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NA, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,~
+
+  # investigating data
+    # at present, no latitude or longitude variable on public hs data frame
+
+  # PATRICIA: ULTIMATELY THIS DATA FRAME WILL APPEND MULTIPLE YEARS OF CCD DATA AND VARIABLE 'YEAR' WILL NOT ALWAYS BE '1718'
+  pubhs_data <- pubhs_data_1718 %>% filter(!(is.na(total_students)),total_students>0) %>%
+    select(ncessch,sch_name,state_code,lzip,contains('total'),contains('pct'),starts_with('g09'),starts_with('g10'),starts_with('g11'),starts_with('g12'),sch_type,titlei_status_text,magnet_text,charter_text,school_year) %>% 
+    mutate(school_control = 'public',
+      # to be consistent w/ how this variable formatted in private school data
+      school_year = str_replace_all(school_year,'20|-','')
+    ) %>%  rename(name = sch_name,zip_code = lzip,pub_sch_type = sch_type,total_09 = g09,total_10=g10,total_11 = g11, total_12 = g12, data_year = school_year)
   
-hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+
+   pubhs_data %>% glimpse()
+
+# PRIVATE HIGH SCHOOL DATA
+privhs_data_1718 <- readRDS(file.path(data_dir, 'pss_1718.RDS'))
+
+  # private high school data used for the private school chapter
+    #private school script: https://github.com/cyouh95/recruiting-chapter/blob/master/scripts/pss_data_saving.R#L529-L535
+
+  # notes on question/coding of ethnicity/race
+    # question wording for ethnicity/race questions can be found in pss_codebook_1717.docx
+      # enrollment by race includes all students in K-12; not separate by grade, which is available for the public school data
+    # private high school race vars
+      #6A Hispanic or Latino Students
+      #6B White Students
+      #6C Black Students
+      #6D Asian Students
+      #6E Native Hawaiian/Pacific Islander Students
+      #6F American Indian/Alaska Native Students
+      #6G Students of Two or More Races
+
+  # investigating privhs_data 
+    #privhs_data_1718 %>% select(contains('pct')) %>% glimpse()
+
+    # total students always equalls sum of students for each race group
+      #privhs_data_1718 %>% mutate(total_generated = rowSums(dplyr::across(.cols = c(total_white,total_black,total_hispanic,total_asian,total_amerindian,total_nativehawaii,total_tworaces), na.rm = TRUE))) %>% select(total_white,total_black,total_hispanic,total_asian,total_amerindian,total_nativehawaii,total_tworaces,total_generated,total_students) %>% mutate(gen_eq_total = if_else(total_students == total_generated,1,0, missing = NULL)) %>% count(gen_eq_total)
+  
+  # create data frame w/ selected variables
+    # PATRICIA: ULTIMATELY THIS DATA FRAME WILL APPEND MULTIPLE YEARS OF PSS DATA 
+    privhs_data <- privhs_data_1718 %>% select(ncessch,name,state_code,zip_code,latitude,longitude,contains('total'),-total_male,contains('pct'),-pct_to_4yr,religion,religion_5,school_type,year) %>%
+      rename(priv_sch_type = school_type, data_year = year) %>% mutate(school_control= 'private')
+    
+
+    privhs_data %>% glimpse()
+    
+  
+## APPEND PUBLIC AND PRIVATE HIGH SCHOOL DATA
+
+  # Combine data
+    pubhs_privhs_data <- dplyr::bind_rows(
+      pubhs_data,privhs_data
+    ) %>% filter(!is.na(pct_white)) # 2 obs in 17-18 data for publics that have 0s for all enrollment by race vars and NAs for all pct enrollment by race vars
+    
+  # checks
+    pubhs_privhs_data %>% glimpse()
+    pubhs_privhs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs      
+    pubhs_privhs_data %>% count(school_control)
+    pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_unknown))
+    
+    pubhs_privhs_data %>% glimpse()
+  
+    # check that enrollment count race vars sum to total enrollment both public and private; looks good
+    #pubhs_privhs_data %>% select(contains('total')) %>% glimpse()  
+    
+    pubhs_privhs_data %>% mutate(
+      total_unknown = if_else(school_control=='public',total_unknown,0L, missing = NULL),
+      total_generated = rowSums(dplyr::across(.cols = c(contains('total'),-total_09,-total_10,-total_11,-total_12,-total_students), na.rm = TRUE))
+    ) %>% select(ncessch,name,school_control,state_code,zip_code,total_generated,contains('total'),-total_09,-total_10,-total_11,-total_12) %>%
+      mutate(gen_eq_tot = if_else(total_generated == total_students,1,0,missing = NULL)) %>% count(school_control,gen_eq_tot)
+      #%>% count(school_control,tot_pct) %>% print(n=100)
+    
+    
+    # check that pct race vars sum to 100 for both public and private; looks good
+    pubhs_privhs_data %>% select(contains('pct')) %>% glimpse()  
+    pubhs_privhs_data %>% mutate(
+      pct_unknown = if_else(school_control=='public',pct_unknown,0, missing = NULL),
+      tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))
+    ) %>% select(ncessch,name,school_control,state_code,zip_code,contains('pct')) %>% count(school_control,tot_pct) %>% print(n=100)
+      # %>% filter(school_control == 'private') %>% View()
+      # %>% count(school_control,tot_pct)
+    
+
+
+########### HIGH SCHOOL DATA USED FOR OFF-CAMPUS RECRUITING PROJECT; TOO DATED
+    
+  #hs_data <- read_csv(url('https://github.com/cyouh95/third-way-report/blob/master/assets/data/hs_data.csv?raw=true'), col_types = c('zip_code' = 'c'))
+  # data file located here: C:\Users\ozanj\Documents\third-way-report\assets\data
+  # script to create file: https://github.com/ksalazar3/recruiting-static-visuals#data-source
+  # years of data:
+    # 2014-15 NCES Common Core of Data (CCD) [x]
+    # 2015-16 NCES Private School Universe Survey (PSS) [x]:  If 2015-16 data is not available, 2013-14 data was used.
+  # 
+
   
   #hs_data %>% glimpse() # 
   #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
   #hs_data %>% count(school_type) # public and private
+
+## -----------------------------------------------------------------------------
+## SECONDARY DATA, CEEB CODE
+## -----------------------------------------------------------------------------
 
 ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/ceeb_nces_crosswalk.csv'))
 
@@ -91,6 +277,90 @@ ceeb_nces <- read_csv(url('https://github.com/mpatricia01/public_requests_eda/ra
   #ceeb_nces %>% glimpse() # two variables: ceeb code (college board school code); ncessch code
   #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
   #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+
+# investigate high school data [from NCES common core for public schools and PSS for private schools]
+
+  #hs_data %>% glimpse() # 
+  #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
+  #hs_data %>% count(school_type) # public and private
+  
+# investigate ceeb code on ceeb_nces crosswalk, merge w/ nces hs data
+
+  #ceeb_nces %>% glimpse()
+    # script that created this crosswalk: https://github.com/ksalazar3/public_requests/blob/master/ceeb_nces_crosswalk.R
+      # based on three sources:
+        # 1. a crosswalk available online: https://ire.uncg.edu/research/NCES_CEEB_Table/ 
+        # 2. crosswalk from CU-Boulder: https://github.com/cu-boulder/ceeb_nces_crosswalk
+        # 3. NICHE high school rankings
+  
+  # duplicate obs per ceeb code and duplicate obs per NCES code; because crosswalk created by aggregating across several sources
+    #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+    #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  
+  # ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% count(ceeb_len)
+   #ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% arrange(desc(ceeb_len),ceeb) %>% View()
+  
+
+# merge NCES high school data to ceeb code crosswalk
+  
+  #ceeb_hs_old <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
+  #ceeb_hs_old <- ceeb_hs_old %>% arrange(ceeb,desc(total_students)) %>% group_by(ceeb) %>% filter(row_number()==1) %>% ungroup()
+  
+  ceeb_hs <- ceeb_nces %>% inner_join(pubhs_privhs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
+    # lots of obs that don't merge; will have to improve quality of ceeb_nces crosswalk
+  #glimpse(ceeb_hs)
+  #ceeb_hs %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
+  
+  #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs; 
+  
+  # investigate obs where there are two observations for one ceeb code (each ceeb code associated with a different NCES code)
+    #ceeb_hs %>% group_by(ceeb) %>% mutate(n_per_ceeb = n()) %>% ungroup() %>% filter(n_per_ceeb==2) %>% arrange(ceeb,ncessch) %>% View()
+
+    # when merging this to student list data a ceeb code that is associated with two different nces codes will have two observations in ceeb_hs and will cause students to be counted twice once you merge to student list data
+  
+    # when there are two nces codes associated with one ceeb, keep the obs w/ higher number of students [FOR NOW]
+    ceeb_hs <- ceeb_hs %>% arrange(ceeb,desc(total_students)) %>% group_by(ceeb) %>% filter(row_number()==1) %>% ungroup()
+    
+    #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # now, uniquely identifies obs
+    
+
+# investigate/ ceeb code on student list data
+    
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
+  
+  # stu_hs_code length==1; 648 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_state) %>% print(n=100)
+  
+  # stu_hs_code length==3; 3 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% count(stu_hs_code) %>% print(n=100)
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  
+  # stu_hs_code length==4; 143 obs
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+  
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
+  
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_hs_code) # values are either 3 or 4
+  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
+
+  # stu_hs_code length ==7
+    # always Urbana; 
+    # stu_hs_code starts with "E00"...; don't think these would merge to CEEB if we deleted the "E"
+    #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==7) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
+    
+  # summary of investigation
+    # lowest value of ceeb code on ceeb_nces crosswalk is '010000'
+    # this means that adding a leading zero will only work for stu_hs_code that have length of 5
+    # for stu_hs_code w/ length==7, all of these obs starts with "E00" (e.g., 'E003798'); 
+      # if we remove the leading "E", the highest value would be 00XXXX which is lower than lowest value of ceeb on ceeb_nces crosswalk ('010000')
+      # so these obs also will not merge w/ ceeb code
+  # decision for creation of ceeb code:
+    # for obs where stu_hs_code length==5, add a leading '0'
+    # for obs where stu_hs_code length==6, leave unchanged
+    # for all other obs, ceeb should be NA
+    
 
 cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
   # note: because using readr version 2.0, must use readr::with_edition() to overcome this error: The size of the connection buffer (131072) was not large enough to fit a complete line: * Increase it by setting `Sys.setenv("VROOM_CONNECTION_SIZE")`
@@ -892,46 +1162,6 @@ lists_orders_df %>% glimpse()
     
 ###################### MERGE IN SECONDARY DATA
 
-###### LOAD CENSUS ZIP-CODE LEVEL DATA
-  
-  # load ACS data w/ zipcode-level data on population and median household income; one obs per zip-code 
-  acs_race_zipcode <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv')) %>% arrange(zipcode)
-  
-    #acs_race_zipcode %>% glimpse()
-    #acs_race_zipcode %>% group_by(zipcode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  
-    # create numeric zip code
-    acs_race_zipcode <- acs_race_zipcode %>% mutate(zip_code = substr(msa_name, 7, 11)) %>%
-    mutate(
-      # turn negative values of median household income to NA
-      median_household_income = if_else(median_household_income >0,median_household_income,NA_real_, missing = NULL),
-      # turn character pct race variables into numeric  
-      pop_white_15_19_pct = as.numeric(pop_white_15_19_pct),
-      pop_black_15_19_pct = as.numeric(pop_black_15_19_pct),
-      pop_asian_15_19_pct = as.numeric(pop_asian_15_19_pct),
-      pop_amerindian_15_19_pct = as.numeric(pop_amerindian_15_19_pct),
-      pop_nativehawaii_15_19_pct = as.numeric(pop_nativehawaii_15_19_pct),
-      pop_otherrace_15_19_pct = as.numeric(pop_otherrace_15_19_pct),
-      pop_tworaces_15_19_pct = as.numeric(pop_tworaces_15_19_pct),
-      pop_hispanic_15_19_pct = as.numeric(pop_hispanic_15_19_pct)      
-    )
-    #acs_race_zipcode %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-    #acs_race_zipcode %>% count(median_household_income) %>% print(n=100)
-    #acs_race_zipcode %>% filter(is.na(median_household_income)) %>% count()
-  
-  # load different ACS data w/ zip-code level data; 
-  zip_to_state <- read_csv(file.path(data_dir, 'zip_to_state.csv')) %>% arrange(zip_code)
-  
-    #zip_to_state %>% glimpse()
-    #zip_to_state %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-    zip_to_state <- zip_to_state %>% select(state_code, zip_code)
-  
-  # add variable state_code to acs_race_zipcode
-  acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
-    #acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  
-  # check on weird values of median household income
-  acs_race_zipcodev2 %>% count(median_household_income) %>% print(n=100)
 
 #### Merge zip-code level data to data frame w/ student_list/order summary data frame
   
@@ -997,86 +1227,6 @@ lists_orders_zip_df <- lists_orders_df %>%
 
 #### Merge in secondary data on schools
 
-# investigate high school data [from NCES common core for public schools and PSS for private schools]
-
-  #hs_data %>% glimpse() # 
-  #hs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # ncessch uniquely identifies obs
-  #hs_data %>% count(school_type) # public and private
-  
-# investigate ceeb code on ceeb_nces crosswalk, merge w/ nces hs data
-
-  #ceeb_nces %>% glimpse()
-    # script that created this crosswalk: https://github.com/ksalazar3/public_requests/blob/master/ceeb_nces_crosswalk.R
-      # based on three sources:
-        # 1. a crosswalk available online: https://ire.uncg.edu/research/NCES_CEEB_Table/ 
-        # 2. crosswalk from CU-Boulder: https://github.com/cu-boulder/ceeb_nces_crosswalk
-        # 3. NICHE high school rankings
-  
-  # duplicate obs per ceeb code and duplicate obs per NCES code; because crosswalk created by aggregating across several sources
-    #ceeb_nces %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-    #ceeb_nces %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-  
-  # ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% count(ceeb_len)
-   #ceeb_nces %>% mutate(ceeb_len = str_length(ceeb)) %>% arrange(desc(ceeb_len),ceeb) %>% View()
-  
-
-# merge NCES high school data to ceeb code crosswalk
-  
-  ceeb_hs <- ceeb_nces %>% inner_join(hs_data, by = 'ncessch')  # get rid of rows w/o NCES data too
-    # lots of obs that don't merge; will have to improve quality of ceeb_nces crosswalk
-  #glimpse(ceeb_hs)
-  #ceeb_hs %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs
-  
-  #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # does not uniquely identify obs; 
-  
-  # investigate obs where there are two observations for one ceeb code (each ceeb code associated with a different NCES code)
-    #ceeb_hs %>% group_by(ceeb) %>% mutate(n_per_ceeb = n()) %>% ungroup() %>% filter(n_per_ceeb==2) %>% arrange(ceeb,ncessch) %>% View()
-
-    # when merging this to student list data a ceeb code that is associated with two different nces codes will have two observations in ceeb_hs and will cause students to be counted twice once you merge to student list data
-  
-    # when there are two nces codes associated with one ceeb, keep the obs w/ higher number of students [FOR NOW]
-    ceeb_hs <- ceeb_hs %>% arrange(ceeb,desc(total_students)) %>% group_by(ceeb) %>% filter(row_number()==1) %>% ungroup()
-    
-    #ceeb_hs %>% group_by(ceeb) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # now, uniquely identifies obs
-    
-
-# investigate/ ceeb code on student list data
-    
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
-  
-  # stu_hs_code length==1; 648 obs
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_state) %>% print(n=100)
-  
-  # stu_hs_code length==3; 3 obs
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% count(stu_hs_code) %>% print(n=100)
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==3) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
-  
-  # stu_hs_code length==4; 143 obs
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
-  
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% count(stu_hs_code_len)
-  
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==1) %>% count(stu_hs_code) # values are either 3 or 4
-  #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==4) %>% count(stu_hs_code) %>% print(n=100)
-
-  # stu_hs_code length ==7
-    # always Urbana; 
-    # stu_hs_code starts with "E00"...; don't think these would merge to CEEB if we deleted the "E"
-    #lists_orders_zip_df %>% filter(stu_in_us ==1) %>% mutate(stu_hs_code_len = str_length(stu_hs_code)) %>% filter(stu_hs_code_len==7) %>% select(univ_name,ord_num,stu_hs_code,stu_state,stu_city,stu_zip_code) %>% View()
-    
-  # summary of investigation
-    # lowest value of ceeb code on ceeb_nces crosswalk is '010000'
-    # this means that adding a leading zero will only work for stu_hs_code that have length of 5
-    # for stu_hs_code w/ length==7, all of these obs starts with "E00" (e.g., 'E003798'); 
-      # if we remove the leading "E", the highest value would be 00XXXX which is lower than lowest value of ceeb on ceeb_nces crosswalk ('010000')
-      # so these obs also will not merge w/ ceeb code
-  # decision for creation of ceeb code:
-    # for obs where stu_hs_code length==5, add a leading '0'
-    # for obs where stu_hs_code length==6, leave unchanged
-    # for all other obs, ceeb should be NA
-  
 # create ceeb code on student list data
     
 
@@ -1104,23 +1254,26 @@ lists_orders_zip_df <- lists_orders_df %>%
   #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_in_us==0) %>% select(stu_hs_code,stu_hs_code_len,stu_ceeb,stu_ceeb_len,stu_country,stu_state,stu_city,stu_zip_code,univ_name,ord_num) %>% View()
 
 # merge student list data (left) to high school data (right) by ceeb code
+  ceeb_hs_old %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
+  ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
   
   lists_orders_zip_hs_df <- lists_orders_zip_df %>% 
     left_join(y= (ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1)), by = c('stu_ceeb' = 'ceeb')) %>%
     mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one)
   
   # INVESTIGATE MERGE
+    # NOTE: 8/20/2021: THE NUMBERS IN COMMENTS ON BELOW CHECKS ARE BASED ON USING HIGH SCHOOL DATA FRAME hs_data, WHICH WE ARE NOT USING ANYMORE
     # SUMMARY OF INVESTIGATION
       # prospects w/ missing hs_level data somewhat more likely to be hispanic/black, somewhat less likely to be white
       # don't see other huge differences
   
-    #lists_orders_zip_hs_df %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 85.4% of students merge
-    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 89.4% of students merge
-    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!is.na(stu_ceeb)) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 89.8% of students merge
+    #lists_orders_zip_hs_df %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 89.6 of students merge
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 93.8% of students merge
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!is.na(stu_ceeb)) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 94.2% of students merge
     
   # anti-merge
-    lists_orders_zip_hs_anti <- lists_orders_zip_df %>% anti_join(ceeb_hs, by = c('stu_ceeb' = 'ceeb')) #112,867 obs
-    lists_orders_zip_hs_anti <- lists_orders_zip_hs_anti %>% filter(!is.na(stu_ceeb)) # 102,583 obs that have a 6 digit ceeb code
+    lists_orders_zip_hs_anti <- lists_orders_zip_df %>% anti_join(ceeb_hs, by = c('stu_ceeb' = 'ceeb')) #80K obs
+    lists_orders_zip_hs_anti <- lists_orders_zip_hs_anti %>% filter(!is.na(stu_ceeb)) # 70K obs that have a 6 digit ceeb code
     
     #lists_orders_zip_hs_anti %>% glimpse() 
     #lists_orders_zip_hs_anti %>% count(stu_in_us) %>% mutate(freq = (n / sum(n)) * 100) # 72.9% in US
@@ -1142,6 +1295,8 @@ lists_orders_zip_df <- lists_orders_df %>%
     # zip_median_household_income [missing actually has higher avg median income]
     #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0),mean_med_inc = mean(zip_median_household_income, na.rm = TRUE))
     #lists_orders_zip_hs_anti %>% filter(stu_in_us==1) %>% summarise(n_obs = sum(n()),n_miss = sum(is.na(zip_median_household_income)),n_nonmiss = sum(is.na(zip_median_household_income)==0),mean_med_inc = mean(zip_median_household_income, na.rm = TRUE))
+    
+    
     
     # zip code-level race
       # all prospects
@@ -1184,14 +1339,33 @@ lists_orders_zip_df <- lists_orders_df %>%
 # student level
   # 0/1 variables [generally, not exclusive]
     
-    #stu_is_hisp_common, stu_american_indian_common,stu_asian_common, stu_black_common, stu_native_hawaiian_common, stu_white_common, stu_race_no_response_common, stu_other_common, stu_ct_race_groups_common, stu_multi_race_common
+    #stu_is_hisp_common
+    #stu_american_indian_common
+    #stu_asian_common
+    #stu_black_common
+    #stu_native_hawaiian_common
+    #stu_white_common
+    #stu_race_no_response_common
+    #stu_other_common
+    #stu_ct_race_groups_common
+    #stu_multi_race_common
 
   # categorical
     #stu_race_cb
     lists_orders_zip_hs_df %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
     lists_orders_zip_hs_df %>% filter(!(stu_race_cb %in% (0) | is.na(stu_race_cb))) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
     
+    #0 [no response]                       23786
+    #1 [American Indian/Alaska Native]      2765
+    #2 [Asian]                            150665
+    #3 [Black/African American]            44427
+    #4 [Hispanic/Latino]                  168064
+    #8 [Native Hawaiian/Pacific Islander]    799
+    #9 [white]                            346641
+    #12 [two or more races, non-Hispanic]   3366
+    
 # zip code level [ACS]
+    # https://www.census.gov/quickfacts/fact/note/US/RHI625219
   # zip_pop_white_15_19_pct
   # zip_pop_black_15_19_pct
   # zip_pop_asian_15_19_pct
@@ -1260,6 +1434,14 @@ lists_orders_zip_hs_df %>% glimpse()
   #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>% count(stu_out_st)
 
   # income
+
+lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>%
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+    )
+
   lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
     group_by(stu_out_st) %>% summarize(
       n_obs = sum(n()),
@@ -1281,9 +1463,15 @@ lists_orders_zip_hs_df %>% glimpse()
   lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
     group_by(univ_name,stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100)
 
+
+lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(univ_name,stu_out_st) %>% count(hs_school_type)
+
+
+lists_orders_zip_hs_df %>% filter(stu_in_us==1, univ_id == '145637') %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
+    group_by(stu_out_st,hs_school_type) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100) %>% print(n=100)
   
-START HERE:
-  NEXT FIND THOSE FILTER CRITERUA (VARIABLES STARTING W/ ORD_) THAT ARE ASSOCIATED WITH SYSTEMIC RACE/CLASS INEQUALITY
+
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
 ## -----------------------------------------------------------------------------
