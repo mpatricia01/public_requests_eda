@@ -191,8 +191,8 @@ orders_df %>% count(zip_code)
 
 
 # read in data
-lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
-lists_df %>% glimpse() # note: the order number is embedded in the variable "source"
+lists_urbana <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
+lists_urbana %>% glimpse() # note: the order number is embedded in the variable "source"
   #lists_df %>% count(Source) %>% print(n=100)
 
 # Checks
