@@ -116,8 +116,14 @@ add_testtakers_cols <- function(sat_df) {
       pop_nativehawaii_15_19_pct = as.numeric(pop_nativehawaii_15_19_pct),
       pop_otherrace_15_19_pct = as.numeric(pop_otherrace_15_19_pct),
       pop_tworaces_15_19_pct = as.numeric(pop_tworaces_15_19_pct),
-      pop_hispanic_15_19_pct = as.numeric(pop_hispanic_15_19_pct)      
+      pop_hispanic_15_19_pct = as.numeric(pop_hispanic_15_19_pct),
+      # create number and percent variable that combines native american, alaska native, native hawaiian and pacific islander
+      pop_native_15_19 = pop_amerindian_15_19 + pop_nativehawaii_15_19,
+      pop_native_15_19_pct = (pop_native_15_19/pop_total_15_19)*100
+      
     )
+    
+
     #acs_race_zipcode %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
     #acs_race_zipcode %>% count(median_household_income) %>% print(n=100)
     #acs_race_zipcode %>% filter(is.na(median_household_income)) %>% count()
@@ -136,11 +142,30 @@ add_testtakers_cols <- function(sat_df) {
   # check on weird values of median household income
   acs_race_zipcodev2 %>% count(median_household_income) %>% print(n=100)
   
+  # check on race/ethnicity vars
+    #acs_race_zipcodev2 %>% count(is.na(pop_white_15_19))
+    #acs_race_zipcodev2 %>% count(is.na(pop_amerindian_15_19))
+    #acs_race_zipcodev2 %>% count(is.na(pop_nativehawaii_15_19))
+    #acs_race_zipcodev2 %>% count(is.na(pop_native_15_19))
+    
+    #acs_race_zipcodev2 %>% count(is.na(pop_white_15_19_pct))
+    #acs_race_zipcodev2 %>% count(is.na(pop_amerindian_15_19_pct))
+    #acs_race_zipcodev2 %>% count(is.na(pop_nativehawaii_15_19_pct))
+    #acs_race_zipcodev2 %>% count(is.na(pop_native_15_19_pct))
+    
+    #acs_race_zipcodev2 %>% filter(is.na(pop_white_15_19_pct)) %>% count(pop_total_15_19)
+  
   # check what race/ethnicity variables add up to [**** basically, always = 100!*****]
-  acs_race_zipcodev2 %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
-    select(state_code,zip_code,contains('pct')) %>% count(tot_pct) 
+  acs_race_zipcodev2 %>% select(-pop_native_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
+    select(state_code,zip_code,contains('pct')) %>% count(tot_pct)
+  
+  acs_race_zipcodev2 %>% select(-pop_amerindian_15_19_pct,-pop_nativehawaii_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
+    select(state_code,zip_code,contains('pct')) %>% count(tot_pct)  
+  
   #acs_race_zipcodev2 %>% glimpse()
 
+
+  
 zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-way-report/master/assets/data/zip_code_cbsa.csv'))
   
   #zip_cbsa_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
@@ -220,15 +245,27 @@ privhs_data_1718 <- readRDS(file.path(data_dir, 'pss_1718.RDS'))
   # Combine data
     pubhs_privhs_data <- dplyr::bind_rows(
       pubhs_data,privhs_data
-    ) %>% filter(!is.na(pct_white)) # 2 obs in 17-18 data for publics that have 0s for all enrollment by race vars and NAs for all pct enrollment by race vars
+    ) %>% filter(!is.na(pct_white)) %>% # 2 obs in 17-18 data for publics that have 0s for all enrollment by race vars and NAs for all pct enrollment by race vars
+    # create number and percent variable that combines native american, alaska native, native hawaiian and pacific islander
+    mutate(
+      total_native = total_nativehawaii + total_amerindian,
+      pct_native = (total_native/total_students)*100
+    )
+    #pubhs_privhs_data %>% select(total_amerindian,total_nativehawaii,total_native,total_students,pct_amerindian,pct_nativehawaii,pct_native) %>% View()
     
   # checks
-    pubhs_privhs_data %>% glimpse()
-    pubhs_privhs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs      
-    pubhs_privhs_data %>% count(school_control)
-    pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_unknown))
+    #pubhs_privhs_data %>% glimpse()
+    #pubhs_privhs_data %>% group_by(ncessch) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs      
+    #pubhs_privhs_data %>% count(school_control)
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_unknown))
     
-    pubhs_privhs_data %>% glimpse()
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(total_students))
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_white))
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_amerindian))
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_nativehawaii))
+    #pubhs_privhs_data %>% group_by(school_control) %>% count(is.na(pct_native))
+    
+    #pubhs_privhs_data %>% glimpse()
   
     # check that enrollment count race vars sum to total enrollment both public and private; looks good
     #pubhs_privhs_data %>% select(contains('total')) %>% glimpse()  
@@ -243,7 +280,7 @@ privhs_data_1718 <- readRDS(file.path(data_dir, 'pss_1718.RDS'))
     
     # check that pct race vars sum to 100 for both public and private; looks good
     pubhs_privhs_data %>% select(contains('pct')) %>% glimpse()  
-    pubhs_privhs_data %>% mutate(
+    pubhs_privhs_data %>% select(-pct_native) %>% mutate(
       pct_unknown = if_else(school_control=='public',pct_unknown,0, missing = NULL),
       tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))
     ) %>% select(ncessch,name,school_control,state_code,zip_code,contains('pct')) %>% count(school_control,tot_pct) %>% print(n=100)
@@ -1240,7 +1277,23 @@ lists_orders_zip_df <- lists_orders_df %>%
       stu_hs_code_len == 6 ~ stu_hs_code
     ),
     stu_ceeb_len = str_length(stu_ceeb)
-  )
+  ) %>%
+  # create additional variables for analysis
+    mutate(
+      # student-level in-state vs. out-of-state purchase
+      stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL),
+      # student-level dichotomous race vars from categorical CB race var
+      stu_white = if_else(stu_race_cb==9,1,0,missing=NULL),
+      stu_asian = if_else(stu_race_cb==2,1,0,missing=NULL),
+      stu_black = if_else(stu_race_cb==3,1,0,missing=NULL),
+      stu_hispanic = if_else(stu_race_cb==4,1,0,missing=NULL),
+      stu_amerindian = if_else(stu_race_cb==1,1,0,missing=NULL),
+      stu_nativehawaii = if_else(stu_race_cb==8,1,0,missing=NULL),
+      stu_native = if_else(stu_race_cb %in% c(1,8),1,0,missing=NULL), # ametican indian, alaska native, native hawwaiian or pacific islander
+      stu_tworaces = if_else(stu_race_cb==12,1,0,missing=NULL),
+      stu_unknown = if_else(stu_race_cb==0,1,0,missing=NULL),
+    ) 
+
   # checks on variable stu_ceeb
   #lists_orders_zip_df %>% filter(!(stu_hs_code_len %in% c(5,6))) %>% count(stu_hs_code_len)
   #lists_orders_zip_df %>% filter(!(stu_hs_code_len %in% c(5,6))) %>% count(stu_ceeb) # always NA
@@ -1254,13 +1307,25 @@ lists_orders_zip_df <- lists_orders_df %>%
   #lists_orders_zip_df %>% mutate(stu_ceeb_len = str_length(stu_ceeb)) %>% filter(stu_in_us==0) %>% select(stu_hs_code,stu_hs_code_len,stu_ceeb,stu_ceeb_len,stu_country,stu_state,stu_city,stu_zip_code,univ_name,ord_num) %>% View()
 
 # merge student list data (left) to high school data (right) by ceeb code
-  ceeb_hs_old %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
-  ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
+  #ceeb_hs_old %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
+  #ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1) %>% glimpse()
   
   lists_orders_zip_hs_df <- lists_orders_zip_df %>% 
     left_join(y= (ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1)), by = c('stu_ceeb' = 'ceeb')) %>%
-    mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one)
-  
+    mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one) %>%
+    # create 0/1 indicator for student attends a private high school
+    mutate(
+      hs_private = if_else(hs_school_control=='private',1,0,missing=NULL)
+    )    
+      
+      
+  # 8/23/2021: exclude Minnesota State University Moorhead for now because missing prospect-level race vars
+    #lists_orders_zip_df %>% filter(univ_id == '174358') %>% count()
+    #lists_orders_zip_df %>% filter(univ_id == '174358') %>% count(stu_in_us)
+    lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id != '174358')
+    lists_orders_zip_hs_df %>% count()
+
+    
   # INVESTIGATE MERGE
     # NOTE: 8/20/2021: THE NUMBERS IN COMMENTS ON BELOW CHECKS ARE BASED ON USING HIGH SCHOOL DATA FRAME hs_data, WHICH WE ARE NOT USING ANYMORE
     # SUMMARY OF INVESTIGATION
@@ -1333,229 +1398,544 @@ lists_orders_zip_df <- lists_orders_df %>%
 
     
 ## -----------------------------------------------------------------------------
-## INVESTIGATING EQUALITY OF RACE/ETHNICITY CATEGORIES ACROSS DATA SOURCES (prospect level; prospect zip-code; prospect high school)
-## -----------------------------------------------------------------------------
-    
-# student level
-  # 0/1 variables [generally, not exclusive]
-    
-    #stu_is_hisp_common
-    #stu_american_indian_common
-    #stu_asian_common
-    #stu_black_common
-    #stu_native_hawaiian_common
-    #stu_white_common
-    #stu_race_no_response_common
-    #stu_other_common
-    #stu_ct_race_groups_common
-    #stu_multi_race_common
-
-  # categorical
-    #stu_race_cb
-    lists_orders_zip_hs_df %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
-    lists_orders_zip_hs_df %>% filter(!(stu_race_cb %in% (0) | is.na(stu_race_cb))) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
-    
-    #0 [no response]                       23786
-    #1 [American Indian/Alaska Native]      2765
-    #2 [Asian]                            150665
-    #3 [Black/African American]            44427
-    #4 [Hispanic/Latino]                  168064
-    #8 [Native Hawaiian/Pacific Islander]    799
-    #9 [white]                            346641
-    #12 [two or more races, non-Hispanic]   3366
-    
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
-      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
-    )
-  
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)  
-  
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>%
-    mutate(
-      stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL),
-      stu_white = if_else(stu_race_cb==9,1,0,missing=NULL),
-      stu_asian = if_else(stu_race_cb==2,1,0,missing=NULL),
-      stu_black = if_else(stu_race_cb==3,1,0,missing=NULL),
-      stu_hispanic = if_else(stu_race_cb==4,1,0,missing=NULL),
-      stu_amerindian = if_else(stu_race_cb==1,1,0,missing=NULL),
-      stu_nativehawaii = if_else(stu_race_cb==8,1,0,missing=NULL),
-      stu_tworaces = if_else(stu_race_cb==12,1,0,missing=NULL),
-      stu_unknown = if_else(stu_race_cb==0,1,0,missing=NULL),
-    ) %>%
-    group_by(stu_out_st) %>%
-     summarize(
-      n_obs = sum(n()),
-      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
-     pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
-     pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
-     pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
-     pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
-     pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
-     pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
-     pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
-     pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
-     
-    )
-
-  
-# zip code level [ACS]
-    # https://www.census.gov/quickfacts/fact/note/US/RHI625219
-  # zip_pop_white_15_19_pct
-  # zip_pop_black_15_19_pct
-  # zip_pop_asian_15_19_pct
-  # zip_pop_amerindian_15_19_pct
-  # zip_pop_nativehawaii_15_19_pct
-  # zip_pop_otherrace_15_19_pct
-  # zip_pop_tworaces_15_19_pct
-  # zip_pop_hispanic_15_19_pct
-
-  #group_by(stu_out_st) %>% 
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
-      pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
-      pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
-      pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
-      pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
-      pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
-      pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
-      pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
-      pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
-    )
-
-# high-school level    
-  # hs_pct_white
-  # hs_pct_black
-  # hs_pct_hispanic
-  # hs_pct_asian
-  # hs_pct_amerindian
-  # hs_pct_nativehawaii
-  # hs_pct_tworaces
-  # hs_pct_unknown
-    
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
-      pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
-      pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
-      pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
-      pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
-      pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
-      pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
-      pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
-      pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
-    )
-  
-    ceeb_hs %>% glimpse()
-    
-    ceeb_hs %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_hs_race = sum(is.na(pct_white)==0),
-      pct_hs_white = mean(pct_white, na.rm = TRUE),
-      pct_hs_asian = mean(pct_asian, na.rm = TRUE),
-      pct_hs_black = mean(pct_black, na.rm = TRUE),
-      pct_hs_hispanic = mean(pct_hispanic, na.rm = TRUE),
-      pct_hs_amerindian = mean(pct_amerindian, na.rm = TRUE),
-      pct_hs_nativehawaii = mean(pct_nativehawaii, na.rm = TRUE),
-      pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
-      pct_hs_unknown = mean(pct_unknown, na.rm = TRUE),      
-      
-    )
-  
-# questions:
-    # does the ACS/zipcode variable for "tworaces" include students who identify as hispanic? the student-level measure of two or more races excludes students who identify as two or more races
-
-    
-## -----------------------------------------------------------------------------
 ## RQ2A: WHAT ARE THE CHARACTERISTICS OF PROSPECTS PURCHASED BY STUDENT LISTS? HOW DO THESE CHARACTERISTICS DIFFER ACROSS UNIVERSITY TYPE, GEOGRAPHIC FOCUS, AND ACROSS FILTER CRITERIA
 ## -----------------------------------------------------------------------------
 
-lists_orders_zip_hs_df %>% glimpse()
-# potential tables/figures to create
-  # from EDA google doc: https://docs.google.com/document/d/17XGsoYYmqODmdUik-5q5-0GuBc0LNb6KOrs_lhAYUpU/edit# 
+# EDA GOOGLE DOCS
+  # 'exploratory data analysis': https://docs.google.com/document/d/17XGsoYYmqODmdUik-5q5-0GuBc0LNb6KOrs_lhAYUpU/edit# 
+  # 'OJ and KS analysis plans' https://docs.google.com/document/d/17lpSfaXgKCc3bRBsuiqKEPMhLSL6agyv2lWQxeGf9a4/edit
     
-  #Row1: characteristics of all prospects purchased from all lists across all universities
-  #Columns: number of students by race, average income in zip-code, average share of race by zip-code, etc
-  #Row2: in-state prospects
-  #Row3: out-of-state prospects
-  #Other rows
-  #Regional university; research university
-  #Table of student characteristics by filter?
-#Show results via map too?
-    
-# prospect characteristics of potential interest
-    # number of students
-    # number/percent of students by race
-    # number of students by public/private high school
-    # median income of zip-code where student lives
-    # racial composition of high school student attend
-    # 
-    
-# university characteristics. how do prospect characteristics differ by following university characteristics
-    # university (e.g., univ_id)
-      # in-state vs. out-of-state purchases (but this is technically a filter)
-    # university carnegie type
-    
-# student list purchase filters. how do prospect characteristics differ by the following filters (individually and/or in conjunction) chosen for the student list purchase
-    # in-state vs. out-of-state
-    # international
-    # Segment analysis [0/1]
-    # Score range
-    # 
-
-lists_orders_zip_hs_df %>% glimpse()
-######### EDA
-    
-# in-state vs. out-of-steate [focusing on state of the prospect rather than states of the order]    
   
-  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(univ_state)
-  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count(stu_state) %>% print(n=100)
-  #lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>% count(stu_out_st)
-
-  # income
-
-lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>%
+#############      
+######### PROSPECT CHARACTERISTICS OF INTEREST; BY ALL AND IN-STATE VS. OUT-OF-STATE PROSPECTS
+#############    
+    
+# number of students    
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count()
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(stu_out_st) %>% count()    
+    
+# median income of zip-code where student lives
+  # avg of purchased prospects
+    
+    # all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )    
+    
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0) %>% group_by(stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+  
+  # Avg for set of zip-codes where purchased prospect lives
+    
+    # all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_zip_code) %>% filter(row_number()==1) %>% ungroup() %>% 
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+    
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_zip_code,stu_out_st) %>% filter(row_number()==1) %>% ungroup() %>% 
+      group_by(stu_out_st) %>%summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+  
+# number/percent of prospects by race
+  
+  # all
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100)  
+  # same
+  #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(stu_race_cb) %>% summarise (n = n()) %>%  mutate(pct = 100*(n / sum(n)))
+  
+  # create from 0/1 variables defined by the categorical variable 
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>%    
     summarize(
       n_obs = sum(n()),
-      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
-      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
-    )
-
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
-      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
-    )
-
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(univ_name,stu_out_st) %>% summarize(
-      n_obs = sum(n()),
-      n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
-      mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
-    )
-
-  # prospect race [stark results]
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100)
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )  
   
-  lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(univ_name,stu_out_st) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100)
-
-
-lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(univ_name,stu_out_st) %>% count(hs_school_type)
-
-
-lists_orders_zip_hs_df %>% filter(stu_in_us==1, univ_id == '145637') %>% mutate(stu_out_st = if_else(stu_state != univ_state,1,0, missing = NULL)) %>%
-    group_by(stu_out_st,hs_school_type) %>% count(stu_race_cb) %>% mutate(freq = (n / sum(n)) * 100) %>% print(n=100) %>% print(n=100)
+  # by 0/1 prospect is out of state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(stu_out_st) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100)  
   
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(stu_out_st) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )    
+  
+# racial composition of high school student attend
+  
+  #Avg of purchased prospects
+  
+    #all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% 
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )
+  
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% group_by(stu_out_st) %>% 
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )    
+      
+  #Avg for set of high schools where purchased prospect lives
+    
+    # all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_ceeb) %>% filter(row_number()==1) %>% ungroup() %>%
+      # group_by out-of-state and then create summary statistics
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )  
+    
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_ceeb,stu_out_st) %>% filter(row_number()==1) %>% ungroup() %>%
+      # group_by out-of-state and then create summary statistics
+      group_by(stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )  
+    
+# racial composition of zip-code
+  
+  #Avg of purchased prospects
+  
+    # all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% 
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
+        pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+        pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+        pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+        pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+        #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+        #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+        pct_zip_native = mean(zip_pop_native_15_19_pct, na.rm = TRUE),
+        pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+        pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      )
+    
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% group_by(stu_out_st) %>% 
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
+        pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+        pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+        pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+        pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+        #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+        #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+        pct_zip_native = mean(zip_pop_native_15_19_pct, na.rm = TRUE),
+        pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+        pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      )
+    
+  #Avg for set of zip-codes where purchased prospect lives
+    
+    #all
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_zip_code) %>% filter(row_number()==1) %>% ungroup() %>% 
+      # group_by out-of-state and then create summary statistics
+      summarize(
+        n_obs = sum(n()),
+        n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
+        pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+        pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+        pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+        pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+        #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+        #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+        pct_zip_native = mean(zip_pop_native_15_19_pct, na.rm = TRUE),
+        pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+        pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      )
+  
+    # by 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs ==0) %>% 
+      # group_by student zip_code [and potentially in-state/out-of-state purchase] and then keep only first obs for each zip-code
+      group_by(stu_zip_code,stu_out_st) %>% filter(row_number()==1) %>% ungroup() %>% 
+      # group_by out-of-state and then create summary statistics
+      group_by(stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_zip_race = sum(is.na(zip_pop_otherrace_15_19_pct)==0),
+        pct_zip_white = mean(zip_pop_white_15_19_pct, na.rm = TRUE),
+        pct_zip_asian = mean(zip_pop_asian_15_19_pct, na.rm = TRUE),
+        pct_zip_black = mean(zip_pop_black_15_19_pct, na.rm = TRUE),
+        pct_zip_hispanic = mean(zip_pop_hispanic_15_19_pct, na.rm = TRUE),
+        #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+        #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+        pct_zip_native = mean(zip_pop_native_15_19_pct, na.rm = TRUE),
+        pct_zip_otherrace = mean(zip_pop_otherrace_15_19_pct, na.rm = TRUE),
+        pct_zip_tworaces = mean(zip_pop_tworaces_15_19_pct, na.rm = TRUE),
+      )
+
+      
+# prospect attends public vs. private school
+  
+  # all
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)  
+  
+  # by 0/1 prospect is out of state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% group_by(stu_out_st) %>% count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)  
+  
+# Racial composition of prospects by public/private high school
+  
+  # all
+    
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(hs_private) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100)  
+  
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(hs_private) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )
+
+  # by 0/1 prospect is out of state
+  
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(hs_private,stu_out_st) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100) %>% print(n=40)
+
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(stu_out_st,hs_private) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )
+
+#############  
+######### PROSPECT CHARACTERISTICS OF INTEREST; BY UNIVERSITY TYPE AND IN/OUT OF STATE
+#############
+  
+#### which universities are which carnegie type
+
+    #lists_orders_zip_hs_df %>% group_by(univ_c15basic,univ_name) %>% count()
+  
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(univ_c15basic,univ_name) %>% filter(row_number()==1) %>% ungroup() %>% arrange(univ_c15basic) %>% select(univ_name,univ_id,univ_c15basic)
+  
+# number of students    
+
+    # by university type
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(univ_c15basic) %>% count()
+    
+    # by university type and 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(univ_c15basic,stu_out_st) %>% count()
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(univ_name,stu_out_st) %>% count()
+
+    
+# median income of zip-code where student lives
+  # avg of purchased prospects
+    
+    # by university type
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0) %>% group_by(univ_c15basic) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )    
+    
+    # by university type and 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0) %>% group_by(univ_c15basic,stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+  
+
+# number/percent of prospects by race
+  
+  # by university type
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100) %>% print(n=30)
+
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>%    
+    group_by(univ_c15basic) %>% summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )  
+  
+  # by university type and 0/1 prospect is out of state
+  
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic,stu_out_st) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100)  %>% print(n=50)
+  
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic,stu_out_st) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )
+  
+
+# racial composition of high school student attend
+  
+  #Avg of purchased prospects
+  
+    # by university type
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% 
+      group_by(univ_c15basic) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )
+  
+    # by university type and 0/1 prospect is out of state
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% 
+      group_by(univ_c15basic,stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_hs_race = sum(is.na(hs_pct_white)==0),
+        pct_hs_white = mean(hs_pct_white, na.rm = TRUE),
+        pct_hs_asian = mean(hs_pct_asian, na.rm = TRUE),
+        pct_hs_black = mean(hs_pct_black, na.rm = TRUE),
+        pct_hs_hispanic = mean(hs_pct_hispanic, na.rm = TRUE),
+        #pct_hs_amerindian = mean(hs_pct_amerindian, na.rm = TRUE),
+        #pct_hs_nativehawaii = mean(hs_pct_nativehawaii, na.rm = TRUE),
+        pct_hs_native = mean(hs_pct_native, na.rm = TRUE),
+        pct_hs_tworaces = mean(hs_pct_tworaces, na.rm = TRUE),
+        pct_hs_unknown = mean(hs_pct_unknown, na.rm = TRUE),      
+      )
+
+#### prospect attends public vs. private school
+  
+  # by university type
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% group_by(univ_c15basic) %>% count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)  
+  
+  # by university type and 0/1 prospect is out of state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0) %>% group_by(univ_c15basic,stu_out_st) %>% count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)  
+  
+# Racial composition of prospects by public/private high school
+  
+  # by university type
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic,hs_private) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )
+
+  # by 0/1 prospect is out of state
+    #lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic,hs_school_control,stu_out_st) %>% count(stu_race_cb) %>% mutate(pct = (n / sum(n)) * 100) %>% print(n=40)
+
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_hs ==0,!(is.na(stu_race_cb))) %>% group_by(univ_c15basic,stu_out_st,hs_private) %>% 
+    summarize(
+      n_obs = sum(n()),
+      n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+      pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+      pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+      pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+      pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+      #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+      #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+      pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+      pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+      pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+    )    
+    
+
+#############  
+######### PROSPECT CHARACTERISTICS OF INTEREST BY FILTER CRITERIA
+#############
+
+# LIST OF ORDER SUMMARY VARIABLES
+
+# POTENTIAL ORDER SUMMARY VARIABLES OF INTEREST
+  # general
+    # ord_num            <chr> "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "483721", "4~
+    # ord_title          <chr> "1150-1500 INTL Travel Countries Only", "1150-1500 INTL Travel Countries Only", "1150-1500 INTL Travel Countries Only", "1150-1500 INTL Travel Countries~  
+    # ord_date_start     <date> 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06-27, 2019-06~  
+    # ord_hs_grad_class  <chr> "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|2022", "2021|202~
+    # na_ord_summ        <dbl> 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,~  
+  
+  # geographic order filter variables
+  
+    # ord_zip_code       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_segment        <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_state_name     <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_cbsa_name      <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_geomarket      <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_intl_region    <chr> "AS-3 - Egypt|AC-7 - Hong Kong|AS-4 - India|AC-8 - Indonesia|AS-7 - Jordan|AC-16 - Korea, South (ROK)|AC-29 - Macao|AC-10 - Malaysia|AS-14 - Saudi Arabi~
+  
+  # score variables
+    # ord_sat_score_min  <dbl> 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 1200, 12~
+    # ord_sat_score_max  <dbl> 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 15~
+    # ord_psat_score_min <dbl> 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 1150, 11~
+    # ord_psat_score_max <dbl> 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 1450, 14~
+    
+  # HS gpa variables
+    # ord_gpa_low        <chr> "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B-", "B~
+    # ord_gpa_high       <chr> "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A+", "A~
+  # ord_rank_low       <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+  # ord_rank_high      <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+  
+  # demographic filter variables
+    # ord_gender         <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+    # ord_race_ethnicity <chr> NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, ~
+  
+  lists_orders_zip_hs_df %>% glimpse()
+  lists_orders_zip_hs_df %>% select(contains('ord')) %>% glimpse()
+  
+  # which observations are you missing order summary data for?
+  
+    lists_orders_zip_hs_df %>% count(univ_name,na_ord_summ) %>% print(n=100)
+
+  # geographic order filter variables  
+    # segment
+      lists_orders_zip_hs_df %>% count(univ_name,ord_segment) %>% print(n=100)
+      lists_orders_zip_hs_df %>% filter(univ_id == '145637') %>% count(univ_name,ord_segment) %>% print(n=100)
+      
+      lists_orders_zip_hs_df %>% filter(univ_id == '145637') %>% count(ord_segment) %>% print(n=100)
+      orders_df %>% filter(univ_id == '145637') %>% count(segment)
+      
+      # orders that use segment
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(segment)
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(state_name)
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(cbsa_name)
+      # some orders just use state_name in conjunction w/ segment; others use CBSA in conjunction w/ segment; others use CBSA and state name in conjunction w/ segment
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(state_name,cbsa_name)
+      
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(sat_score_min)
+      orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(sat_score_max)
+      
+      
+  lists_orders_zip_hs_df %>% count(univ_name,ord_intl_region) %>% print(n=100)
+  ord_segment
+  lists_orders_zip_hs_df %>% count(univ_name,ord_geomarket) %>% print(n=100)
+  lists_orders_zip_hs_df %>% count(univ_name,ord_cbsa_name) %>% print(n=100)
+  lists_orders_zip_hs_df %>% count(univ_name,ord_zip_code) %>% print(n=100)
+  
+  lists_orders_zip_hs_df %>% count(univ_name,ord_rank_low) %>% print(n=100)
+  
+  lists_orders_zip_hs_df %>% count(univ_name,ord_zip_code_file) %>% print(n=100)
+  
+  
+  ord_intl_region
+
+
+
+    
+
 
 ## -----------------------------------------------------------------------------
 ## INVESTIGATING HISPANIC ORIGIN [ethnicity] AND RACE VARIABLES;
@@ -1808,154 +2188,3 @@ lists_orders_zip_hs_df %>% filter(stu_in_us==1, univ_id == '145637') %>% mutate(
       other = mean(other),
       race_no_response = mean(race_no_response)
     )       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-lists_df %>% select(univ_id,student_id,city,state,zip,zip_code,country,geomarket,race,is_hispanic_origin,hs_code,order_no,order_date,update_date,county_code,post_del,post_corr,
-                    gender,cuban,mexican,puerto_rican,other_hispanic,non_hispanic,american_indian,asian,black,native_hawaiian,white,other,race_no_response,ethnicity_no_response,
-                    grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen,score_range) %>%
-  rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|univ_id)) %>% glimpse()
-
-
-
-
-
-orders_df %>% select(contains('date')) %>% glimpse()
-lists_df %>% select(contains('date')) %>% glimpse()
-
-
-lists_df %>% count(univ_name,name_source) %>% print(n=500)
-lists_df %>% count(univ_name,update_date) %>% print(n=500)
-
-
-
-
-
-lists_df %>% glimpse()
-
-
-
-orders_df %>% rename_with(.fn = function(x){paste0("ord_", x)}, .cols = !(starts_with('univ')|starts_with('order'))) %>% glimpse()
-
-mtcars %>% rename_with(.cols = hp:wt, function(x){paste0("cars.", x)}) # v.1.0.4.
-
-orders_df %>% select(starts_with('univ'),order_num) %>% 
-  left_join(lists_df %>% select(univ_id,order_no,student_id), by = c('univ_id', 'order_num' = 'order_no'))
-
-
-c("a" = "b", "c" = "d")
-
-      lists_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
-  right_join(lists_df, by = 'univ_id') %>% select(-univ_sector)
-
-
-
-
-
-## -----------------------------------------------------------------------------
-## RESEARCH QUESTION 3: WHAT ARE THE CHARACTERISTICS OF PROSPECTS/SCHOOLS/COMMUNITIES INCLUDED VERSUS EXCLUDED FROM STUDENT LIST PURCHASES?
-## -----------------------------------------------------------------------------
-
-#load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/145637_orders.RData'))
-# Contains: IL_orders, OOS_orders, OOS_eng_orders, OOS_noneng_orders, intl_orders,
-#           lists_df_pivot, lists_df_sat, lists_df_act, df_sat_ca_20, df_sat_ca_19, hs_tract_ca
-
-
-# read in data
-lists_df <- read_csv(file.path(data_dir, '145637_lists.csv'), col_types = cols(.default = 'c'))
-lists_df %>% glimpse() # note: the order number is embedded in the variable "source"
-  #lists_df %>% count(Source) %>% print(n=100)
-
-# Checks
-str_detect(lists_df$Source, '^(?:\\w+ \\d+, \\d{4} [SACT]{3} Search \\d+;?\\s*)+$') %>% table() # WHAT IS THIS CHECKING?
-str_count(lists_df$Source, 'SAT|ACT') %>% sum()  # 465231 matches number of rows in lists_df_pivot
-
-# 
-# https://cathblatter.rbind.io/blog/2020/03/16/using-pivot-longer-and-regex-for-data-wrangling/
-lists_df_pivot <- lists_df %>% 
-  pivot_longer(
-    cols = starts_with(c('sat_', 'act_')),
-    names_to = c('.value', 'test_num'),
-    names_pattern = '(^\\w+)_(\\d+)'
-  ) %>%
-  select(-test_num) %>% 
-  pivot_longer(
-    cols = starts_with(c('sat_', 'act_')),
-    names_to = c('test_type', '.value'),
-    names_sep = '_',
-    values_drop_na = T
-  ) %>%
-  rename(order_num = test, order_date = date) %>% 
-  mutate(order_date = mdy(order_date))
-
-lists_df_pivot %>% glimpse()
-
-# create data frame for ACT orders
-  #lists_df_act <- lists_df_pivot %>% filter(test_type == 'act')
-  # Missing order summary for most of lists_df_act (only have 3/22/19 & 6/27/19 order summary, which doesn't match any of the student list dates)
-  #View(lists_df_act %>% select(order_num, order_date) %>% distinct())
-
-# SAT orders
-lists_df_sat <- lists_df_pivot %>% filter(test_type == 'sat')
-lists_df_sat %>% glimpse()
-
-lists_df_sat %>% count(order_num) %>% print(n=100)
-  # NOTE: there appears to be like 92 different order numbers; this is more than the 80 orders on orders_df
-
-  # Missing order summary for 107713 of 415689 rows in lists_df_sat (15 distinct orders)
-  anti_join(lists_df_sat, orders_df, by = 'order_num') %>% nrow()
-  View(anti_join(lists_df_sat, orders_df, by = 'order_num') %>% select(order_num, order_date) %>% distinct())
-
-# 3 order summaries w/ no lists entries, but these look like draft orders that weren't actually placed (i.e., 'Edit name')
-View(anti_join(orders_df, lists_df_sat, by = 'order_num'))
-
-# Explore remaining matched rows (rows may be duplicates if they belong to multiple orders)
-merged_df_sat <- inner_join(lists_df_sat, orders_df, by = 'order_num')
-
-
-## -----------------------------------------------------------------------------
-## RQ1: WHAT ARE THE CHARACTERISTICS OF STUDENT LIST PURCHASES
-## -----------------------------------------------------------------------------
-
-######### structure of orders data frames
-
-names(IL_orders)
-names(intl_orders)
-OOS_eng_orders
-OOS_noneng_orders
-OOS_orders
-
-
-############### IN-STATE ORDERS
-
-
-IL_orders
-
-
-## -----------------------------------------------------------------------------
-## END SCRIPT
-## -----------------------------------------------------------------------------
-
-
