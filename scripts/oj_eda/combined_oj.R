@@ -180,8 +180,8 @@ zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-w
   #cbsa_name %>% mutate(cbsacode_len = str_length(cbsacode)) %>% count(cbsacode_len) # always 5
   
   # count number of obs per cbsa code and cbsa name
-    cbsa_name %>% group_by(cbsacode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)  %>% print(n=30) # does not uniquely identifies obs
-    cbsa_name %>% group_by(cbsacode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)  %>% print(n=30) # does not uniquely identifies obs
+    #cbsa_name %>% group_by(cbsacode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)  %>% print(n=30) # does not uniquely identifies obs
+    #cbsa_name %>% group_by(cbsacode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key)  %>% print(n=30) # does not uniquely identifies obs
 
   # keep one obs per cbsa
     cbsa_name <- cbsa_name %>% select(cbsacode,cbsatitle,metropolitanmicropolitanstatis,csacode,csatitle) %>% group_by(cbsacode) %>% filter(row_number()==1) %>% ungroup()
@@ -190,13 +190,17 @@ zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-w
     
 # add cbsa name to cbsa code
     # assign cbsa_1 as cbsa associated with zip code, even if part if zip-code in another CBSA; because cbsa_1 is the cbsa with highest percentage of zip-code in that cbsa
-    zip_cbsa_data %>% count(cbsa_1_ratio)
-    zip_cbsa_data %>% count(cbsa_2_ratio)
+    #zip_cbsa_data %>% count(cbsa_1_ratio)
+    #zip_cbsa_data %>% count(cbsa_2_ratio)
     
-    zip_cbsa_data %>% glimpse()
+
+    zip_cbsa_name_data <- zip_cbsa_data %>% select(zip_code,cbsa_1,cbsa_1_ratio) %>% left_join((y=cbsa_name %>% mutate(one=1)) %>% select(-metropolitanmicropolitanstatis),by = c('cbsa_1'='cbsacode')) %>% rename(cbsatitle_1 = cbsatitle) %>%
+      mutate(na_cbsa_name = if_else(is.na(one),1,0)) %>% select(-one)
     
-    zip_cbsa_data %>% select(zip_code,cbsa_1,cbsa_1_ratio) %>% left_join(y=cbsa_name %>% select(-metropolitanmicropolitanstatis),by = c('cbsa_1'='cbsacode')) %>% rename(cbsatitle_1 = cbsatitle)
+    zip_cbsa_name_data %>% glimpse()
+    zip_cbsa_name_data %>% count(na_cbsa_name)
     
+
 #### names associated with CBSA codes
   # relevant links
     # Census "delineation" files: 
@@ -220,7 +224,19 @@ zip_cbsa_data <- read_csv(url('https://raw.githubusercontent.com/cyouh95/third-w
     # cbsa = 49340; cbsa title = Worcester, MA-CT; csa code = 148; csa title = Boston-Worcester-Providence, MA-RI-NH-CT
 
 
-  # 
+# merge zip code data to cbsa name
+    
+acs_race_zipcodev2
+
+zip_cbsa_name_data %>% glimpse()
+
+acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+zip_cbsa_name_data %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+
+acs_race_zipcodev3 <- acs_race_zipcodev2 %>% 
+  left_join(y= zip_cbsa_name_data %>% select(-na_cbsa_name),by = c('zip_code'))
+
+rm(acs_race_zipcodev2,cbsa_name)
 ## -----------------------------------------------------------------------------
 ## SECONDARY DATA, HIGH SCHOOL DATA
 ## -----------------------------------------------------------------------------
@@ -480,7 +496,13 @@ orders_df %>% glimpse()
 lists_df %>% glimpse()
 
 orders_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
-  right_join(orders_df, by = 'univ_id') %>% select(-univ_sector)
+  right_join(orders_df, by = 'univ_id') %>% select(-univ_sector) %>%
+  # drop order from U Illinois-Urbana that seems like it was not executed (order name is OOS ENG Female PSAT Catch-Up; 1,377 students available; but "name license status" was "saved" rather than "fulfilled" and "maximum volume = 0)
+  filter(order_num != '374945')
+
+  orders_df %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # unique
+
+
 
 # LABEL ORDER SUMMARY DATA
 orders_df %>% glimpse()
@@ -1268,7 +1290,7 @@ lists_orders_df %>% glimpse()
     #lists_orders_df %>% count(stu_country) %>% print(n=400)
     
 lists_orders_zip_df <- lists_orders_df %>% 
-  left_join(y=acs_race_zipcodev2 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% mutate(one=1),by = c('stu_zip_code' = 'zip_code')) %>%
+  left_join(y=acs_race_zipcodev3 %>% select(-zipcode,-msa_name) %>% rename_with(.fn = function(x){paste0("zip_", x)}, .cols = !(starts_with('zip'))) %>% mutate(one=1),by = c('stu_zip_code' = 'zip_code')) %>%
   mutate(na_zip_acs = if_else(is.na(one),1,0)) %>% select(-one)
 
   # INVESTIGATE MERGE
@@ -1464,25 +1486,53 @@ lists_orders_zip_df <- lists_orders_df %>%
     
 # number of students by in vs. out-of-state
     
-    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(stu_out_st) %>% count()    
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% group_by(stu_out_st) %>% count()
 
-# metropolitan areas prospects are from
+# CBSAs prospects are from
     
-  # stu_geomarket               <chr> "INT-SA Saudi Arabia", "INT-ID Indonesia", "INT-VM Vietnam", "INT-KS South Korea", "INT-HK Hong Kong S.A.R.", "INT-IN India", "INT-VM Vietnam", "IN~
+  # in state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,stu_out_st==0,!is.na(zip_cbsatitle_1)) %>% 
+    count(zip_cbsatitle_1) %>% arrange(desc(n)) %>% print(n=30)
+    
+  # out of state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,stu_out_st==1,!is.na(zip_cbsatitle_1)) %>% 
+    count(zip_cbsatitle_1) %>% arrange(desc(n)) %>% print(n=30)
+  
+# Combined statistical areas prospects are from
+  
+  # in state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,stu_out_st==0,!is.na(zip_csatitle)) %>% 
+    count(zip_csatitle) %>% arrange(desc(n)) %>% print(n=30)
+    
+  # out of state
+  lists_orders_zip_hs_df %>% filter(stu_in_us==1,stu_out_st==1,!is.na(zip_csatitle)) %>% 
+    count(zip_csatitle) %>% arrange(desc(n)) %>% print(n=30)  
+  
+    lists_orders_zip_hs_df %>% glimpse()
+    
     
 # geomarkets prospects are from
-   
-    lists_orders_zip_hs_df %>% glimpse()
-    lists_orders_zip_hs_df %>% select(starts_with('stu_')) %>% glimpse()
-    lists_orders_zip_hs_df %>% select(starts_with('zip_')) %>% glimpse()
+  # stu_geomarket               <chr> "INT-SA Saudi Arabia", "INT-ID Indonesia", "INT-VM Vietnam", "INT-KS South Korea", "INT-HK Hong Kong S.A.R.", "INT-IN India", "INT-VM Vietnam", "IN~
+  # NEED TO FIX THE GEOMARKET VARIABLE; IT IS FORMATTED DIFFERENTLY ACROSS UNIVERSITIES
+    # maybe find a crosswalk betwen statecode-two-digit code and name
     
-  
-  
-
+  # in state
+  lists_orders_zip_hs_df %>% filter(stu_out_st==0) %>% 
+    count(stu_geomarket) %>% arrange(desc(n)) %>% print(n=30)
+    
+  # out of state
+  lists_orders_zip_hs_df %>% filter(stu_out_st==1) %>% 
+    count(stu_geomarket) %>% arrange(desc(n)) %>% print(n=50)  
+   
 # international prospects
   # stu_country                 <chr> "saudi arabia", "indonesia", "vietnam", "south korea", "hong kong s.a.r.", "india", "vietnam", "india", "vietnam", "united arab emirates", "south k~
   
+  lists_orders_zip_hs_df %>% count(stu_country) %>% arrange(desc(n)) %>% print(n=50)
+
+  lists_orders_zip_hs_df %>% filter(stu_country != 'united states') %>% count(univ_name) %>% arrange(desc(n)) %>% print(n=50)  
     
+  lists_orders_zip_hs_df %>% filter(stu_country != 'united states') %>% count(stu_geomarket) %>% arrange(desc(n)) %>% print(n=50)  
+  
 # median income of zip-code where student lives
   # avg of purchased prospects
     
@@ -1761,6 +1811,288 @@ lists_orders_zip_df <- lists_orders_df %>%
     lists_orders_zip_hs_df %>% count(univ_name,na_ord_summ) %>% print(n=100)
 
   # geographic order filter variables  
+    
+##### analysis of segment orders (for U Illinois-Urbana)
+
+  # on prospect-level data, there are 21 different orders from U. Urbana that utilize segment
+    lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>% group_by(ord_num) %>% filter(row_number()==1) %>% ungroup() %>% select(ord_num) %>% count()
+  
+  # on prospect-level data, these 21 orders are associated with 158,190 students
+    lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>% count()
+    #lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>% count(stu_country) %>% print(n=40) # all but like 100 of these students are from united states
+    
+  # this is the one out of state order that does not use segment
+    orders_df %>% filter(univ_id == '145637', order_num == '483724') %>% View()
+  
+  # order-level df; 21 orders use segment
+  orders_df %>% filter(univ_id == '145637') %>% count(segment) # 21 orders use segment
+  orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% arrange(order_num) %>% View()
+
+  # which segments for these 21 orders
+    #orders_df %>% filter(univ_id == '145637') %>% count(segment)
+    # always the same set of neighborhood and high school segments:
+      #'EN:51, HS:68|EN:58, HS:70|EN:53, HS:70|EN:51, HS:65|EN:69, HS:70|EN:60, HS:68|EN:73, HS:70|EN:60, HS:65|EN:69, HS:68|EN:70, HS:68|EN:63, HS:70|EN:70, HS:66|EN:78, HS:ALL|EN:58, HS:65|EN:58, HS:64|EN:51, HS:79|EN:60, HS:70|EN:51, HS:70|EN:53, HS:65|EN:60, HS:79|EN:69, HS:75|EN:70, HS:70|EN:63, HS:65|EN:61, HS:ALL|EN:73, HS:65|EN:70, HS:79'
+      #EN:51, HS:65 | EN:51, HS:68 | EN:51, HS:70 | EN:51, HS:79
+      #EN:53, HS:65 | EN:53, HS:70 |
+      #EN:58, HS:64 | EN:58, HS:65 | EN:58, HS:70
+      #EN:60, HS:65 | EN:60, HS:68 | EN:60, HS:70 | EN:60, HS:79
+      #EN:61, HS:ALL
+      #EN:63, HS:65 | EN:63, HS:70
+      #EN:69, HS:68 | EN:69, HS:70 | EN:69, HS:75
+      #EN:70, HS:66 | EN:70, HS:68 | EN:70, HS:70 | EN:70, HS:79
+      #EN:73, HS:65 | EN:73, HS:70
+      #EN:78, HS:ALL
+    # how to read this:
+      # for census tracts assigned to neighborhood cluster 51, they want students who attend high schools assigned to one of the following high school clusters %in% c(65,68,70,79)
+      
+orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()    
+  # state_name [21 segment orders]
+    # 13 orders use this state_name:
+      # 'Vermont|Rhode Island|Hawaii|Maine|Virginia|Michigan|Idaho|Delaware|Iowa|Maryland|Massachusetts|Arkansas|Utah|Indiana|Minnesota|Arizona|Missouri|Montana|Mississippi|New Hampshire|New Jersey|New Mexico|Alaska|Texas|Alabama|North Carolina|North Dakota|Nebraska|New York|Georgia|Nevada|Tennessee|California|Oklahoma|Ohio|Wyoming|Florida|South Dakota|South Carolina|Connecticut|West Virginia|District of Columbia|Wisconsin|Kentucky|Kansas|Oregon|Louisiana|Washington|Colorado|Pennsylvania'
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), state_name == 'Vermont|Rhode Island|Hawaii|Maine|Virginia|Michigan|Idaho|Delaware|Iowa|Maryland|Massachusetts|Arkansas|Utah|Indiana|Minnesota|Arizona|Missouri|Montana|Mississippi|New Hampshire|New Jersey|New Mexico|Alaska|Texas|Alabama|North Carolina|North Dakota|Nebraska|New York|Georgia|Nevada|Tennessee|California|Oklahoma|Ohio|Wyoming|Florida|South Dakota|South Carolina|Connecticut|West Virginia|District of Columbia|Wisconsin|Kentucky|Kansas|Oregon|Louisiana|Washington|Colorado|Pennsylvania') %>% count() # 14
+      # these 13 orders do not filter on cbsa name
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), state_name == 'Vermont|Rhode Island|Hawaii|Maine|Virginia|Michigan|Idaho|Delaware|Iowa|Maryland|Massachusetts|Arkansas|Utah|Indiana|Minnesota|Arizona|Missouri|Montana|Mississippi|New Hampshire|New Jersey|New Mexico|Alaska|Texas|Alabama|North Carolina|North Dakota|Nebraska|New York|Georgia|Nevada|Tennessee|California|Oklahoma|Ohio|Wyoming|Florida|South Dakota|South Carolina|Connecticut|West Virginia|District of Columbia|Wisconsin|Kentucky|Kansas|Oregon|Louisiana|Washington|Colorado|Pennsylvania') %>% count(cbsa_name) # 14
+    
+    # 5 orders use this state_name: 
+      # 'Armed Forces Americas (Except Canada)|Connecticut|Armed Forces Canada, Europe, Middle East, Africa|Missouri|California|Armed Forces Pacific'
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), state_name == 'Armed Forces Americas (Except Canada)|Connecticut|Armed Forces Canada, Europe, Middle East, Africa|Missouri|California|Armed Forces Pacific') %>% count() # 5
+      
+      # QUESTION: FOR THESE ORDERS, HOW DO YOU KNOW THAT THE FILTER IS STATES OR MSA RATHER THAN STATE *AND* MSA?
+      
+    # 3 orders have NA state_name but condition on CBSA
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), is.na(state_name)) %>% count() # 3
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), is.na(state_name)) %>% count(state_name) # 3
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), is.na(state_name)) %>% count(cbsa_name) # 3
+      orders_df %>% filter(univ_id == '145637', !is.na(segment), is.na(state_name)) %>% View() # 3
+      # two orders filter on these CBSAs
+        # 'NY - Syracuse, NY|FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|NY - Rochester, NY|CA - Santa Rosa, CA|CA - Chico, CA|GA - Macon-Bibb County, GA|FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|TX - Midland, TX|FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|CA - San Diego-Carlsbad, CA|CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|TX - Abilene, TX|GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|NJ - Vineland-Bridgeton, NJ|FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|NY - Buffalo-Cheektowaga-Niagara Falls, NY|GA - Augusta-Richmond County, GA-SC|TX - Sherman-Denison, TX|NY - Glens Falls, NY|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|CA - Vallejo-Fairfield, CA|TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|CA - Stockton-Lodi, CA|CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|NY - Albany-Schenectady-Troy, NY|CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|GA - Rome, GA|CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|CA - Santa Cruz-Watsonville, CA|NY - Watertown-Fort Drum, NY|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|NY - New York-Newark-Jersey City, NY-NJ-PA|TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|NJ - Trenton, NJ|TX - Corpus Christi, TX|NJ - Atlantic City-Hammonton, NJ|NY - Ithaca, NY|NY - Binghamton, NY|TX - El Paso, TX|TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|CA - Hanford-Corcoran, CA|CA - Salinas, CA|CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|CA - Los Angeles-Long Beach-Anaheim, CA|TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|NY - Elmira, NY|CA - Redding, CA|TX - Longview, TX|TX - Austin-Round Rock, TX|NY - Utica-Rome, NY|CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|NY - Kingston, NY|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ'
+      # one order filters on these CBSAs
+        # 'FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|CA - Santa Rosa, CA|CA - Chico, CA|GA - Macon-Bibb County, GA|FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|TX - Midland, TX|FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|CA - San Diego-Carlsbad, CA|CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|TX - Abilene, TX|GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|NJ - Vineland-Bridgeton, NJ|FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|GA - Augusta-Richmond County, GA-SC|TX - Sherman-Denison, TX|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|CA - Vallejo-Fairfield, CA|TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|CA - Stockton-Lodi, CA|CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|GA - Rome, GA|CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|CA - Santa Cruz-Watsonville, CA|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|NY - New York-Newark-Jersey City, NY-NJ-PA|TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|NJ - Trenton, NJ|TX - Corpus Christi, TX|NJ - Atlantic City-Hammonton, NJ|TX - El Paso, TX|TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|CA - Hanford-Corcoran, CA|CA - Salinas, CA|CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|CA - Los Angeles-Long Beach-Anaheim, CA|TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|CA - Redding, CA|TX - Longview, TX|TX - Austin-Round Rock, TX|CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ'
+      
+      # these three orders have following score/GPA criteria
+        # sat_score_min = 1240; sat_score_max = 1450; psat_score_min = 1220; psat_score_max = 1450; gpa_low = B-; gpa_high = A+
+      
+        # looking at prospect-level data for these orders
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('500590','567376','483751')) %>% count()
+      
+     # 6 out-of-state non-engineering orders [[5 use segment and one does not]; this one doesn't use segment 483724
+      
+        #orders_df %>% filter(univ_id == '145637', order_num %in% c('483724','470283','371629','456737','386335','403340')) %>% View()
+        # all six use the same state_name and cbsa_name
+        orders_df %>% filter(univ_id == '145637', order_num %in% c('483724','470283','371629','456737','386335','403340')) %>% count(state_name)
+        
+        # prospect-level, 6 orders (including the non-segment)
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335','403340')) %>% count()
+        
+        orders_df %>% filter(univ_id == '145637', order_num %in% c('483724','470283','371629','456737','386335','403340')) %>% count(cbsa_name)
+        
+        # 5 orders use sat_min = 1240 and sat_max = 1450
+          # order num = 403340 uses sat_min = 1230 and sat_max = 1450
+  
+          orders_df %>% filter(univ_id == '145637', order_num %in% c('483724','470283','371629','456737','386335')) %>% count(state_name)
+          orders_df %>% filter(univ_id == '145637', order_num %in% c('483724','470283','371629','456737','386335')) %>% count(cbsa_name)
+
+        # looking at prospect-level data for these orders
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335')) %>% count()
+          
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335')) %>% 
+          group_by(ord_num) %>% count()
+      
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335')) %>% 
+          group_by(ord_num) %>% summarize(
+          n_obs = sum(n()),
+          n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+          pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+          pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+          pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+          pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+          #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+          #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+          pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+          pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+          pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+        )    
+        
+      # 13 engineering orders
+        orders_df %>% filter(univ_id == '145637', order_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count()
+        
+        orders_df %>% filter(univ_id == '145637', order_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count(state_name)
+        orders_df %>% filter(univ_id == '145637', order_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count(cbsa_name)
+        
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count()
+        
+      # making sure the 21 segment orders add up to the right number of prospects
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>% count() %>% as_vector() # total number of prospects
+        
+        # 3 msa orders [filter on msa, but not state]
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('500590','567376','483751')) %>% count()
+        
+        # 5 non-engineering orders [filter on segment, state, and cbsa]
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335')) %>% count()
+
+        # 13 engineering orders [filter on segment and state, but not CBSA]
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count()
+        
+        # add them up; about right
+        (lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('500590','567376','483751')) %>% count() %>% as_vector()) + (lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335')) %>% count() %>% as_vector()) + (lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483701','403333','371665','386336','469731','403314','371662','456710','386441','470123','483702','500494','567377')) %>% count() %>% as_vector())
+          
+    # sort descending by cbsa [or csa] 
+        lists_orders_zip_hs_df %>% glimpse()
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>% count()
+        
+        # number of prospects, descending by cbsa
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>%
+          mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>%
+          count(zip_cbsa_name_code) %>% arrange(desc(n)) %>% print(n=30)
+        
+        # number of prospects, descending by csa
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment)) %>%
+          mutate(zip_csa_name_code = str_c(zip_csatitle,zip_csacode, sep = '; ')) %>%
+          count(zip_csa_name_code) %>% arrange(desc(n)) %>% print(n=30)
+        
+    # investigate racial composition of prospects purchased in particular CBSAs or CSAs
+        
+        #Miami-Fort Lauderdale-West Palm Beach, FL; 33100     4034
+          # student-level data
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '33100') %>%
+          summarize(
+            n_obs = sum(n()),
+            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+          )
+          
+          # compared to composition of zip-codes
+          acs_race_zipcodev3 %>% filter(cbsa_1 == '33100') %>% 
+            summarize(
+              n_obs = sum(n()),
+              n_nonmiss_zip_race = sum(is.na(pop_otherrace_15_19_pct)==0),
+              pct_zip_white = mean(pop_white_15_19_pct, na.rm = TRUE),
+              pct_zip_asian = mean(pop_asian_15_19_pct, na.rm = TRUE),
+              pct_zip_black = mean(pop_black_15_19_pct, na.rm = TRUE),
+              pct_zip_hispanic = mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+              #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+              #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+              pct_zip_native = mean(pop_native_15_19_pct, na.rm = TRUE),
+              pct_zip_otherrace = mean(pop_otherrace_15_19_pct, na.rm = TRUE),
+              pct_zip_tworaces = mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+            )
+          
+          # compare to racial composition of public high schools in the CBSA
+            # ADD THIS NEXT
+          
+        # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD; 37980
+          # student-level
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '37980') %>%
+          summarize(
+            n_obs = sum(n()),
+            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+          )          
+          
+          # compared to composition of zip-codes
+          acs_race_zipcodev3 %>% filter(cbsa_1 == '37980') %>% 
+            summarize(
+              n_obs = sum(n()),
+              n_nonmiss_zip_race = sum(is.na(pop_otherrace_15_19_pct)==0),
+              pct_zip_white = mean(pop_white_15_19_pct, na.rm = TRUE),
+              pct_zip_asian = mean(pop_asian_15_19_pct, na.rm = TRUE),
+              pct_zip_black = mean(pop_black_15_19_pct, na.rm = TRUE),
+              pct_zip_hispanic = mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+              #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+              #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+              pct_zip_native = mean(pop_native_15_19_pct, na.rm = TRUE),
+              pct_zip_otherrace = mean(pop_otherrace_15_19_pct, na.rm = TRUE),
+              pct_zip_tworaces = mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+            )          
+          
+        # Baltimore-Columbia-Towson, MD; 12580
+          # student-level
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '12580') %>%
+          summarize(
+            n_obs = sum(n()),
+            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+          )          
+          
+          # compared to composition of zip-codes
+          acs_race_zipcodev3 %>% filter(cbsa_1 == '12580') %>% 
+            summarize(
+              n_obs = sum(n()),
+              n_nonmiss_zip_race = sum(is.na(pop_otherrace_15_19_pct)==0),
+              pct_zip_white = mean(pop_white_15_19_pct, na.rm = TRUE),
+              pct_zip_asian = mean(pop_asian_15_19_pct, na.rm = TRUE),
+              pct_zip_black = mean(pop_black_15_19_pct, na.rm = TRUE),
+              pct_zip_hispanic = mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+              #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+              #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+              pct_zip_native = mean(pop_native_15_19_pct, na.rm = TRUE),
+              pct_zip_otherrace = mean(pop_otherrace_15_19_pct, na.rm = TRUE),
+              pct_zip_tworaces = mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+            )            
+          
+        # Boston-Cambridge-Newton, MA-NH; 14460
+          # student-level
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '14460') %>%
+          summarize(
+            n_obs = sum(n()),
+            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+          )          
+          
+          # compared to composition of zip-codes
+          acs_race_zipcodev3 %>% filter(cbsa_1 == '14460') %>% 
+            summarize(
+              n_obs = sum(n()),
+              n_nonmiss_zip_race = sum(is.na(pop_otherrace_15_19_pct)==0),
+              pct_zip_white = mean(pop_white_15_19_pct, na.rm = TRUE),
+              pct_zip_asian = mean(pop_asian_15_19_pct, na.rm = TRUE),
+              pct_zip_black = mean(pop_black_15_19_pct, na.rm = TRUE),
+              pct_zip_hispanic = mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+              #pct_zip_amerindian = mean(zip_pop_amerindian_15_19_pct, na.rm = TRUE),
+              #pct_zip_nativehawaii = mean(zip_pop_nativehawaii_15_19_pct, na.rm = TRUE),
+              pct_zip_native = mean(pop_native_15_19_pct, na.rm = TRUE),
+              pct_zip_otherrace = mean(pop_otherrace_15_19_pct, na.rm = TRUE),
+              pct_zip_tworaces = mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+            )                      
+          
+  # U. Urbana international purchases; 4 orders; these don't use segment
+      orders_df %>% filter(univ_id == '145637', order_num %in% c('483721','372044','470250','371669')) %>% View()
+      
+  orders_df %>% glimpse()
+  orders_df %>% filter(univ_id == '145637', order_num == '483724') %>% View()
+  
     # segment
       lists_orders_zip_hs_df %>% count(univ_name,ord_segment) %>% print(n=100)
       lists_orders_zip_hs_df %>% filter(univ_id == '145637') %>% count(univ_name,ord_segment) %>% print(n=100)
@@ -1778,8 +2110,12 @@ lists_orders_zip_df <- lists_orders_df %>%
       orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(sat_score_min)
       orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% count(sat_score_max)
       
+##### analysis of segment orders (for U Illinois-Urbana)
+        
+  
       
   lists_orders_zip_hs_df %>% count(univ_name,ord_intl_region) %>% print(n=100)
+  
   ord_segment
   lists_orders_zip_hs_df %>% count(univ_name,ord_geomarket) %>% print(n=100)
   lists_orders_zip_hs_df %>% count(univ_name,ord_cbsa_name) %>% print(n=100)
