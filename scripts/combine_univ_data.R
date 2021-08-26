@@ -80,7 +80,11 @@ orders_df <- dplyr::bind_rows(
 
 lists_df <- dplyr::bind_rows(
   lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358
-) 
+)
+
+names(orders_df)
+names(lists_df)
+table(lists_df$update_date)
 
 
 # Add zip_code variable extracting 5-digit zip code
