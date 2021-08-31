@@ -5,11 +5,12 @@ library(tidyverse)
 
 # 'univ_id', 'po_num', 'order_num', 'order_title', 'created_by', 'date_updated',
 # 'order_cost', 'num_runs', 'num_students',
-# 'date_start', 'date_end', 'hs_grad_class', 'zip_code_file', 'zip_code', 'county',
-# 'state_name', 'cbsa_name', 'intl_region', 'segment', 'race_ethnicity', 'gender',
+# 'date_start', 'date_end', 'hs_grad_class', 'zip_code_file', 'zip_code',
+# 'state_name', 'cbsa_name', 'county', 'geomarket', 'intl_region', 'segment', 'race_ethnicity', 'gender',
 # 'sat_score_min', 'sat_score_max', 'sat_score_old_min', 'sat_score_old_max',
 # 'psat_score_min', 'psat_score_max', 'psat_score_old_min', 'psat_score_old_max',
 # 'gpa_high', 'gpa_low', 'rank_high', 'rank_low',
+# 'college_type', 'edu_aspirations', 'rotc_plans', 'major', 'citizenship'
 # 'source_file', 'market'  (user-created)
 
 # Order list fields
@@ -73,17 +74,42 @@ n_distinct(lists_df_174358$order_no)  # 2 lists
 # Note: Only received 2 College Board PSAT orders for 2017 and 2018, both have 7 runs
 
 
+# University of Minnesota-Crookston (174075)
+load(file = file.path(data_dir, '174075_data.RData'))
+
+n_distinct(orders_df_174075$order_num)  # 1 order summary
+n_distinct(lists_df_174075$order_no)  # 1 list
+
+# Note: Only received 1 College Board order from 2019
+# Order summary's geography criteria was cut off (i.e., 'View all' not expanded) so need to update state_name in orders_df_174075 once we request expanded version
+
+
+# University of California-San Diego (110680)
+load(file = file.path(data_dir, '110680_data.RData'))
+
+n_distinct(orders_df_110680$order_num)  # 48 order summaries
+n_distinct(lists_df_110680$order_no)  # 104 lists
+
+# The last 3 order summaries look like draft orders that weren't actually placed (i.e., 'Edit name' in the title)
+orders_df_110680$order_title %>% tail(3)
+
+# Note: Order summaries are from 2020 while lists are from around 2018-2019, so do not actually correspond to each other
+# Need to request the respective missing lists/order summaries
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680
 )
 
 names(orders_df)
 names(lists_df)
+table(orders_df$univ_id)
+table(lists_df$univ_id)
 table(lists_df$update_date)
 
 
