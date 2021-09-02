@@ -80,6 +80,7 @@ list.files(path = scripts_dir)
     
 # number of students
     lists_orders_zip_hs_df %>% filter(stu_in_us==1) %>% count()
+lists_orders_zip_hs_df %>% count(univ_name)
     
 # number of students by in vs. out-of-state
     
@@ -153,6 +154,36 @@ list.files(path = scripts_dir)
         n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
         mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
       )
+    
+    # check on UC SD
+    
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0,univ_id == '110680') %>% group_by(stu_out_st) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+    
+    # income by order num
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0,univ_id == '110680') %>% group_by(stu_out_st,ord_num) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+        mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      ) %>% print(n=150)
+    
+    # race by order num
+    lists_orders_zip_hs_df %>% filter(stu_in_us==1,na_zip_acs==0,univ_id == '110680') %>% group_by(stu_out_st,ord_num) %>% summarize(
+        n_obs = sum(n()),
+        n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+        pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+        pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+        pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+        pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+        #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+        #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+        pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+        pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+        #pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
+      ) %>% print(n=150)
     
 # number/percent of prospects by race
   
@@ -883,6 +914,7 @@ orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
   # 20 Tampa-St. Petersburg-Clearwater, FL; 45300           1628 
   # 17 Detroit-Warren-Dearborn, MI; 19820                   1726
 
+          
 
           # student-level
           lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '12060') %>%
@@ -918,6 +950,7 @@ orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
               #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
             )
 
+          
 ##### EXAMINING HIGH SCHOOLS IN CBSA THAT HAVE ZERO VS. GT ZERO NAMES PURCHASED FOR SEGMENT ANALYSIS ORDERS
           
   # focus on out of state orders that use segment and are not focused on engineering
@@ -964,7 +997,44 @@ orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
       #EN:78, HS:ALL
     # how to read this:
       # for census tracts assigned to neighborhood cluster 51, they want students who attend high schools assigned to one of the following high school clusters %in% c(65,68,70,79)
-                    
+         
+          
+          ############ CONTEXT:  IL IN STATE
+        
+          # compare to in-state orders for UI Urbana
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', stu_state == 'IL',!(is.na(stu_race_cb)),stu_race_cb !=0) %>%
+          summarize(
+            n_obs = sum(n()),
+            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
+            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
+          )
+          
+          # IL PUBLIC SCHOOLS
+          ceeb_hs %>% filter(school_control == 'public',total_12>0, state_code == 'IL') %>%
+            summarize(
+              n_obs = sum(n()),
+              n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              tot_students = sum(total_students, na.rm = TRUE),
+              #tot_white = sum(total_white, na.rm = TRUE),
+              #tot_asian = sum(total_asian, na.rm = TRUE),
+              pct_white = sum(total_white, na.rm = TRUE)/tot_students*100,
+              pct_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+              pct_black = sum(total_black, na.rm = TRUE)/tot_students*100,
+              pct_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+              pct_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+              pct_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+              pct_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+              #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+            )
+          
+          
     # number of prospects purchased by CBSA
         lists_orders_zip_hs_df %>% filter(univ_id == '145637', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751')) %>%
           mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>%
@@ -999,8 +1069,11 @@ orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
   # focus on atlanta
     # 5 Atlanta-Sandy Springs-Roswell, GA; 12060             7456
 
+
+          
+          ############ ATL
           # student-level racial composition of prospects
-          lists_orders_zip_hs_df %>% filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751')) %>%
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'),!(is.na(stu_race_cb)),stu_race_cb !=0) %>%
           summarize(
             n_obs = sum(n()),
             n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
@@ -1012,7 +1085,6 @@ orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
             #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
             pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
             pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
-            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
           )          
 
           # racial composition of all students in public high schools [with a ceeb code] in the CBSA
@@ -1104,14 +1176,40 @@ atl_hs_seg %>% glimpse()
       atl_hs <- ceeb_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% left_join(atl_hs_seg, by = c('ceeb' = 'stu_ceeb')) %>%
         mutate(
           n_stu = if_else(!is.na(n_stu),n_stu,0L, missing = NULL),
+          n_stu_white = if_else(!is.na(n_stu_white),n_stu_white,0, missing = NULL),
+          n_stu_asian = if_else(!is.na(n_stu_asian),n_stu_asian,0, missing = NULL),
+          n_stu_black = if_else(!is.na(n_stu_black),n_stu_black,0, missing = NULL),
+          n_stu_hispanic = if_else(!is.na(n_stu_hispanic),n_stu_hispanic,0, missing = NULL),
+          n_stu_native = if_else(!is.na(n_stu_native),n_stu_native,0, missing = NULL),
+          n_stu_tworaces = if_else(!is.na(n_stu_tworaces),n_stu_tworaces,0, missing = NULL),
+          n_stu_unknown = if_else(!is.na(n_stu_unknown),n_stu_unknown,0, missing = NULL),
           gt0_stu = if_else(n_stu>0,1,0, missing = NULL),
+          n_stu_black_hispanic = n_stu_black + n_stu_hispanic,
+          gt0_stu_black_hispanic = if_else(n_stu_black_hispanic>0,1,0, missing = NULL),
           n_stu_cat5 = cut(n_stu, breaks=c(-Inf, 0, 10, 40, 100, +Inf),labels = lbls_cat5),
           n_stu_cat4 = cut(n_stu, breaks=c(-Inf, 0, 10, 100, +Inf),labels = lbls_cat4),
           n_stu_cat3 = cut(n_stu, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
+          n_stu_black_cat3 = cut(n_stu_black, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
+          n_stu_hispanic_cat3 = cut(n_stu_hispanic, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
+          n_stu_black_hispanic_cat3 = cut(n_stu_black_hispanic, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
           )
 
-
+      atl_hs %>% glimpse()
+      
       # average racial composition of public schools in the CBSA, with 0 vs. gt0 prospects purchased
+      atl_hs %>% filter(school_control == 'public',total_12>0) %>%
+        group_by(gt0_stu) %>% summarize(
+              n_obs = sum(n()),
+              n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              pct_hs_white = mean(pct_white, na.rm = TRUE),
+              pct_hs_asian = mean(pct_asian, na.rm = TRUE),
+              pct_hs_black = mean(pct_black, na.rm = TRUE),
+              pct_hs_hispanic = mean(pct_hispanic, na.rm = TRUE),
+              pct_hs_native = mean(pct_native, na.rm = TRUE), # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
+              pct_hs_unknown = mean(pct_unknown, na.rm = TRUE),      
+        )
+      
       # examine public high schools 
       atl_hs %>% filter(school_control == 'public',total_12>0) %>%
         group_by(n_stu_cat4) %>% summarize(
@@ -1145,9 +1243,70 @@ atl_hs_seg %>% glimpse()
       atl_hs %>% count(n_stu) %>% print(n=100)
       atl_hs %>% count(gt0_stu)
       
+
+    ############ ATL - WHO ARE THE BLACK/LATINX PROSPECTS IN ATL PURCHASED VIA SEGMENT? WHAT ARE THEIR CHARACTERISTICS? HOW DO THEIR SCHOOLS COMPARE TO OTHER SCHOOLS IN ATL?
+      
+      lists_orders_zip_hs_df %>% count(stu_race_cb)
+      
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'), stu_race_cb %in% c(3,4)) %>% count(stu_race_cb)
+      
+      ##### 
+      ##### median income
+      # avg. of median zip-code income for all ATL prospects purchased by segment; about $101,000
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751')) %>% 
+        summarize(
+          n_obs = sum(n()),
+          n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+          mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+      
+      # avg. of median zip-code income for Black and Latinx ATL prospects purchased by segment; about $93,000
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'), stu_race_cb %in% c(3,4)) %>% 
+        summarize(
+          n_obs = sum(n()),
+          n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+          mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )
+      
+      # higher for latinx than for black      
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'), stu_race_cb %in% c(3,4)) %>% 
+        group_by(stu_race_cb) %>% summarize(
+          n_obs = sum(n()),
+          n_nonmiss_inc = sum(is.na(zip_median_household_income)==0),
+          mean_med_inc = mean(zip_median_household_income, na.rm = TRUE),
+      )      
       
       
-            summarize(
+      ##### 
+      ##### attendance at public or private school
+      
+      # all purchased prospects; about 12% attend private
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'),!is.na(hs_private)) %>% 
+        count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)
+      
+      # black and latinx; about 13% attend private
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'),!is.na(hs_private),stu_race_cb %in% c(3,4)) %>% 
+        count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)
+
+      # higher percent private for latinx      
+      lists_orders_zip_hs_df %>% 
+        filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751'),!is.na(hs_private),stu_race_cb %in% c(3,4)) %>% 
+        group_by(stu_race_cb) %>% count(hs_private) %>% mutate(pct = (n / sum(n)) * 100)
+      
+      
+      ##### 
+      ##### racial composition of schools that purchased prospects attend
+      
+
+      # avg of school-level racial composition, all ATL schools; zero vs. at least one prospect purchased by Segment
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private,gt0_stu) %>% summarize(
               n_obs = sum(n()),
               n_nonmiss_hs_race = sum(is.na(pct_white)==0),
               pct_hs_white = mean(pct_white, na.rm = TRUE),
@@ -1157,23 +1316,112 @@ atl_hs_seg %>% glimpse()
               pct_hs_native = mean(pct_native, na.rm = TRUE), # native american + alaska native + native hawaiaan + other pacific islander
               pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
               pct_hs_unknown = mean(pct_unknown, na.rm = TRUE),      
-            )            
+        )   
+      
+      # racial composition of all students in ATL, separately for public vs. private
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private) %>% summarize(
+              n_obs = sum(n()),
+              #n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              tot_students = sum(total_students, na.rm = TRUE),
+              pct_hs_white = sum(total_white, na.rm = TRUE)/tot_students*100,
+              pct_hs_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+              pct_hs_black = sum(total_black, na.rm = TRUE)/tot_students*100,
+              pct_hs_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+              pct_hs_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+        )
 
-          # student-level racial composition of prospects
-          lists_orders_zip_hs_df %>% filter(univ_id == '145637', zip_cbsa_1 == '12060', ord_num %in% c('483724','470283','371629','456737','386335','500590','567376','483751')) %>%
-          summarize(
-            n_obs = sum(n()),
-            n_nonmiss_stu_race_cb = sum(is.na(stu_race_cb)==0),
-            pct_stu_white =  mean(stu_white, na.rm = TRUE)*100,
-            pct_stu_asian =  mean(stu_asian, na.rm = TRUE)*100,
-            pct_stu_black =  mean(stu_black, na.rm = TRUE)*100,
-            pct_stu_hispanic =  mean(stu_hispanic, na.rm = TRUE)*100,
-            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
-            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
-            pct_stu_native =  mean(stu_native, na.rm = TRUE)*100,
-            pct_stu_tworaces =  mean(stu_tworaces, na.rm = TRUE)*100,
-            pct_stu_unknown =  mean(stu_unknown, na.rm = TRUE)*100,
-          )                                  
+      # racial composition of all students in ATL, separately for public vs. private and by categorical number of black students purchased
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private,n_stu_black_cat3) %>% summarize(
+              n_obs = sum(n()),
+              #n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              tot_students = sum(total_students, na.rm = TRUE),
+              pct_hs_white = sum(total_white, na.rm = TRUE)/tot_students*100,
+              pct_hs_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+              pct_hs_black = sum(total_black, na.rm = TRUE)/tot_students*100,
+              pct_hs_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+              pct_hs_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+        )      
+      
+      # FINDINGS
+        # across all public HS in ATL (187 schools, 299K total students), 38.8% of all students are black
+      
+        # in public schools where no black students were purchased (120 schools, 152K total students), 52% of all students are black
+        # in public schools where 1-10 black students were purchased (56 schools, 119K total students), 24.0% of all students are black
+        # in public schools where 11 or more black students were purchased (11 schools, 28K total students), 29% of all students are black
+      
+        # takaway: schools where black prospects were purchased using Urbana Segment enrolled a lower percentage of black students than all ATL public schools
+        # caveat: disparities are not huge
+          # can we say that Black students attending schools with a lower percentage of black students were more likely to be purchased than black students attending schools that enrolled a higher percentage of black students?
+        
+      
+
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private,n_stu_black_cat3) %>% summarize(
+              n_obs = sum(n()),
+              #n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              tot_students = sum(total_students, na.rm = TRUE),
+              pct_hs_white = sum(total_white, na.rm = TRUE)/tot_students*100,
+              pct_hs_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+              pct_hs_black = sum(total_black, na.rm = TRUE)/tot_students*100,
+              pct_hs_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+              pct_hs_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+        )      
+      
+      # school-level avg of racial composition by number of black prospects purchased
+        # school-level average percent of students who are black in ATL is 44.8%
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private,n_stu_black_cat3) %>% summarize(
+              n_obs = sum(n()),
+              n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              pct_hs_white = mean(pct_white, na.rm = TRUE),
+              pct_hs_asian = mean(pct_asian, na.rm = TRUE),
+              pct_hs_black = mean(pct_black, na.rm = TRUE),
+              pct_hs_hispanic = mean(pct_hispanic, na.rm = TRUE),
+              pct_hs_native = mean(pct_native, na.rm = TRUE), # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
+        )      
+      
+      # schools with at least one black/latinx prospect purchased
+      atl_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% 
+        group_by(private,n_stu_black_hispanic_cat3) %>% summarize(
+              n_obs = sum(n()),
+              n_nonmiss_hs_race = sum(is.na(pct_white)==0),
+              pct_hs_white = mean(pct_white, na.rm = TRUE),
+              pct_hs_asian = mean(pct_asian, na.rm = TRUE),
+              pct_hs_black = mean(pct_black, na.rm = TRUE),
+              pct_hs_hispanic = mean(pct_hispanic, na.rm = TRUE),
+              pct_hs_native = mean(pct_native, na.rm = TRUE), # native american + alaska native + native hawaiaan + other pacific islander
+              pct_hs_tworaces = mean(pct_tworaces, na.rm = TRUE),
+              pct_hs_unknown = mean(pct_unknown, na.rm = TRUE),      
+        )
+      
+      
+atl_hs_seg %>% glimpse()
+    # school-level dataset of all schools in atl that have ceeb code
+
+      ceeb_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% count()
+      ceeb_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% count(school_control)
+      
+      # create value labels for categorical variable of number of prospects purchased per high school
+      lbls_cat5 <- c('zero','1-10','11-40','41-100','100+')
+      lbls_cat4 <- c('zero','1-10','11-100','100+')
+      lbls_cat3 <- c('zero','1-10','11+')
+      
+      atl_hs <- ceeb_hs %>% filter(total_12>0, cbsa_1 == '12060') %>% left_join(atl_hs_seg, by = c('ceeb' = 'stu_ceeb')) %>%
+        mutate(
+          n_stu = if_else(!is.na(n_stu),n_stu,0L, missing = NULL),
+          gt0_stu = if_else(n_stu>0,1,0, missing = NULL),
+          n_stu_cat5 = cut(n_stu, breaks=c(-Inf, 0, 10, 40, 100, +Inf),labels = lbls_cat5),
+          n_stu_cat4 = cut(n_stu, breaks=c(-Inf, 0, 10, 100, +Inf),labels = lbls_cat4),
+          n_stu_cat3 = cut(n_stu, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
+          )
+
+      atl_hs %>% glimpse()      
 ##########
           
           
