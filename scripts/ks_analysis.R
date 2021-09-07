@@ -32,6 +32,16 @@ library(labelled)
     
 ################### BUILDING TABLE for RQ2A
 
+    race <- lists_orders_zip_hs_df %>% filter(stu_country=='united states') %>%
+        count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+    
+    race <- race %>% select(stu_race_cb, V1)
+    race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "race missing", stu_race_cb))
+    race<- race %>% remove_rownames %>% column_to_rownames(var="stu_race_cb")
+    row.names(race) <- c("No Response", "Pct AI/AN", "Pct Asian", "Pct Black", "Pct Latinx", "Pct NH/PI", "Pct White", "Multiracial", "Race Missing")
+    
+    
+    
                 
 #FUNCTION FOR TABLE_RQ2A
         table_rq2a <- function(variables, columns) {
@@ -45,6 +55,8 @@ library(labelled)
                 counter = counter+1
                 
                 if(i=="all"){filter_string=c("stu_country=='united states'")}
+                #if(i=="in-state"){filter_string=c("stu_country=='united states'")}
+                
 
                 #create N row
                 n <- as_data_frame(t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% count()))
@@ -52,12 +64,13 @@ library(labelled)
                 
                 
                 #create race rows
-                race <- as_data_frame (t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%  #rlang turns strings into expressions
-                                                     summarize(pctwhite = mean(stu_white_common, na.rm=TRUE)*100,
-                                                               pctasian = mean(stu_asian_common, na.rm=TRUE)*100,
-                                                               pctblack = mean(stu_black_common, na.rm=TRUE)*100,
-                                                               pcthisp = mean(stu_is_hisp_common, na.rm=TRUE)*100)))
-                row.names(race) <- c("Pct White", "Pct Asian", "Pct Black", "Pct Latinx")
+                race <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+                
+                race <- race %>% select(stu_race_cb, V1)
+                race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "race missing", stu_race_cb))
+                race<- race %>% remove_rownames %>% column_to_rownames(var="stu_race_cb")
+                row.names(race) <- c("Pct Race-No Response", "Pct AI/AN", "Pct Asian", "Pct Black", "Pct Latinx", "Pct NH/PI", "Pct White", "Multiracial", "Pct Race- Missing")
                 
                 
                 #create income row
