@@ -9,7 +9,7 @@ library(tidyverse)
 # 'state_name', 'cbsa_name', 'county', 'geomarket', 'intl_region', 'segment', 'race_ethnicity', 'gender',
 # 'sat_score_min', 'sat_score_max', 'sat_score_old_min', 'sat_score_old_max',
 # 'psat_score_min', 'psat_score_max', 'psat_score_old_min', 'psat_score_old_max',
-# 'gpa_high', 'gpa_low', 'rank_high', 'rank_low',
+# 'gpa_high', 'gpa_low', 'rank_high', 'rank_low', 'ap_scores',
 # 'college_type', 'edu_aspirations', 'rotc_plans', 'major', 'citizenship'
 # 'source_file', 'market'  (user-created)
 
@@ -20,7 +20,7 @@ library(tidyverse)
 # 'gender', 'grad_year', 'hs_code', 'geomarket', 'score_range',
 # 'cuban', 'mexican', 'puerto_rican', 'other_hispanic', 'non_hispanic', 'american_indian', 'asian', 'black', 'native_hawaiian', 'white', 'other', 'race_no_response', 'ethnicity_no_response',
 # 'major_1', 'major_2', 'major_3', 'ap1', 'ap2', 'ap3', 'ap4', 'ap5', 'ap6', 'ap7', 'ap8', 'ap9', 'ap10', 'satsub1', 'satsub2', 'satsub3', 'satsub4', 'satsub5', 'satsub6', 'satsub7', 'satsub8', 'satsub9', 'satsub10',
-# 'name_source', 'update_date', 'homeschool', 'low_ses', 'hs_cluster', 'en_cluster', 'nhrp', 'first_gen', 'pltw', 'interest_me', 'pref_inst1', 'pref_inst2', 'pref_inst3', 'pref_inst4', 'pref_inst5',
+# 'name_source', 'update_date', 'homeschool', 'low_ses', 'hs_cluster', 'en_cluster', 'nhrp', 'first_gen', 'pltw', 'interest_me', 'pref_inst1', 'pref_inst2', 'pref_inst3', 'pref_inst4', 'pref_inst5', 'nrp_afam', 'nrp_hisp', 'nrp_indg', 'nrp_rurl'
 # 'source', 'order_date', 'is_hispanic_origin' (urbana specific)
 # 'race' (urbana/moorhead specific)
 # 'source_file', 'zip_code' (user-created)
@@ -93,24 +93,42 @@ n_distinct(lists_df_110680$order_no)  # 104 lists
 # The last 3 order summaries look like draft orders that weren't actually placed (i.e., 'Edit name' in the title)
 orders_df_110680$order_title %>% tail(3)
 
-# Note: Order summaries are from 2020 while lists are from around 2018-2019, so do not actually correspond to each other
-# Need to request the respective missing lists/order summaries
+# Also 3 other orders that resulted in 0 students, but other than that, we did receive the corresponding lists for the remaining 42 orders
+orders_df_110680 %>% select(order_num, order_title, num_students) %>% left_join(lists_df_110680 %>% group_by(order_no) %>% summarise(num_students_in_list = n()), by = c('order_num' = 'order_no')) %>% View()
+
+# This leaves 62 of 104 lists that we did not receive order summaries for
+orders_df_110680 %>% select(order_num, order_title, num_students) %>% right_join(lists_df_110680 %>% group_by(order_no) %>% summarise(num_students_in_list = n()), by = c('order_num' = 'order_no')) %>% View()
+
+# Note: Currently requesting order summaries for the remaining lists and any other order summaries/lists we are missing for the full timeframe
+
+
+# Tarleton State University (228529)
+load(file = file.path(data_dir, '228529_data.RData'))
+
+n_distinct(orders_df_228529$order_num)  # 9 order summaries
+n_distinct(lists_df_228529$order_no)  # 3 lists
+
+# Only 1 order overlap between received order summaries and lists
+base::intersect(orders_df_228529$order_num, lists_df_228529$order_no)
+
+# Order summary's geography criteria was cut off (i.e., 'View all' not expanded) so need to update orders_df_228529 once we request expanded version
+# Also need to request those corresponding order summaries/lists that we're missing
 
 
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529
 )
 
 names(orders_df)
 names(lists_df)
-table(orders_df$univ_id)
-table(lists_df$univ_id)
-table(lists_df$update_date)
+table(orders_df$univ_id, useNA = 'always')
+table(lists_df$univ_id, useNA = 'always')
+table(lists_df$update_date, useNA = 'always')
 
 
 # Add zip_code variable extracting 5-digit zip code
