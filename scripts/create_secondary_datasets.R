@@ -54,10 +54,21 @@ list.files(path = scripts_dir)
 ## SECONDARY DATA, CENSUS ACS DATA
 ## -----------------------------------------------------------------------------
 
+####### LOAD DATA (FROM HUD) THAT IS USED TO CREATE CROSS-WALK OF ZIP-CODE TO STATE
+  library(readxl)
+  #zip_tract_032018 <- read_excel(path = file.path(data_dir, 'ZIP_TRACT_032018.xlsx'))
+  zip_tract_092021 <- read_excel(path = file.path(data_dir, 'ZIP_TRACT_092021.xlsx'))
+  names(zip_tract_092021) <- tolower(names(zip_tract_092021))
+  
+  zip_tract_092021 <- zip_tract_092021 %>% distinct(zip,usps_zip_pref_state) %>% select(zip,usps_zip_pref_state) %>% rename(zip_code = zip, state_code = usps_zip_pref_state)
+  
+  
+  zip_tract_092021 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  
 ###### LOAD CENSUS ZIP-CODE LEVEL DATA
   
   # load ACS data w/ zipcode-level data on population and median household income; one obs per zip-code 
-  acs_race_zipcode <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv')) %>% arrange(zipcode)
+  acs_race_zipcode <- read_csv(file.path(data_dir, 'acs_race_zipcode.csv')) %>% arrange(zipcode) 
     # based on 2019 5-year ACS
     # script: C:\Users\ozanj\Documents\public_requests_eda\scripts\acs_collect_via_API.py
     # definitions for race
@@ -97,10 +108,18 @@ list.files(path = scripts_dir)
   # load different ACS data w/ zip-code level data; 
   zip_to_state <- read_csv(file.path(data_dir, 'zip_to_state.csv')) %>% arrange(zip_code)
   
-    #zip_to_state %>% glimpse()
+    zip_to_state %>% glimpse()
     #zip_to_state %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
     zip_to_state <- zip_to_state %>% select(state_code, zip_code)
+    zip_to_state %>% count(state_code) %>% print(n=70)
   
+    
+    # create data frame that has two-digit state code for every zip code
+    zip_to_state_v2 <- dplyr::bind_rows(zip_to_state,zip_tract_092021) %>% distinct(zip_code,state_code) %>% arrange(zip_code)
+    
+    zip_to_state_v2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+    rm(zip_tract_092021)
+    
   # add variable state_code to acs_race_zipcode
   acs_race_zipcodev2 <- left_join(acs_race_zipcode, zip_to_state, by = "zip_code")
     #acs_race_zipcodev2 %>% group_by(zip_code) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs

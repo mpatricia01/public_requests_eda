@@ -30,6 +30,13 @@ library(tidyverse)
 
 data_dir <- file.path('.', 'data')
 
+# variable names (all variables, across all universities)
+  # comment this out because uses dfs orders_df and lists_df, which aren't created until bottom of this script
+  # order_names <- names(orders_df) %>% as.tibble() %>% rename(var_name=value) %>% filter(!var_name %in% c('univ_name','univ_state','univ_zip','univ_c15basic'))
+    #order_names %>% print(n=50)
+
+  # list_names <- names(lists_df)  %>% as.tibble() %>% rename(var_name=value) %>% filter(!var_name %in% c('race','is_hispanic_origin','source','student_id','score_range','order_date','family_income','hs_name','entry_term','zip_code'))
+
 
 # University of Illinois at Urbana-Champaign (145637)
 load(file = file.path(data_dir, '145637_data.RData'))
@@ -55,6 +62,10 @@ n_distinct(lists_df_224545$order_no)  # 91 lists
 # Order93 was excluded from orders_df_224545 because it is a duplicate of Order62 instead of the correct summary for List93
 # List60 was excluded from lists_df_224545 because it is a duplicate of List72 instead of the correct list for Order60
 # Currently following up on these errors
+
+# potentially missing variables (not all important) [ozan 10/18/2021]
+   #list_names %>% anti_join(y=(names(lists_df_224545) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # lists df: 
 
 
 # Stephen F Austin State University (228431)
@@ -116,9 +127,21 @@ base::intersect(orders_df_228529$order_num, lists_df_228529$order_no)
 # Order summary's geography criteria was cut off (i.e., 'View all' not expanded) so need to update orders_df_228529 once we request expanded version
 # Also need to request those corresponding order summaries/lists that we're missing
 
+# potentially missing variables (not all important) [ozan 10/18/2021]
+  #order_names %>% anti_join(y=(names(orders_df_228529) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # orders df: 
+  #list_names %>% anti_join(y=(names(lists_df_228723) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=80)
+    # lists df: 
+
 
 # Arizona State University (104151)
 load(file = file.path(data_dir, '104151_data.RData'))
+  # as of 10/18/2021
+    # no order summary data
+
+# potentially missing variables (not all important) [ozan 10/18/2021]
+   #list_names %>% anti_join(y=(names(lists_df_104151) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # lists df: hs_code, 
 
 
 # Texas A & M University-College Station (228723)
@@ -133,20 +156,45 @@ lists_df_228723 %>% select(source, order_no) %>% distinct() %>% anti_join(orders
 # 9 order summaries w/o lists
 orders_df_228723 %>% select(order_num, order_title, date_start) %>% anti_join(lists_df_228723 %>% select(source, order_no) %>% distinct(), by = c('order_num' = 'order_no')) %>% View()
 
+# potentially missing variables (not all important) [ozan 10/18/2021]
+  #order_names %>% anti_join(y=(names(orders_df_228723) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # orders df: date_updated, source_file
+  #list_names %>% anti_join(y=(names(lists_df_228723) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=80)
+    # lists df: gender, cuban, mexican, puerto_rican, other_hispanic, non_hispanic, american_indian, asian, black, native_hawaiian, white, other, race_no_response, ethnicity_no_response, grad_year, homeschool, low_ses
+  # race variable for college station is way different
+  #lists_df_228723 %>% glimpse()
+  #lists_df_228723 %>% count(race)
 
 # University of California-Davis (110644)
 load(file = file.path(data_dir, '110644_data.RData'))
 
 n_distinct(orders_df_110644$order_num)  # 5 order summaries
+  # potential variables missing on order summary data [ozan 10/18/2021]
+    # num_runs, date_end, created_by, date_updated, source_file
+
 n_distinct(lists_df_110644$order_no)  # 5 lists
 
 # Only have 5 College Board order summaries from Oct 2020 so far
 # No HS code in student list - need to request
 
+# potentially missing variables (not all important) [ozan 10/18/2021]
+  #order_names %>% anti_join(y=(names(orders_df_110644) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # orders df: # num_runs, date_end, created_by, date_updated, source_file
+   #list_names %>% anti_join(y=(names(lists_df_110644) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # lists df: gender, hs_code, geomarket, city, state, low_ses, post_del, post_corr, other (race category), name_source, update_date, low_ses
+    # 
+
 
 # University of Illinois at Chicago (145600)
 load(file = file.path(data_dir, '145600_data.RData'))
+  # as of 10/18/2021 (crystal email)
+    # no order summary data
+    # I also added the student-level lists portion for U of IL-Chicago. The order summaries part wasn't parsing properly (might be the way the PDF was saved), so I think I'll just enter it manually since there are only around 20 orders. I'll try to get that added soon.
 
+# potentially missing variables (not all important) [ozan 10/18/2021]
+   #list_names %>% anti_join(y=(names(lists_df_145600) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
+    # lists df: non important missing
+    # note: grad_year is two-digit rather than four-digit
 
 # Combine data
 orders_df <- dplyr::bind_rows(

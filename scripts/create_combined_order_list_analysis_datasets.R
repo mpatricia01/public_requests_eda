@@ -65,51 +65,11 @@ list.files(path = scripts_dir)
 load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combined_data.RData'))
 
 
-# ORDERS AND LISTS BY UNIVERSITY [AS OF 8/31/2021]
 
-  # University of Illinois at Urbana-Champaign (145637)
-    # 80 order summaries (92 lists)
-    # notes:
-      # 3 order summaries w/ no lists, but these look like draft orders that weren't actually placed (i.e., 'Edit name' in the title)
-        # View(anti_join(orders_df_145637, lists_df_145637, by = c('order_num' = 'order_no')))
-    # 15 orders where we have list but no order summary (mostly from early 2017 - currently requesting)
-      # View(anti_join(lists_df_145637, orders_df_145637, by = c('order_no' = 'order_num')) %>% select(order_no, order_date) %>% distinct())
-  
-  # Texas A & M University-Texarkana (224545)
-    # 91 order summaries (and 91 lists)
-    # notes:
-      # Originally provided us 93 pairs of order summaries/lists (i.e., source_file column in orders_df_224545 & lists_df_224545)
-      # But Order59/List59 are exact duplicates of Order58/List58 so were excluded from above dataframes
-      # Order93 was excluded from orders_df_224545 because it is a duplicate of Order62 instead of the correct summary for List93
-      # List60 was excluded from lists_df_224545 because it is a duplicate of List72 instead of the correct list for Order60
+# variables names in orders_df and in lists_df
+#order_names <- names(orders_df) %>% as.tibble() %>% rename(var_name=value) %>% filter(!var_name %in% c('univ_name','univ_state','univ_zip','univ_c15basic'))
+  #order_names %>% print(n=50)
 
-  # Stephen F Austin State University (228431)
-    # 16 order summaries (and 15 lists)
-    # notes:
-      # 1 order summary w/o list (does say "duplicated" in title so maybe that's why? currently following up)
-      # View(anti_join(orders_df_228431, lists_df_228431, by = c('order_num' = 'order_no')))
-  
-  # Minnesota State University-Moorhead (174358)
-    # 2 order summaries and 2 lists
-    # Note: Only received 2 College Board PSAT orders for 2017 and 2018, both have 7 runs
-  
-  #University of Minnesota-Crookston (174075)
-    # 1 order summary
-    # 1 list
-    # notes: 
-      # Note: Only received 1 College Board order from 2019
-      # Order summary's geography criteria was cut off (i.e., 'View all' not expanded) so need to update state_name in orders_df_174075 once we request expanded version
-
-  # University of California-San Diego (110680)
-    # 48 order summaries
-    # 104 lists
-    # Notes: 
-      # The last 3 order summaries look like draft orders that weren't actually placed (i.e., 'Edit name' in the title)
-        # orders_df_110680$order_title %>% tail(3)
-      # Note: Order summaries are from 2020 while lists are from around 2018-2019, so do not actually correspond to each other
-      # Need to request the respective missing lists/order summaries
-
-  
 # VARIABLES THAT ARE FORMATTED DIFFERENTLY ACROSS UNIVERSITIES [AS OF 8/31/2021] (must create common version before you can include in cross-university analyses)
 
   # state_name
@@ -125,9 +85,11 @@ load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combi
 orders_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
   right_join(orders_df, by = 'univ_id') %>% select(-univ_sector) %>%
   # drop order from U Illinois-Urbana that seems like it was not executed (order name is OOS ENG Female PSAT Catch-Up; 1,377 students available; but "name license status" was "saved" rather than "fulfilled" and "maximum volume = 0)
-  filter(order_num != '374945')
+  filter(order_num != '374945') %>% arrange(univ_id,order_num)
 
   orders_df %>% group_by(order_num) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # unique
+  
+  orders_df %>% count(univ_id)
 
 # LABEL ORDER SUMMARY DATA
 orders_df %>% glimpse()
@@ -236,23 +198,40 @@ orders_df %>% var_label()
 
 
 ## -----------------------------------------------------------------------------
-## LIST DATA TO INCORPORATE/PROCESS 8/31/2021
+## LIST DATA TO INCORPORATE/PROCESS 10/18/2021
 ## -----------------------------------------------------------------------------
 
 
 #lists_df_145637 %>% glimpse() # University of Illinois at Urbana-Champaign (145637)
 
-#lists_df_228431 %>% glimpse() # Stephen F Austin State University (228431)
+lists_df_110644 %>% glimpse() # UC-davis (110644)
+lists_df_145600 %>% glimpse() # UI-Chicago (145600)
+lists_df_104151 %>% glimpse() # ASU (104151)
+lists_df_228723 %>% glimpse() # Texas A&M-College Station (228723)
+lists_df_228529 %>% glimpse() # Tarleton State University (228529)
 
-#lists_df_224545 %>% glimpse() # Texas A & M University-Texarkana (224545)
+# state
 
-#lists_df_174358 %>% glimpse() # Minnesota State University-Moorhead (174358)
+lists_df_110644 %>% count(state) # UC-davis (110644); state variable does not exist
+lists_df_145600 %>% count(state) %>% print(n=70) # UI-Chicago (145600)
+lists_df_104151 %>% count(state) %>% print(n=70) # ASU (104151); exists but missing for 15,050 obs (for non-US)
+  #lists_df %>% filter(univ_id == '104151', is.na(state)) %>% count(country)
+lists_df_228723 %>% count(state) %>% print(n=70) # Texas A&M-College Station (228723); state variable does not exist
+lists_df_228529 %>% count(state) # Tarleton State University (228529); exists but missing for many obs
+lists_df %>% filter(univ_id == '228529') %>% count(state)
 
-#lists_df_174075 %>% glimpse() # University of Minnesota-Crookston (174075)
+# country
 
-#lists_df_110680 %>% glimpse() # UC san diego
+lists_df_110644 %>% count(country) %>% print(n=70) # UC-davis (110644);
+lists_df_145600 %>% count(country) %>% print(n=200) # UI-Chicago (145600)
+lists_df_104151 %>% count(country) %>% print(n=200) # ASU (104151); exists but missing for 577 obs
+lists_df_228723 %>% count(country) %>% print(n=70) # Texas A&M-College Station (228723); country is missing
+lists_df_228529 %>% count(country) # Tarleton State University (228529); exists but missing for many obs
 
-
+# texas-a&m college station [missing both state and country]
+  lists_df_228723 %>% count(source) %>% print(n=50)
+  lists_df_228723 %>% filter(is.na(zip)) %>% count() # 266 obs w/ missing zip code
+  
 ## -----------------------------------------------------------------------------
 ## INVESTIGATE LIST DATA
 ## -----------------------------------------------------------------------------
@@ -314,6 +293,15 @@ orders_df %>% var_label()
       #lists_df_sat %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # one obs per ref,order_num, order_date
 
 
+# merge by zip code to add state code variable for institutions that did not put state code on list data: UC-davis (110644); Texas A&M-College Station (228723) 
+  lists_df <- lists_df %>% left_join(y=zip_to_state_v2, by=c('zip_code'='zip_code')) %>% 
+    mutate(state = if_else(univ_id %in% c('228723','110644','228529') & is.na(state),state_code,state)) %>% select(-state_code) # UC-davis (110644); Texas A&M-College Station (228723)
+    #filter(univ_id %in% c('228723','110644')) %>% count(univ_id,state) %>% print(n=200)
+
+  #lists_df %>% filter(univ_id %in% c('228723','110644')) %>% count(univ_id,state) %>% print(n=200)
+  #lists_df %>% filter(univ_id %in% c('228723','110644'),is.na(state)) %>% View()
+  #lists_df %>% filter(univ_id %in% c('228723','110644'),is.na(state)) %>% count(zip_code) %>% print(n=400)
+  
 # merge in IPEDS vars
 lists_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, sector, c15basic) %>% rename(univ_state = state_code, univ_zip = zip_code, univ_sector = sector, univ_c15basic = c15basic) %>%
   right_join(lists_df, by = 'univ_id') %>% select(-univ_sector) %>%
