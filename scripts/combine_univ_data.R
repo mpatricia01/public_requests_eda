@@ -134,13 +134,23 @@ lists_df_228723 %>% select(source, order_no) %>% distinct() %>% anti_join(orders
 orders_df_228723 %>% select(order_num, order_title, date_start) %>% anti_join(lists_df_228723 %>% select(source, order_no) %>% distinct(), by = c('order_num' = 'order_no')) %>% View()
 
 
+# University of California-Davis (110644)
+load(file = file.path(data_dir, '110644_data.RData'))
+
+n_distinct(orders_df_110644$order_num)  # 5 order summaries
+n_distinct(lists_df_110644$order_no)  # 5 lists
+
+# Only have 5 College Board order summaries from Oct 2020 so far
+# No HS code in student list - need to request
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644
 )
 
 names(orders_df)
@@ -148,6 +158,7 @@ names(lists_df)
 table(orders_df$univ_id, useNA = 'always')
 table(lists_df$univ_id, useNA = 'always')
 table(lists_df$update_date, useNA = 'always')
+table(lists_df$grad_year, useNA = 'always')
 
 
 # Add zip_code variable extracting 5-digit zip code
@@ -156,8 +167,11 @@ mutate(
   zip_code = case_when(
     str_to_lower(country) == 'united states' | is.na(country) ~ str_pad(str_sub(zip, end = 5), width = 5, side = 'left', pad = '0'),
     TRUE ~ NA_character_
-  )
+  ),
+  grad_year = if_else(nchar(grad_year) == 2, str_c('20', grad_year), grad_year)
 )
+
+table(lists_df$grad_year, useNA = 'always')
 
 
 # Save dataframes
