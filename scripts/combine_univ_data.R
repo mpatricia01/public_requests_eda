@@ -144,13 +144,17 @@ n_distinct(lists_df_110644$order_no)  # 5 lists
 # No HS code in student list - need to request
 
 
+# University of Illinois at Chicago (145600)
+load(file = file.path(data_dir, '145600_data.RData'))
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
   orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600
 )
 
 names(orders_df)
@@ -163,13 +167,13 @@ table(lists_df$grad_year, useNA = 'always')
 
 # Add zip_code variable extracting 5-digit zip code
 lists_df <- lists_df %>% 
-mutate(
-  zip_code = case_when(
-    str_to_lower(country) == 'united states' | is.na(country) ~ str_pad(str_sub(zip, end = 5), width = 5, side = 'left', pad = '0'),
-    TRUE ~ NA_character_
-  ),
-  grad_year = if_else(nchar(grad_year) == 2, str_c('20', grad_year), grad_year)
-)
+  mutate(
+    zip_code = case_when(
+      str_to_lower(country) == 'united states' | is.na(country) ~ str_pad(str_sub(zip, end = 5), width = 5, side = 'left', pad = '0'),
+      TRUE ~ NA_character_
+    ),
+    grad_year = if_else(nchar(grad_year) == 2, str_c('20', grad_year), grad_year)
+  )
 
 table(lists_df$grad_year, useNA = 'always')
 
