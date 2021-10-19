@@ -36,6 +36,11 @@ options(max.print=100)
 #options(tibble.width = Inf, width = 10000, scipen = 999) # does this work for scripts or just rmd?
 options(scipen = 999)
 
+#?memory.limit
+memory.size()
+memory.limit()
+memory.limit(size = 40000) # set max memory allocation to 40000; I think this is 40 gigabytes; not sure if this is actually possible
+memory.limit()
 
 ## ---------------------------
 ## directory paths
@@ -59,8 +64,17 @@ list.files(path = scripts_dir)
 ## LOAD ORDER DATA AND LIST DATA
 ## -----------------------------------------------------------------------------
 
-# Create vector of state codes for 50 states + DC; used in creation of variables for country and others
-  state_codes <- c('AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY')  
+# Create vector of state codes for 50 states + DC + territories; used in creation of variables for country and others
+  state_codes <- c('AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','AS','FM','GU','MH','MP','PR','PW','VI','UM')  
+    #AS – American Samoa
+    #FM – Federated States of Micronesia
+    #GU – Guam
+    #MH – Marshall Islands
+    #MP – Northern Mariana Islands
+    #PR – Puerto Rico
+    #PW – Palau
+    #VI – U.S. Virgin Islands
+    #UM – U.S. Minor Outlying Island
 
 load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combined_data.RData'))
 
@@ -204,34 +218,14 @@ orders_df %>% var_label()
 
 #lists_df_145637 %>% glimpse() # University of Illinois at Urbana-Champaign (145637)
 
-lists_df_110644 %>% glimpse() # UC-davis (110644)
-lists_df_145600 %>% glimpse() # UI-Chicago (145600)
-lists_df_104151 %>% glimpse() # ASU (104151)
-lists_df_228723 %>% glimpse() # Texas A&M-College Station (228723)
-lists_df_228529 %>% glimpse() # Tarleton State University (228529)
+#lists_df_110644 %>% glimpse() # UC-davis (110644)
+#lists_df_145600 %>% glimpse() # UI-Chicago (145600)
+#lists_df_104151 %>% glimpse() # ASU (104151)
+#lists_df_228723 %>% glimpse() # Texas A&M-College Station (228723)
+#lists_df_228529 %>% glimpse() # Tarleton State University (228529)
 
-# state
 
-lists_df_110644 %>% count(state) # UC-davis (110644); state variable does not exist
-lists_df_145600 %>% count(state) %>% print(n=70) # UI-Chicago (145600)
-lists_df_104151 %>% count(state) %>% print(n=70) # ASU (104151); exists but missing for 15,050 obs (for non-US)
-  #lists_df %>% filter(univ_id == '104151', is.na(state)) %>% count(country)
-lists_df_228723 %>% count(state) %>% print(n=70) # Texas A&M-College Station (228723); state variable does not exist
-lists_df_228529 %>% count(state) # Tarleton State University (228529); exists but missing for many obs
-lists_df %>% filter(univ_id == '228529') %>% count(state)
 
-# country
-
-lists_df_110644 %>% count(country) %>% print(n=70) # UC-davis (110644);
-lists_df_145600 %>% count(country) %>% print(n=200) # UI-Chicago (145600)
-lists_df_104151 %>% count(country) %>% print(n=200) # ASU (104151); exists but missing for 577 obs
-lists_df_228723 %>% count(country) %>% print(n=70) # Texas A&M-College Station (228723); country is missing
-lists_df_228529 %>% count(country) # Tarleton State University (228529); exists but missing for many obs
-
-# texas-a&m college station [missing both state and country]
-  lists_df_228723 %>% count(source) %>% print(n=50)
-  lists_df_228723 %>% filter(is.na(zip)) %>% count() # 266 obs w/ missing zip code
-  
 ## -----------------------------------------------------------------------------
 ## INVESTIGATE LIST DATA
 ## -----------------------------------------------------------------------------
@@ -293,10 +287,27 @@ lists_df_228529 %>% count(country) # Tarleton State University (228529); exists 
       #lists_df_sat %>% group_by(Ref, order_num, order_date) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # one obs per ref,order_num, order_date
 
 
-# merge by zip code to add state code variable for institutions that did not put state code on list data: UC-davis (110644); Texas A&M-College Station (228723) 
+# FIX STATE, COUNTRY, HS GRAD YEAR
+  # merge by zip code to add state code variable for institutions that did not put state code on list data: UC-davis (110644); Texas A&M-College Station (228723) 
   lists_df <- lists_df %>% left_join(y=zip_to_state_v2, by=c('zip_code'='zip_code')) %>% 
-    mutate(state = if_else(univ_id %in% c('228723','110644','228529') & is.na(state),state_code,state)) %>% select(-state_code) # UC-davis (110644); Texas A&M-College Station (228723)
-    #filter(univ_id %in% c('228723','110644')) %>% count(univ_id,state) %>% print(n=200)
+    mutate(
+      state = if_else(state %in% state_codes==0,state_code,state),
+      country = tolower(country),
+      country = if_else(state %in% state_codes & is.na(country),"united states",country) # replace country w/ united states if state in US state or territory
+    ) %>% select(-state_code) %>%
+    # create grad_year variable for texas A&M college station
+    mutate(
+      entry_season = tolower(str_extract(string = entry_term, pattern = '\\w+')),
+      entry_year = as.numeric(str_extract(string = entry_term, pattern = '\\d+')),
+      grad_year = case_when(
+        univ_id == '228723' & entry_season %in% c('fall','summer') ~ entry_year, # if entry_term for college is fall or summer, assume graduated high school in same calendar year
+        univ_id == '228723' & entry_season %in% c('spring') ~ entry_year-1, # if entry_term for college is spring, assume graduated high school in previous calendar year
+        univ_id != '228723' ~ as.numeric(grad_year)
+      ),
+      entry_seaon = NULL,
+      entry_year = NULL
+    )
+
 
   #lists_df %>% filter(univ_id %in% c('228723','110644')) %>% count(univ_id,state) %>% print(n=200)
   #lists_df %>% filter(univ_id %in% c('228723','110644'),is.na(state)) %>% View()
@@ -348,11 +359,6 @@ lists_df <- univ_data %>% select(univ_id, univ_name, state_code, zip_code, secto
       univ_id == '174358' & state == 'Wisconsin' ~ 'WI',
     ),
     state = if_else(univ_id == '174358',state_moorhead,state, missing = NULL),
-    # populate values of variable 'country' for MN Moorhead state (no country variable on input data)
-    country = case_when(
-      univ_id != '174358' ~ country,
-      univ_id == '174358' & state %in% c(state_codes) ~ 'United States'
-    )
   ) %>%
   select(-state_moorhead)
 
@@ -583,8 +589,8 @@ lists_df <- lists_df %>% mutate(
     univ_id == '145637' & is_hispanic_origin == 'Yes' ~ 1,
     univ_id == '145637' & (is_hispanic_origin %in% c('No')| is.na(is_hispanic_origin)==1) ~ 0,
     # Texarkana and Stephen F. Austin, rules:
-    univ_id %in% c('228431','224545','110680','174075') & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
-    univ_id %in% c('228431','224545','110680','174075') & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0,   # == 0 if non_hispanic == 1 and all four categories == NA
+    univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
+    univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0,   # == 0 if non_hispanic == 1 and all four categories == NA
     # Note: variable is_hisp_common is NA for 12893 obs for following reasons:
       # all ethnicity variables [including ethnicity_no_respone] == NA ; 8391 obs
       # ethnicity_no_response== 'Y'; 4502 obs
@@ -665,56 +671,57 @@ lists_df <- lists_df %>% mutate(
   lists_df <- lists_df %>% mutate(
     american_indian_common = case_when(
       univ_id == '145637'  ~ american_indian_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & american_indian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(american_indian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & american_indian =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(american_indian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'american indian or alaska native' ~ 1,
       univ_id == '174358' & race_moorhead != 'american indian or alaska native' & !is.na(race_moorhead) ~ 0
     ),
     asian_common = case_when(
       univ_id == '145637'  ~ asian_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & asian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(asian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & asian =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(asian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'asian' ~ 1,
       univ_id == '174358' & race_moorhead != 'asian' & !is.na(race_moorhead) ~ 0      
     ),
     black_common = case_when(
       univ_id == '145637'  ~ black_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & black =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(black) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & black =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(black) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'black or african american' ~ 1,
       univ_id == '174358' & race_moorhead != 'black or african american' & !is.na(race_moorhead) ~ 0      
     ),
     native_hawaiian_common = case_when(
       univ_id == '145637'  ~ native_hawaiian_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & native_hawaiian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & native_hawaiian =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'native hawaiian/other pacific islander' ~ 1,
       univ_id == '174358' & race_moorhead != 'native hawaiian/other pacific islander' & !is.na(race_moorhead) ~ 0      
     ),
     white_common = case_when(
       univ_id == '145637'  ~ white_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & white =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(white) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & white =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(white) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'white' ~ 1,
       univ_id == '174358' & race_moorhead != 'white' & !is.na(race_moorhead) ~ 0      
     ),
     race_no_response_common = case_when(
       univ_id == '145637'  ~ race_no_response_urbana,
-      univ_id %in% c('228431','224545','110680','174075') & race_no_response =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(race_no_response) ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & race_no_response =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(race_no_response) ~ 0,
     ),
     other_common = case_when( # confused about this variable; not sure which boxes respondent could have checked to get this; 
       # no relevant input var for urbana; for Texarkana/SF Austin there are 152 total cases; not sure where they come from
         # note from xls_sat-esr-data-file-layout-crosswalk-fixed-width.xls:
           # "Note, "other" will be maintained until all students have responded to the new question."
-      univ_id == '145637'  ~ 0,
-      univ_id %in% c('228431','224545','110680','174075') & other =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075') & is.na(other) & is.na(race_no_response) ~ 0,
+          # note [10/19/2021]: UC-davis (110644) data does not have "other" variable
+      univ_id %in% c('145637','110644')  ~ 0,
+      univ_id %in% c('228431','224545','110680','174075','145600','104151','228529') & other =='Y' ~ 1,
+      univ_id %in% c('228431','224545','110680','174075','145600','104151','228529') & is.na(other) & is.na(race_no_response) ~ 0,
     ),
     # create measure that counts number of race groups
     ct_race_groups_common = rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common), na.rm = TRUE)),
@@ -800,20 +807,18 @@ lists_df <- lists_df %>% mutate(
     #10   Other
     #12   Two Or More Races, Non-Hispanic
 
-
-      
 lists_df <- lists_df %>% 
   mutate(
     race_cb = case_when(
-      univ_id != '174358' & (is.na(is_hisp_common)==1 | (is_hisp_common==0 & race_no_response_common==1)) ~ 0, #0    No Response [ethnicity/Hispanic is NA; OR hispanic==0 AND race_no_response indicator indicates they chose not to respond]
-      univ_id != '174358' & (american_indian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 1, #1    American Indian/Alaska Native [american_indian_common ==1; AND multi_race_common == 0; AND is_hisp_common == 0 ]
-      univ_id != '174358' & (asian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 2, #2    Asian
-      univ_id != '174358' & (black_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 3, #3    Black/African American
-      univ_id != '174358' & (is_hisp_common ==1) ~ 4, #4    Hispanic/Latino
-      univ_id != '174358' & (native_hawaiian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 8, #8    Native Hawaiian or Other Pacific Islander
-      univ_id != '174358' & (white_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 9, #9    White
-      univ_id != '174358' & (other_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 10, #10   Other
-      univ_id != '174358' & (multi_race_common == 1 & is_hisp_common == 0) ~ 12 #12   Two Or More Races, Non-Hispanic      
+      univ_id %in% c('174358','228723')==0 & (is.na(is_hisp_common)==1 | (is_hisp_common==0 & race_no_response_common==1)) ~ 0, #0    No Response [ethnicity/Hispanic is NA; OR hispanic==0 AND race_no_response indicator indicates they chose not to respond]
+      univ_id %in% c('174358','228723')==0 & (american_indian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 1, #1    American Indian/Alaska Native [american_indian_common ==1; AND multi_race_common == 0; AND is_hisp_common == 0 ]
+      univ_id %in% c('174358','228723')==0 & (asian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 2, #2    Asian
+      univ_id %in% c('174358','228723')==0 & (black_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 3, #3    Black/African American
+      univ_id %in% c('174358','228723')==0 & (is_hisp_common ==1) ~ 4, #4    Hispanic/Latino
+      univ_id %in% c('174358','228723')==0 & (native_hawaiian_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 8, #8    Native Hawaiian or Other Pacific Islander
+      univ_id %in% c('174358','228723')==0 & (white_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 9, #9    White
+      univ_id %in% c('174358','228723')==0 & (other_common==1 & multi_race_common == 0 & is_hisp_common == 0) ~ 10, #10   Other
+      univ_id %in% c('174358','228723')==0 & (multi_race_common == 1 & is_hisp_common == 0) ~ 12 #12   Two Or More Races, Non-Hispanic      
     ),
     # for U Minnesota Moorhead
     race_cb = case_when(
@@ -824,7 +829,19 @@ lists_df <- lists_df %>%
       univ_id == '174358' & race_moorhead == 'hispanic or latino' ~ 4, # 
       univ_id == '174358' & race_moorhead == 'native hawaiian/other pacific islander' ~ 8, # 
       univ_id == '174358' & race_moorhead == 'white' ~ 9, # 
-    )
+    ),
+    race_cb = case_when(
+      univ_id != '228723' ~ race_cb,
+      univ_id == '228723' & race == 'AO - Asian' ~ 2, # AO - Asian                                     39115
+      univ_id == '228723' & race == 'BA - Black or Multi w/Black' ~ 3, # BA - Black or Multi w/Black                     5078
+      univ_id == '228723' & race == 'HA - Hispanic' ~ 4, # HA - Hispanic                                  41762
+      univ_id == '228723' & race == 'IN - International' ~ 10, # IN - International; code as "other"
+      univ_id == '228723' & race == 'IO - American Indian or Alaskan Native' ~ 1, # IO - American Indian or Alaskan Native           136
+      univ_id == '228723' & race == 'MX - Multi w/o Black' ~ 12, # MX - Multi w/o Black                            4250
+      univ_id == '228723' & race == 'PO - Native Hawaiian or Other Pacific Islander' ~ 8, # PO - Native Hawaiian or Other Pacific Islander    73
+      univ_id == '228723' & race == 'UK - Not Reported' ~ 0, # UK - Not Reported                               3782
+      univ_id == '228723' & race == 'WO - White' ~ 9, # WO - White                                     49045    
+    ),
   ) %>%
   # create value labels for level of urbanization
   set_value_labels(
@@ -844,7 +861,7 @@ lists_df <- lists_df %>%
 
   var_label(lists_df[['race_cb']]) <- 'College Board derived federal race/ethnic categories; NA if hispanic == 0 and all input race variables (including race_no_response) are NA'
 
-  #lists_df %>% count(univ_name,race_cb) %>% print(n=70)
+  #lists_df %>% count(univ_name,race_cb) %>% print(n=100)
 
 # checks of variable race_cb  
   #lists_df %>% count(race_cb)
@@ -881,11 +898,16 @@ lists_df <- lists_df %>%
       # these are obs that had NA for: all input race vars; for ethnicity_no_response; and for race_no_response
   
 # delete input/work variables that are no longer needed
-  lists_df <- lists_df %>% select(-contains('urbana'),-is_hispanic_origin,-race,-race2,-cuban,-mexican,-puerto_rican,-other_hispanic,-non_hispanic,-american_indian,-asian,-black,-native_hawaiian,-white,-other,-race_no_response,-ethnicity_no_response,-race_moorhead) %>% glimpse()
-
-
-
-
+  #lists_df <- lists_df %>% select(-contains('urbana'),-is_hispanic_origin,-race,-race2,-cuban,-mexican,-puerto_rican,-other_hispanic,-non_hispanic,-american_indian,-asian,-black,-native_hawaiian,-white,-other,-race_no_response,-ethnicity_no_response,-race_moorhead) %>% glimpse()
+  lists_df <- lists_df %>% select(-contains('urbana'),-is_hispanic_origin,-race,-race2,-race_moorhead,-ct_race_groups_common)
+    # -cuban,-mexican,-puerto_rican,-other_hispanic,-non_hispanic,-american_indian,-asian,-black,-native_hawaiian,-white,-other,-race_no_response,-ethnicity_no_response
+  lists_df %>% glimpse()
+  
+# delete other variables no longer needed
+  lists_df <- lists_df %>% select(-entry_season,-entry_term,
+    -major_1_text,-major_2_text,-major_3_text,-interest_me,-score_range,-family_income,
+    -hs_name,-order_date,-source_file)
+  
 ## -----------------------------------------------------------------------------
 ## RESEARCH QUESTION 1: RQ1, What are the characteristics of student list purchases
 ## -----------------------------------------------------------------------------
@@ -926,7 +948,7 @@ lists_df <- lists_df %>%
     # stephen F. Austin
       #lists_df %>% filter(univ_id == '228431') %>% group_by(order_no) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) %>% print(n=100) # 15 different orders
       #lists_df %>% filter(univ_id == '228431') %>% select(order_no) %>% distinct() %>% count() # 15 distinct values of order_no
-
+    
   # MERGE; BY UNIV_ID AND ORDER_NO
 lists_orders_df <- orders_df %>% 
   # bulk rename columns that start with "order"
@@ -940,22 +962,20 @@ lists_orders_df <- orders_df %>%
          ord_gender,ord_race_ethnicity)  %>% mutate(one=1) %>% 
   # merge in student list data
   right_join(y = (lists_df %>% select(starts_with('univ'),student_id,city,state,zip,zip_code,country,geomarket,hs_code,order_no,county_code,post_del,post_corr,gender,
-                    is_hisp_common,american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,race_no_response_common,other_common,ct_race_groups_common,multi_race_common,race_cb,
-                    grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen,score_range) %>% # deleted these vars order_date,update_date, note that "order_date" is specific to Urbana, taken from the "source" column in raw data
+                                      cuban,mexican,puerto_rican,other_hispanic,non_hispanic,american_indian,asian,black,native_hawaiian,white,other,race_no_response,ethnicity_no_response,
+                    is_hisp_common,american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,race_no_response_common,other_common,multi_race_common,race_cb,
+                    grad_year,major_1,major_2,major_3,name_source,homeschool,hs_cluster,en_cluster,nhrp,first_gen) %>% # deleted these vars order_date,update_date, note that "order_date" is specific to Urbana, taken from the "source" column in raw data
   rename(id = student_id) %>% rename_with(.fn = function(x){paste0("stu_", x)}, .cols = !(order_no|starts_with('univ')))), by = c('univ_id', 'ord_num' = 'order_no')) %>% # note: same result of you merge just by order number
   # create indicator of whether order summary data missing
   mutate(na_ord_summ = if_else(is.na(one),1,0)) %>% select(-one) %>%
   # other variables used later
   mutate(
     # indicator variable for whether student is in 50 US states + DC [note: variable stu_country sometimes missing/unreliable]
-    stu_country = tolower(stu_country),
     #stu_in_us = if_else(stu_country == 'united states' & str_length(stu_state)==2 & !(stu_state %in% c('AA','AE','AP','MH','PR')),1,0, missing = NULL),
     #stu_in_us = if_else(stu_country == 'united states' & stu_state %in% state_codes,1,0, missing = NULL)
     stu_in_us = if_else(stu_state %in% state_codes,1,0, missing = NULL)
   )
-
-
-
+ 
 
 var_label(lists_orders_df[['stu_in_us']]) <- '0/1 measure of whether prospect has country == united staes and state is one of 50 states or DC'
 
@@ -988,8 +1008,6 @@ var_label(lists_orders_df[['stu_in_us']]) <- '0/1 measure of whether prospect ha
     # 16 order numbers from lists_df do not have a match in orders_df; 15 from Urbana-Illinois; 1 from Texarkana
     lists_df %>% anti_join(orders_df, by = c('order_no' = 'order_num')) %>% select(order_no,univ_name) %>% distinct()
  
-lists_orders_df %>% glimpse()
-    
 ###################### MERGE IN SECONDARY DATA
 
 
@@ -1113,11 +1131,8 @@ lists_orders_zip_df <- lists_orders_df %>%
   
   lists_orders_zip_hs_df <- lists_orders_zip_df %>% 
     left_join(y= (ceeb_hs %>% rename_with(.fn = function(x){paste0("hs_", x)}, .cols = !(starts_with('ceeb'))) %>% mutate(one=1)), by = c('stu_ceeb' = 'ceeb')) %>%
-    mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one) # %>%
-    # create 0/1 indicator for student attends a private high school
-    mutate(hs_private = if_else(hs_school_control=='private',1,0,missing=NULL))    
+    mutate(na_hs = if_else(is.na(one),1,0)) %>% select(-one) 
 
-    lists_orders_zip_hs_df %>% count()
     lists_orders_zip_hs_df %>% glimpse()
 
 
@@ -1190,3 +1205,4 @@ lists_orders_zip_df <- lists_orders_df %>%
       # prospects w/ missing hs data live in zip-codes with lower pct white, and somewhat higher pct black, higher pct asian, higher pct hispanic
     
     rm(lists_orders_zip_hs_anti)
+

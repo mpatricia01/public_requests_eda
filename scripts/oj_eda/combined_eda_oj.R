@@ -34,6 +34,11 @@ options(max.print=100)
 #options(tibble.width = Inf, width = 10000, scipen = 999) # does this work for scripts or just rmd?
 options(scipen = 999)
 
+#?memory.limit
+memory.size()
+memory.limit()
+memory.limit(size = 40000) # set max memory allocation to 40000; I think this is 40 gigabytes
+memory.limit()
 
 ## ---------------------------
 ## directory paths

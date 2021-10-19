@@ -126,6 +126,7 @@ base::intersect(orders_df_228529$order_num, lists_df_228529$order_no)
 
 # Order summary's geography criteria was cut off (i.e., 'View all' not expanded) so need to update orders_df_228529 once we request expanded version
 # Also need to request those corresponding order summaries/lists that we're missing
+# 10/19/2021: grad_year and many other variables NA for about 40,000 obs
 
 # potentially missing variables (not all important) [ozan 10/18/2021]
   #order_names %>% anti_join(y=(names(orders_df_228529) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
@@ -164,6 +165,9 @@ orders_df_228723 %>% select(order_num, order_title, date_start) %>% anti_join(li
   # race variable for college station is way different
   #lists_df_228723 %>% glimpse()
   #lists_df_228723 %>% count(race)
+  #lists_df_228723 %>% count(entry_term)
+    # use var entry_term to create grad_year
+
 
 # University of California-Davis (110644)
 load(file = file.path(data_dir, '110644_data.RData'))
@@ -195,6 +199,8 @@ load(file = file.path(data_dir, '145600_data.RData'))
    #list_names %>% anti_join(y=(names(lists_df_145600) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
     # lists df: non important missing
     # note: grad_year is two-digit rather than four-digit
+lists_df_145600 %>% glimpse()
+
 
 # Combine data
 orders_df <- dplyr::bind_rows(
