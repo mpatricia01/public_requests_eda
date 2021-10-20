@@ -11,6 +11,12 @@
     # C:\Users\ozanj\Dropbox\rclass1_ps
   # also, you have absolute autonomy to change questions add new ones/ cut other ones if too redundant
     # e.g., I haven't done anything w/ helper functions like first(), last(), nth()
+  # CRYSTAL - POTENTIAL SUBSTANTIVE THINK TO ADD TO PROBLEM SET [AND PROBABLY CUT SOMETHING ELSE]
+    # CREATE VARIABLE THAT IS FIRST TWO DIGITS OF THE VARIABLE stu_major_1; THIS WILL BE THE TWO-DIGIT CIP-CODE
+      # merge in a string variable that gives descriptor of two-digit cip code
+        # e.g., https://siccode.com/page/what-is-a-cip-code
+      # then can do simple analyses of calculate number of students who intend to major in each field
+
 
 library(tidyverse)
 library(labelled)
