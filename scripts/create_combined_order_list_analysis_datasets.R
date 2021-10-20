@@ -597,7 +597,7 @@ lists_df <- lists_df %>% mutate(
       # u minnesota moorhead
     univ_id == '174358' & race_moorhead == 'hispanic or latino' ~ 1,
     univ_id == '174358' & race_moorhead != 'hispanic or latino' & !is.na(race_moorhead) ~ 0
-    
+    # note: 10/19/2021: probably need to add code for texas A&M college station
   ))
 
 ###################### CREATE INPUT VARIABLE RACE (FOR URBANA) THAT REMOVES DUPLICATE RACE CATEGORIES (E.G., "ASIAN, ASIAN" BECOMES "ASIAN")
@@ -1101,15 +1101,15 @@ lists_orders_zip_df <- lists_orders_df %>%
         # should be missing if state is missing and country is 'united states'
       ),
       # student-level dichotomous race vars from categorical CB race var
-      stu_white = if_else(stu_race_cb==9,1,0,missing=NULL),
-      stu_asian = if_else(stu_race_cb==2,1,0,missing=NULL),
-      stu_black = if_else(stu_race_cb==3,1,0,missing=NULL),
-      stu_hispanic = if_else(stu_race_cb==4,1,0,missing=NULL),
-      stu_amerindian = if_else(stu_race_cb==1,1,0,missing=NULL),
-      stu_nativehawaii = if_else(stu_race_cb==8,1,0,missing=NULL),
-      stu_native = if_else(stu_race_cb %in% c(1,8),1,0,missing=NULL), # ametican indian, alaska native, native hawwaiian or pacific islander
-      stu_tworaces = if_else(stu_race_cb==12,1,0,missing=NULL),
-      stu_unknown = if_else(stu_race_cb==0,1,0,missing=NULL),
+      stu_white_01 = if_else(stu_race_cb==9,1,0,missing=NULL),
+      stu_asian_01 = if_else(stu_race_cb==2,1,0,missing=NULL),
+      stu_black_01 = if_else(stu_race_cb==3,1,0,missing=NULL),
+      stu_hispanic_01 = if_else(stu_race_cb==4,1,0,missing=NULL),
+      stu_amerindian_01 = if_else(stu_race_cb==1,1,0,missing=NULL),
+      stu_nativehawaii_01 = if_else(stu_race_cb==8,1,0,missing=NULL),
+      stu_native_01 = if_else(stu_race_cb %in% c(1,8),1,0,missing=NULL), # ametican indian, alaska native, native hawwaiian or pacific islander
+      stu_tworaces_01 = if_else(stu_race_cb==12,1,0,missing=NULL),
+      stu_unknown_01 = if_else(stu_race_cb==0,1,0,missing=NULL),
     ) 
 
 
