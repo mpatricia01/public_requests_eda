@@ -20,6 +20,7 @@
 
 library(tidyverse)
 library(labelled)
+library(readxl)
 
 
 ## ---------------------------
@@ -61,10 +62,26 @@ rm(list_native_df)
   # CRYSTAL: SAVE THIS TO CLOUD (MAYBE PROBLEM SET DROP BOX) AND 
 load(file = file.path(data_dir, 'list_native_df.RData')) 
 
+# Add CIP data
+cip_df <- read_excel(file.path(scripts_dir, 'oj_eda', 'Student Search Service Layout.xls'), sheet = 'Intended Majors', col_names = c('cip_code', 'stu_major_1_text', 'sat', 'psat', 'stu_major_1_group_text', 'code'), skip = 1) %>% 
+  drop_na(cip_code) %>% 
+  mutate(cip_code = str_remove(cip_code, '\\.$'))
+
+list_native_df <- list_native_df %>% 
+  mutate(
+    stu_major_1 = str_remove(stu_major_1, '\\.0*$'),
+    stu_major_1_group = str_extract(stu_major_1, '^\\d+')
+  ) %>% 
+  left_join(cip_df %>% select(c('cip_code', 'stu_major_1_text')), by = c('stu_major_1' = 'cip_code')) %>% 
+  left_join(cip_df %>% select(c('cip_code', 'stu_major_1_group_text')), by = c('stu_major_1_group' = 'cip_code')) %>% 
+  relocate(any_of(c('stu_major_1_group', 'stu_major_1_text', 'stu_major_1_group_text')), .after = 'stu_major_1')
+
+save(list_native_df, file = file.path(data_dir, 'list_native_df.RData'))
+
 list_native_df %>% glimpse()
 
 # create ethnicity and race variables
-list_native_df %>% mutate(
+list_native_df <- list_native_df %>% mutate(
   # create 0/1 variable for identifies as hispanic
   stu_hispanic_01 = case_when(
     (stu_cuban == 'Y' | stu_mexican == 'Y' | stu_puerto_rican == 'Y' | stu_other_hispanic == 'Y') ~ 1, # any of the hispanic categories equal 'Y'
@@ -99,7 +116,7 @@ list_native_df %>% mutate(
   )
 ) %>%
   # drop input ethnicity/race vars
-  select(-stu_cuban,-stu_mexican,-stu_puerto_rican,-stu_other_hispanic,-stu_non_hispanic,-stu_american_indian,-stu_asian,stu_black,-stu_native_hawaiian,-stu_white)
+  select(-stu_cuban,-stu_mexican,-stu_puerto_rican,-stu_other_hispanic,-stu_non_hispanic,-stu_american_indian,-stu_asian,-stu_black,-stu_native_hawaiian,-stu_white,-stu_ethnicity_no_response,-stu_race_no_response)
 ############# PART X. GET TO KNOW DATASET; 
 
 # glimpse

@@ -1,0 +1,283 @@
+---
+title: "Lecture 5 problem set"
+author: "INSERT YOUR NAME HERE"
+urlcolor: blue
+output: 
+  pdf_document:
+    df_print: default
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, collapse = TRUE, comment = "#>", highlight = TRUE)
+```
+
+
+# Overview
+
+## Background information on data you will be working with 
+
+In this problem set, we are working with data from the list of prospective students that University of Illinois-Chicago purchased from College Board. We have also merged in Census data on zip-code characteristics and NCES data on school characteristics to the prospect-level data from College Board. Hence, the dataset you will be working with has one observation per prospect (i.e., student). Some variables are prospect-level variables, other variables are measured at the zip-code level or school-level. These are measures of the racial composition for the zip code the prospect lives in and measures of the racial composition for the high school which the prospect attends; they do not vary across prospects within the same zip-code or school.
+
+## Task
+
+- For this problem set, you are a researcher and your goal is to identify systematic racial and socioeconomic bias in student list purchases by Western Washington University. That is, do the prospects purchased by Western Washington tend to have different racial and socioeconomic characteristics than other people in their state or zip-code?
+
+- Note that there is a lot of data cleaning required before conducting `group_by` and `summarise()` analyses. Much of this data cleaning involves creating prospect-level and zipcode/state-level measures of race/ethnicity that are consistent to one another. Therefore, we have answered some of the data cleaning questions for you to avoid making the problem set too long. We intentionally left our data cleaning code for you all to get a sense of the process of investigating and cleaning your data.  
+
+
+- Note, for questions that ask you to use `summarise()` function, fine to use `summarise_all()`, `summarise_at()`, or `summarise_if()` instead as long as you get the right answer.
+
+## Caveat
+
+- Merging data from other sources (e.g. College Board & Census) gives us breadth in investigating racial and socioeconomic bias beyond the prospect (student) level, yet at the same time, we are limited in the choices we make for disaggregating by race and ethnicity (in addition to other variables).  Further, there are some fundamental differences between how College Board and Census define race/ethnicity that cannot be overcome with data cleaning. Therefore, comparisons between race/ethnicity variables from College Board and race/ethnicity variables from Census are problematic. 
+
+### Definitions for race and ethnicity used by Census and College Board
+
+Here is some background information on how U.S. Census and College Board define race and ethnicity:
+
+- U.S. Census
+    - Census definitions of race and ethnicity [Link here](https://www.census.gov/topics/population/race/about.html)
+    - Census categories of race and ethnicity [Link here](https://www.socialexplorer.com/data/ACS2016_5yr/metadata/?ds=ACS16_5yr&table=B03002)
+- College Board
+    - College Board Categories of race and ethnicity [Link here](https://research.collegeboard.org/about-us/changes-to-race-ethnicity-reporting)
+    - College Board race and ethnicity questions from SAT Questionnaire [Link here](https://collegereadiness.collegeboard.org/pdf/sat-registration-booklet-students.pdf#page=29)
+
+__Idiosyncracies about the way race/ethnicity is defined by College Board vs. U.S. Census in the dataset you will be working with__
+
+- The College Board survey asks a question about "ethnicity" and then a separate question about "race"; However, the data sent to us by Western Washington combined race and ethnicity into one variable called `ethn_code`
+- The College Board survey questions for ethnicity and race uses the following rules:
+    - "Students may select all options that apply. In prior years, they were asked to select one option."
+- By contrast, US Census data asks respondents to select one option; there is a separate option for "Two or More Races"
+- As a result of these differences, the College Board race/ethnicity variable has a much higher percentage of people who identify as "2 or more races" than data from U.S. Census.
+
+# Load library and data
+
+1. Load the `tidyverse` library:
+
+```{r}
+library(tidyverse)
+```
+
+2. Use `load()` and `url()` to load the `list_native_df` dataframe from `https://github.com/anyone-can-cook/rclass1/raw/master/data/prospect_list/list_native_df.RData`:
+
+```{r}
+load(url('https://github.com/anyone-can-cook/rclass1/raw/master/data/prospect_list/list_native_df.RData'))
+```
+
+3. Preview the first few rows of `list_native_df` using `head()`:
+
+```{r}
+list_native_df %>% head()
+```
+
+4. Run the following code to create the new race/ethnicity categories:
+
+```{r}
+list_native_df <- list_native_df %>% mutate(
+  # create 0/1 variable for identifies as hispanic
+  stu_hispanic_01 = case_when(
+    (stu_cuban == 'Y' | stu_mexican == 'Y' | stu_puerto_rican == 'Y' | stu_other_hispanic == 'Y') ~ 1,
+    (stu_non_hispanic == 'Y' & is.na(stu_cuban) & is.na(stu_mexican) & is.na(stu_puerto_rican) & is.na(stu_other_hispanic)) ~ 0,
+  ),
+  # create 0/1 variables for each ethnicity group
+  stu_cuban_01 = case_when(stu_cuban == 'Y' ~ 1,is.na(stu_cuban) & is.na(stu_ethnicity_no_response) ~ 0),
+  stu_mexican_01 = case_when(stu_mexican == 'Y' ~ 1,is.na(stu_mexican) & is.na(stu_ethnicity_no_response) ~ 0),
+  stu_puerto_rican_01 = case_when(stu_puerto_rican == 'Y' ~ 1,is.na(stu_puerto_rican) & is.na(stu_ethnicity_no_response) ~ 0),
+  stu_other_hispanic_01 = case_when(stu_other_hispanic == 'Y' ~ 1,is.na(stu_other_hispanic) & is.na(stu_ethnicity_no_response) ~ 0),
+  # create 0/1 variables for each race group
+  stu_american_indian_01 = case_when(stu_american_indian == 'Y' ~ 1,is.na(stu_american_indian) & is.na(stu_race_no_response) ~ 0),
+  stu_asian_01 = case_when(stu_asian == 'Y' ~ 1,is.na(stu_asian) & is.na(stu_race_no_response) ~ 0),
+  stu_black_01 = case_when(stu_black == 'Y' ~ 1,is.na(stu_black) & is.na(stu_race_no_response) ~ 0),
+  stu_native_hawaiian_01 = case_when(stu_native_hawaiian == 'Y' ~ 1,is.na(stu_native_hawaiian) & is.na(stu_race_no_response) ~ 0),
+  stu_white_01 = case_when(stu_white == 'Y' ~ 1,is.na(stu_white) & is.na(stu_race_no_response) ~ 0),
+  # create count of number of race groups
+  race_ct = rowSums(dplyr::across(c(stu_american_indian_01,stu_asian_01,stu_black_01,stu_native_hawaiian_01,stu_white_01), na.rm = TRUE)),
+  # create 0/1 measure of multi-race
+  multi_race_01 = if_else(race_ct >=2,1,0, missing = NULL),
+  # create college board categorical ethnicity race variable
+  race_cb = case_when(
+    (is.na(stu_hispanic_01)==1 | (stu_hispanic_01==0 & stu_race_no_response=='Y')) ~ 'no_response',
+    (stu_american_indian_01==1 & multi_race_01 == 0 & stu_hispanic_01 == 0) ~ 'ai_an',
+    (stu_asian_01==1 & multi_race_01 == 0 & stu_hispanic_01 == 0) ~ 'asian',
+    (stu_black_01==1 & multi_race_01 == 0 & stu_hispanic_01 == 0) ~ 'black',
+    (stu_hispanic_01 ==1) ~ 'hispanic',
+    (stu_native_hawaiian_01==1 & multi_race_01 == 0 & stu_hispanic_01 == 0) ~ 'nh_pi',
+    (stu_white_01==1 & multi_race_01 == 0 & stu_hispanic_01 == 0) ~ 'white',
+    (multi_race_01 == 1 & stu_hispanic_01 == 0) ~ 'multi_race'
+  )
+) %>%
+  # drop input ethnicity/race vars
+  select(-stu_cuban,-stu_mexican,-stu_puerto_rican,-stu_other_hispanic,-stu_non_hispanic,-stu_american_indian,-stu_asian,-stu_black,-stu_native_hawaiian,-stu_white,-stu_ethnicity_no_response,-stu_race_no_response)
+```
+
+5. Preview the first few rows of `list_native_df` again using `head()`:
+
+```{r}
+list_native_df %>% head()
+```
+
+
+# Basic data manipulations
+
+1. Let's investigate the College Board race categories. First, find the number of students in each `race_cb` category:
+
+    - Use `count()` to get the count for each `race_cb` category
+    - Use `arrange()` to sort by the count in descending order
+
+```{r}
+list_native_df %>%
+  count(race_cb) %>% 
+  arrange(desc(n))
+```
+
+
+2. Now, we'll add a column for the percentage of students in each `race_cb` category:
+
+    - Use `count()` to get the count for each `race_cb` category
+    - Use `mutate()` to create a new variable `pct` that is the percent of students in each category
+      - Hint: Calculate the percent by dividing the count by the sum of all counts, then multiplying by 100
+    - Use `arrange()` to sort by the count (or percent) in descending order
+
+```{r}
+list_native_df %>%
+  count(race_cb) %>% 
+  mutate(pct = (n / sum(n)) * 100) %>% 
+  arrange(desc(n))
+```
+
+
+# Summarizing across rows
+
+1. Now, let's investigate the individual, disaggregated race category variables we created earlier. Here, we'll take a look at `stu_hispanic_01`. Use `summarise()` to create the following variables:
+
+    - `n_obs`: Use `n()` to get the total number of observations
+    - `n_miss_hispanic`: Use `sum()` and `is.na()` to get the total number of observations where `stu_hispanic_01` is missing
+      - Hint: `is.na()` returns `TRUE` or `FALSE`. When summed, `TRUE` coerces to `1` and `FALSE` coerces to `0`, thus giving us the total number of missing observations.
+    - `pct_hispanic`: Use `mean()` to get the proportion of students who identifies as hispanic (multiply by 100 to get percentage)
+      - Hint: Since there are missing values, we need to specify `na.rm` in `mean()` to remove them
+
+```{r}
+list_native_df %>% summarise(
+  n_obs = n(),
+  n_miss_hispanic = sum(is.na(stu_hispanic_01)),
+  pct_hispanic = mean(stu_hispanic_01, na.rm = T) * 100
+)
+```
+
+2. Next, calculate the percentage of students who identify as each race. Use `summarise()` and `mean()` to create the following variables:
+
+    - `pct_hispanic` (calculated from `stu_hispanic_01`)
+    - `pct_american_indian` (calculated from `stu_american_indian_01`)
+    - `pct_asian` (calculated from `stu_asian_01`)
+    - `pct_black` (calculated from `stu_black_01`) 
+    - `pct_native_hawaiian` (calculated from `stu_native_hawaiian_01`) 
+    - `pct_white` (calculated from `stu_white_01`)
+
+    How do these percentages differ from the categorical `race_cb` variable in which each student can only be in one group?
+
+```{r}
+list_native_df %>% summarise(
+  pct_hispanic = mean(stu_hispanic_01, na.rm = T) * 100,
+  pct_american_indian = mean(stu_american_indian_01, na.rm = T) * 100,
+  pct_asian = mean(stu_asian_01, na.rm = T) * 100,
+  pct_black = mean(stu_black_01, na.rm = T) * 100,
+  pct_native_hawaiian = mean(stu_native_hawaiian_01, na.rm = T) * 100,
+  pct_white = mean(stu_white_01, na.rm = T) * 100,
+)
+```
+
+
+
+# Grouping and summarizing
+
+1. Now, we will use `group_by()` in conjunction with `summarise()` to calculate aggregates for each group. In this question, we'll be grouping by state (`stu_state`) and calculating statistics about the students' zip-code level median household income (`zip_median_household_income`) for each state:
+
+    - First, use `filter()` and `is.na()` to filter out rows with missing state
+    - Use `group_by()` to group by state
+    - Use `summarise()` to create the following variables:
+      - `n_obs`: Use `n()` to get the total number of observations per state
+      - `mean_zip_inc`: Use `mean()` to get the average household income of students per state
+      - `max_zip_inc`: Use `max()` to get the maximum household income of students per state
+      - `min_zip_inc`: Use `min()` to get the minimum household income of students per state
+    - Use `arrange()` to sort by descending `n_obs`
+
+```{r}
+list_native_df %>%
+  filter(!is.na(stu_state)) %>%
+  group_by(stu_state) %>%
+  summarise(
+    n_obs = n(),
+    mean_zip_inc = mean(zip_median_household_income, na.rm = T),
+    max_zip_inc = max(zip_median_household_income, na.rm = T),
+    min_zip_inc = min(zip_median_household_income, na.rm = T)
+  ) %>%
+  arrange(desc(n_obs))
+```
+
+2. We can also group by multiple variables. In this question, we will group by both state (`stu_state`) and the student's first choice major (`stu_major_1_group_text`):
+
+    - Use `filter()` and `is.na()` to filter out rows with missing state
+    - Use `group_by()` to group by state and major
+    - Use `summarise()` and `n()` to create a variable called `n_obs` that represents the number of students with each major choice at each state
+    - Use `arrange()` to sort by state, then descending `n_obs` within each state
+
+```{r}
+list_native_df %>%
+  filter(!is.na(stu_state)) %>%
+  group_by(stu_state, stu_major_1_group_text) %>%
+  summarise(n_obs = n()) %>%
+  arrange(stu_state, desc(n_obs))
+```
+
+3. Now, let's look at the top 3 chosen majors by students from each state. This will build on top of your code from the previous question:
+
+    - First copy your code from the previous question
+    - Next, use `group_by()` to further group by state only
+    - Use `summarise()` to create the following variables:
+      - `top_major`: Use `first()` to get the top choice major by students per state
+      - `second_major`: Use `n()` to get the second choice major by students per state
+      - `third_major`: Use `n()` to get the third choice major by students per state
+
+```{r}
+list_native_df %>%
+  filter(!is.na(stu_state)) %>%
+  group_by(stu_state, stu_major_1_group_text) %>%
+  summarise(n_obs = n()) %>%
+  arrange(stu_state, desc(n_obs)) %>%
+  group_by(stu_state) %>% 
+  summarise(
+    top_major = first(stu_major_1_group_text),
+    second_major = nth(stu_major_1_group_text, 2),
+    third_major = nth(stu_major_1_group_text, 3)
+  )
+```
+
+
+# Your own analysis
+
+1. Perform your own analysis of your choosing.
+
+```{r}
+
+```
+
+
+# Create a GitHub issue   
+
+- Go to the [class repository](https://github.com/anyone-can-cook/rclass1_student_issues_f21/issues) and create a new issue.
+- You can either:
+  - Ask a question that you have about this problem set or the course in general. Make sure to assign the instructors (@ozanj, @briannawright135, @lizachavac) and mention your team (e.g., @anyone-can-cook/your_team_name).
+  - Share something you learned from this problem set or the course. Please tag your team (e.g., @anyone-can-cook/your_team_name).
+- You are also required to respond to at least one issue posted by another student.
+
+- Paste the url to your issue here: 
+- Paste the url to the issue you responded to here: 
+
+
+# Knit to pdf and submit problem set  
+
+**Knit to pdf** by clicking the "Knit" button near the top of your RStudio window (icon with blue yarn ball) or drop down and select "Knit to PDF"
+
+- Go to the [class website](https://anyone-can-cook.github.io/rclass1/) and under the "Readings & Assignments" >> "Week 5" tab, click on the "Problem set 5 submission link"  
+- Submit both .Rmd and pdf files  
+- Use this naming convention "lastname_firstname_ps#" for your .Rmd and pdf files (e.g. jaquette_ozan_ps5.Rmd & jaquette_ozan_ps5.pdf) 
