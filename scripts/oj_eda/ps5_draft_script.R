@@ -47,7 +47,7 @@ list_native_df <- lists_orders_zip_hs_df %>% filter(univ_id == '145600', ord_num
     stu_american_indian,stu_asian,stu_black,stu_native_hawaiian,stu_white,stu_race_no_response,
     stu_major_1,
     na_zip_acs,zip_cbsa_1,zip_cbsatitle_1,zip_csacode,zip_csatitle,zip_median_household_income,
-    #zip_pop_total,zip_pop_white,zip_pop_black,zip_pop_amerindian,zip_pop_asian,zip_pop_nativehawaii,zip_pop_otherrace,zip_pop_tworaces,zip_pop_hispanic,
+    zip_pop_total,zip_pop_white,zip_pop_black,zip_pop_amerindian,zip_pop_asian,zip_pop_nativehawaii,zip_pop_otherrace,zip_pop_tworaces,zip_pop_hispanic,
     na_hs,hs_private,hs_cbsa_1,hs_cbsatitle_1,hs_csacode,hs_csatitle,hs_name,hs_ncessch,hs_state_code,hs_zip_code,
     hs_total_students,hs_total_amerindian,hs_total_asian,hs_total_black,hs_total_hispanic,hs_total_nativehawaii,hs_total_tworaces,hs_total_unknown,hs_total_white,
     hs_pct_amerindian,hs_pct_asian,hs_pct_black,hs_pct_hispanic,hs_pct_nativehawaii,hs_pct_tworaces,hs_pct_unknown,hs_pct_white,    
