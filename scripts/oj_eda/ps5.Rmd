@@ -32,20 +32,19 @@ A note on terms for race and ethnicity categories: This problem set uses categor
 1. Load the `tidyverse` library.
 
 ```{r}
-library(tidyverse)
+
 ```
 
 2. Use `load()` and `url()` to load the `list_native_df` dataframe from `https://github.com/anyone-can-cook/rclass1/raw/master/data/prospect_list/list_native_df.RData`.
 
 ```{r}
-load(url('https://github.com/anyone-can-cook/rclass1/raw/master/data/prospect_list/list_native_df.RData'))
+
 ```
 
 3. Let's investigate the `list_native_df` dataframe. First, use `head()` and `glimpse()` to preview the data.
 
 ```{r}
-list_native_df %>% head()
-list_native_df %>% glimpse()
+
 ```
 
 4. For each of the following **ethnicity** variables, use the `count()` function to count its unique values:
@@ -58,12 +57,7 @@ list_native_df %>% glimpse()
     - `stu_ethnicity_no_response`
 
 ```{r}
-list_native_df %>% count(stu_cuban)
-list_native_df %>% count(stu_mexican)
-list_native_df %>% count(stu_puerto_rican)
-list_native_df %>% count(stu_other_hispanic)
-list_native_df %>% count(stu_non_hispanic)
-list_native_df %>% count(stu_ethnicity_no_response)
+
 ```
 
 5. For each of the following **race** variables, use the `count()` function to count its unique values:
@@ -76,12 +70,7 @@ list_native_df %>% count(stu_ethnicity_no_response)
     - `stu_race_no_response`
 
 ```{r}
-list_native_df %>% count(stu_american_indian)
-list_native_df %>% count(stu_asian)
-list_native_df %>% count(stu_black)
-list_native_df %>% count(stu_native_hawaiian)
-list_native_df %>% count(stu_white)
-list_native_df %>% count(stu_race_no_response)
+
 ```
 
 
@@ -97,7 +86,7 @@ To do that, we will first create 0/1 indicators for each disaggregated race and 
 
 Run the following code to create the new race/ethnicity categories. All code is provided for you, all you need to do is run the code chunk below. Make sure to remove the `eval = F` from the code chunk when you are ready to run this part.
 
-```{r}
+```{r, eval = F}
 list_native_df <- list_native_df %>% mutate(
   # create 0/1 variable for identifies as hispanic
   stu_hispanic_01 = case_when(
@@ -146,8 +135,7 @@ list_native_df <- list_native_df %>% mutate(
 1. After adding the new variables, let's investigate the `list_native_df` dataframe again. Use `head()` and `glimpse()` to preview the data.
 
 ```{r}
-list_native_df %>% head()
-list_native_df %>% glimpse()
+
 ```
 
 2. Now, let's take a look at the derived aggregate race/ethnicity variable `race_cb` we created. Create a new object `race_cb_freq` that stores the count for each race/ethnicity category as follows:
@@ -156,30 +144,24 @@ list_native_df %>% glimpse()
     - Use `arrange()` to sort by the count in descending order
 
 ```{r}
-race_cb_freq <- list_native_df %>%
-  count(race_cb) %>% 
-  arrange(desc(n))
 
-race_cb_freq
 ```
 
 3. Investigate the `race_cb_freq` object you created in the previous question by using the `typeof()` and `str()` functions. Run your code in the code chunk below and answer the following questions:
 
     - What type of object is this, and how many elements does it have?
-      - **ANSWER**: List, 2 elements
+      - **ANSWER**:
     - Is this object a dataframe? If so, how many observations does it have, and what are the names of the variables?
-      - **ANSWER**: Yes, 9 observations, variables are `race_cb` and `n`
+      - **ANSWER**:
 
 ```{r}
-race_cb_freq %>% typeof()
-race_cb_freq %>% str()
+
 ```
 
 4. Now, using `race_cb_freq`, add a column for the percentage of students in each `race_cb` category. Use `mutate()` to create a new variable that is the percent of students in each category. (Hint: Calculate the percent by dividing the count by the sum of all counts, then multiplying by 100)
 
 ```{r}
-race_cb_freq %>%
-  mutate(pct = (n / sum(n)) * 100)
+
 ```
 
 
@@ -192,11 +174,7 @@ race_cb_freq %>%
     - The percentage of students who identify as hispanic
 
 ```{r}
-list_native_df %>% summarise(
-  n_obs = n(),
-  n_miss_hispanic = sum(is.na(stu_hispanic_01)),
-  pct_hispanic = mean(stu_hispanic_01, na.rm = T) * 100
-)
+
 ```
 
 2. Next, use `summarise()` to calculate the percentage of students who identify as each of the following category of race and ethnicity, and assign the result to an object named `race_ethnicity_pct`:
@@ -216,32 +194,19 @@ list_native_df %>% summarise(
     - **ANSWER**: 
 
 ```{r}
-race_ethnicity_pct <- list_native_df %>% summarise(
-  pct_cuban = mean(stu_cuban_01, na.rm = T) * 100,
-  pct_mexican = mean(stu_mexican_01, na.rm = T) * 100,
-  pct_puerto_rican = mean(stu_puerto_rican_01, na.rm = T) * 100,
-  pct_other_hispanic = mean(stu_other_hispanic_01, na.rm = T) * 100,
-  pct_hispanic = mean(stu_hispanic_01, na.rm = T) * 100,
-  pct_american_indian = mean(stu_american_indian_01, na.rm = T) * 100,
-  pct_black = mean(stu_black_01, na.rm = T) * 100,
-  pct_native_hawaiian = mean(stu_native_hawaiian_01, na.rm = T) * 100,
-  pct_white = mean(stu_white_01, na.rm = T) * 100
-)
 
-race_ethnicity_pct
 ```
 
 
 3.  Investigate the `race_ethnicity_pct` object you created in the previous question by using the `typeof()` and `str()` functions. Run your code in the code chunk below and answer the following questions:
 
     - What type of object is this, and how many elements does it have?
-      - **ANSWER**: List, 9 elements
+      - **ANSWER**:
     - Is this object a dataframe? If so, how many observations does it have, and what are the names of the variables?
-      - **ANSWER**: Yes, 1 observation, variables are `pct_cuban`, `pct_mexican`, `pct_puerto_rican`, `pct_other_hispanic`, `pct_hispanic`, `pct_american_indian`, `pct_black`, `pct_native_hawaiian`, and `pct_white`
+      - **ANSWER**:
 
 ```{r}
-race_ethnicity_pct %>% typeof()
-race_ethnicity_pct %>% str()
+
 ```
 
 
@@ -267,21 +232,7 @@ race_ethnicity_pct %>% str()
       - **ANSWER**: 
 
 ```{r}
-list_native_df %>%
-  group_by(zip_cbsatitle) %>%
-  summarise(
-    n_obs = n(),
-    pct_cuban = mean(stu_cuban_01, na.rm = T) * 100,
-    pct_mexican = mean(stu_mexican_01, na.rm = T) * 100,
-    pct_puerto_rican = mean(stu_puerto_rican_01, na.rm = T) * 100,
-    pct_other_hispanic = mean(stu_other_hispanic_01, na.rm = T) * 100,
-    pct_hispanic = mean(stu_hispanic_01, na.rm = T) * 100,
-    pct_american_indian = mean(stu_american_indian_01, na.rm = T) * 100,
-    pct_black = mean(stu_black_01, na.rm = T) * 100,
-    pct_native_hawaiian = mean(stu_native_hawaiian_01, na.rm = T) * 100,
-    pct_white = mean(stu_white_01, na.rm = T) * 100
-  ) %>%
-  arrange(desc(n_obs))
+
 ```
 
 
@@ -296,64 +247,41 @@ list_native_df %>%
     Lastly, sort by the number of students per state in descending order.
 
 ```{r}
-list_native_df %>%
-  group_by(stu_state) %>%
-  summarise(
-    n_obs = n(),
-    n_miss_zip = sum(is.na(zip_median_household_income)),
-    mean_zip_inc = mean(zip_median_household_income, na.rm = T),
-    max_zip_inc = max(zip_median_household_income, na.rm = T),
-    min_zip_inc = min(zip_median_household_income, na.rm = T)
-  ) %>%
-  arrange(desc(n_obs))
+
 ```
 
 3. In the next few questions, we'll take a look at the students' intended major choice. First, group by major choice (`stu_major_1_group_text`) and summarize the number of students per major. Sort by the number of students in descending order and assign the result to an object named `major_group_freq`.
 
 ```{r}
-major_group_freq <- list_native_df %>%
-  group_by(stu_major_1_group_text) %>% 
-  summarise(n_obs = n()) %>% 
-  arrange(desc(n_obs))
 
-major_group_freq
 ```
 
 4. Using `major_group_freq`, add a column for the percentage of students in each `stu_major_1_group_text` category.
 
 ```{r}
-major_group_freq %>% 
-  mutate(pct = n_obs / sum(n_obs) * 100)
+
 ```
 
 5. Now, create the same table as the previous question that shows the count and percentage of students for each major choice, but instead of using `group_by()` and `summarise()`, use `count()` to get the counts from the original `list_native_df` dataframe. Make sure to sort by descending student count. (Hint: Use a similar approach you used to create the frequency count of `race_cb` in Part II)
 
 ```{r}
-list_native_df %>%
-  count(stu_major_1_group_text) %>% 
-  mutate(pct = (n / sum(n)) * 100) %>% 
-  arrange(desc(n))
+
 ```
 
 6. We can also group by multiple variables. In this question, group by both state (`stu_state`) and the student's intended major (`stu_major_1_group_text`), then summarize the number of students per state and major. Sort by state, then the number of students in descending order. Assign the result to an object named `major_by_state_freq`.
 
 ```{r}
-major_by_state_freq <- list_native_df %>%
-  group_by(stu_state, stu_major_1_group_text) %>%
-  summarise(n_obs = n()) %>%
-  arrange(stu_state, desc(n_obs))
 
-major_by_state_freq
 ```
 
 7. Looking at the `major_by_state_freq` dataframe from the previous question, answer the following questions:
 
     - How many observations are there?
-      - **ANSWER**: 1006 observations
+      - **ANSWER**:
     - What does each observation represent?
-      - **ANSWER**: Each observation represents a state-major
+      - **ANSWER**:
     - If we were to group/summarize by state, how many observations would the resulting object have? You will do this in the next question.
-      - **ANSWER**: The number of observations would be equal to the number of states
+      - **ANSWER**:
 
 8. Finally, we will look at the top 3 intended major choices by students from each state. Using `major_by_state_freq`, group by state and create the following variables:
 
@@ -363,13 +291,7 @@ major_by_state_freq
     - The third choice major by students per state
 
 ```{r}
-major_by_state_freq %>%
-  group_by(stu_state) %>% 
-  summarise(
-    top_major = first(stu_major_1_group_text),
-    second_major = nth(stu_major_1_group_text, 2),
-    third_major = nth(stu_major_1_group_text, 3)
-  )
+
 ```
 
 
