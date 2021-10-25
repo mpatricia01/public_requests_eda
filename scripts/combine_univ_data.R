@@ -214,14 +214,23 @@ n_distinct(orders_df_148654$order_num)  # 188 order summaries
 View(orders_df_148654 %>% select(zip_code_file, zip_code, market) %>% distinct())
 
 
+# Northeastern Illinois University (147776)
+load(file = file.path(data_dir, '147776_data.RData'))
+
+n_distinct(orders_df_147776$order_num)  # 1 order summary
+n_distinct(lists_df_147776$order_no)  # 1 list
+
+# Only received a single 2018 CB order - note: made up the order number just to be able to link them
+orders_df_147776$order_num
+
 
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644, orders_df_148654
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644, orders_df_148654, orders_df_147776
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654, lists_df_147776
 )
 
 names(orders_df)
