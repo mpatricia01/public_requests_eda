@@ -10,7 +10,7 @@ library(tidyverse)
 # 'sat_score_min', 'sat_score_max', 'sat_score_old_min', 'sat_score_old_max',
 # 'psat_score_min', 'psat_score_max', 'psat_score_old_min', 'psat_score_old_max',
 # 'gpa_high', 'gpa_low', 'rank_high', 'rank_low', 'ap_scores',
-# 'college_type', 'edu_aspirations', 'rotc_plans', 'major', 'citizenship', 'national_recognition_programs'
+# 'college_type', 'edu_aspirations', 'rotc_plans', 'major', 'low_ses', 'citizenship', 'national_recognition_programs'
 # 'source_file', 'market'  (user-created)
 
 # Order list fields
@@ -21,11 +21,13 @@ library(tidyverse)
 # 'cuban', 'mexican', 'puerto_rican', 'other_hispanic', 'non_hispanic', 'american_indian', 'asian', 'black', 'native_hawaiian', 'white', 'other', 'race_no_response', 'ethnicity_no_response',
 # 'major_1', 'major_2', 'major_3', 'ap1', 'ap2', 'ap3', 'ap4', 'ap5', 'ap6', 'ap7', 'ap8', 'ap9', 'ap10', 'satsub1', 'satsub2', 'satsub3', 'satsub4', 'satsub5', 'satsub6', 'satsub7', 'satsub8', 'satsub9', 'satsub10',
 # 'name_source', 'update_date', 'homeschool', 'low_ses', 'hs_cluster', 'en_cluster', 'nhrp', 'first_gen', 'pltw', 'interest_me', 'pref_inst1', 'pref_inst2', 'pref_inst3', 'pref_inst4', 'pref_inst5', 'nrp_afam', 'nrp_hisp', 'nrp_indg', 'nrp_rurl'
-# 'source', (urbana/college station specific)
+# 'source', (urbana/college station/springfield specific)
 # 'order_date', 'is_hispanic_origin' (urbana specific)
-# 'race', (urbana/moorhead/college station specific)
-# 'entry_term', 'hs_name', 'family_income', (college station specific)
-# 'source_file', 'zip_code' (user-created)
+# 'race', (urbana/moorhead/college station/springfield specific)
+# 'entry_term', 'family_income', (college station specific)
+# 'hs_name', (college station/springfield specific)
+# 'list_name', 'letter_code', 'hs_address', 'hs_city', 'hs_state', 'hs_country', 'hs_zip', (springfield specific)
+# 'source_file', 'zip_code', 'market', 'grade_level' (user-created)
 
 
 data_dir <- file.path('.', 'data')
@@ -202,13 +204,24 @@ load(file = file.path(data_dir, '145600_data.RData'))
 lists_df_145600 %>% glimpse()
 
 
+# University of Illinois at Springfield (148654)
+load(file = file.path(data_dir, '148654_data.RData'))
+
+n_distinct(orders_df_148654$order_num)  # 188 order summaries
+# n_distinct(lists_df_148654$order_no)  # no order number on lists
+
+# Some orders used zip code files in filters - can infer what the zips are for the last 3 files that are for the same markets
+View(orders_df_148654 %>% select(zip_code_file, zip_code, market) %>% distinct())
+
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644, orders_df_148654
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654
 )
 
 names(orders_df)
