@@ -1,0 +1,44 @@
+---
+title: ""
+subtitle: ""
+author: ""
+bibliography: ../bib/spencer_2021.bib
+citeproc: no
+output: 
+  bookdown::pdf_document2:
+    toc: FALSE
+    pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
+eoutput: pdf_document
+csl: ../bib/apa.csl
+urlcolor: blue
+fontsize: 12pt
+#header-includes:
+#      - \usepackage{pdflscape}
+#      - \usepackage{geometry}
+header-includes:
+      - \usepackage{floatrow}
+      - \floatsetup{capposition=top}
+      - \usepackage{setspace}\doublespacing
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(bookdown)
+library(kableExtra)
+library(tidyverse)
+library(gridExtra)
+```
+
+
+# Findings
+
+## Characteristics of Student List Purchases 
+
+
+
+# References
+
+<div id="refs"></div>
+
+
+
