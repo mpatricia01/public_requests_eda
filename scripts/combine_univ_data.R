@@ -9,8 +9,10 @@ library(tidyverse)
 # 'state_name', 'cbsa_name', 'county', 'geomarket', 'intl_region', 'segment', 'race_ethnicity', 'gender',
 # 'sat_score_min', 'sat_score_max', 'sat_score_old_min', 'sat_score_old_max',
 # 'psat_score_min', 'psat_score_max', 'psat_score_old_min', 'psat_score_old_max',
+# 'sat_score_reading_min', 'sat_score_reading_max',
 # 'gpa_high', 'gpa_low', 'rank_high', 'rank_low', 'ap_scores',
-# 'college_type', 'edu_aspirations', 'rotc_plans', 'major', 'low_ses', 'citizenship', 'national_recognition_programs'
+# 'college_type', 'college_size', 'college_location', 'college_setting', 'college_control', 'college_student_body', 'college_living_plans',
+# 'edu_aspirations', 'rotc_plans', 'major', 'low_ses', 'financial_aid', 'citizenship', 'national_recognition_programs'
 # 'source_file', 'market'  (user-created)
 
 # Order list fields
@@ -139,8 +141,9 @@ base::intersect(orders_df_228529$order_num, lists_df_228529$order_no)
 
 # Arizona State University (104151)
 load(file = file.path(data_dir, '104151_data.RData'))
-  # as of 10/18/2021
-    # no order summary data
+
+n_distinct(orders_df_104151$order_num)  # 131 order summaries
+n_distinct(lists_df_104151$order_no)  # 193 lists
 
 # potentially missing variables (not all important) [ozan 10/18/2021]
    #list_names %>% anti_join(y=(names(lists_df_104151) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
@@ -193,9 +196,9 @@ n_distinct(lists_df_110644$order_no)  # 5 lists
 
 # University of Illinois at Chicago (145600)
 load(file = file.path(data_dir, '145600_data.RData'))
-  # as of 10/18/2021 (crystal email)
-    # no order summary data
-    # I also added the student-level lists portion for U of IL-Chicago. The order summaries part wasn't parsing properly (might be the way the PDF was saved), so I think I'll just enter it manually since there are only around 20 orders. I'll try to get that added soon.
+
+n_distinct(orders_df_145600$order_num)  # 18 order summaries
+n_distinct(lists_df_145600$order_no)  # 25 lists
 
 # potentially missing variables (not all important) [ozan 10/18/2021]
    #list_names %>% anti_join(y=(names(lists_df_145600) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
@@ -226,7 +229,7 @@ orders_df_147776$order_num
 
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_228723, orders_df_110644, orders_df_148654, orders_df_147776
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776
 )
 
 lists_df <- dplyr::bind_rows(
