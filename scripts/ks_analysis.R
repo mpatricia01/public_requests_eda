@@ -32,7 +32,14 @@ library(eatATA)
 
 ################### NEED TO REDUCE OBS TO MAKE MANIPULATIONS MANAGEABLE         
     
-    #already removed ASU in create_combine.R; removing secondary R1 in CA (UC Davis); IL (UI Chicago)
+    #remove extra lists_orders_dfs
+    rm(lists_orders_df, lists_orders_zip_df)
+    
+    #remove ASU due to memory issues
+    lists_df <- lists_df %>% filter(univ_id!="104151") 
+    lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="104151") 
+    
+    #removing secondary R1 in CA (UC Davis); IL (UI Chicago)
     #lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="145600" & univ_id!="110644")
 
     # remove ASU from orders_df too
@@ -355,23 +362,6 @@ library(eatATA)
                 theme(legend.position = "none")
             
             
-            ggplot(df_0, 
-                   aes(x=string, 
-                       y=n)) +
-                geom_point(color="blue", 
-                           size = 2) +
-                geom_segment(aes(x = 40, 
-                                 xend = string, 
-                                 y = n, 
-                                 yend = n),
-                             color = "azure3") +
-                labs (x = "Life Expectancy (years)",
-                      y = "",
-                      title = "Life Expectancy by Country",
-                      subtitle = "GapMinder data for Asia - 2007") +
-                theme_minimal() + 
-                theme(panel.grid.major = element_blank(),
-                      panel.grid.minor = element_blank())
             
 ################### ANALYSIS VISUALS FOR RQ2A
     
@@ -416,10 +406,20 @@ library(eatATA)
                     count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
                 
                 race <- race %>% select(stu_race_cb, V1)
-                race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "race missing", stu_race_cb))
-                race<- race %>% remove_rownames %>% column_to_rownames(var="stu_race_cb")
-                row.names(race) <- c("Pct Race-No Response", "Pct AI/AN", "Pct Asian", "Pct Black", "Pct Latinx", "Pct NH/PI", "Pct White", "Multiracial", "Pct Race- Missing")
+                race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==3, "Pct Black", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==4, "Pct Latinx", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==8, "Pct NH/PI", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==9, "Pct White", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==10, "Pct Other Race", stu_race_cb),
+                                        stu_race_cb = ifelse(stu_race_cb==12, "Pct Multiracial", stu_race_cb)                                        )
                 
+                
+                race<- race %>% remove_rownames %>% column_to_rownames(var="stu_race_cb")
+
                 #create income row
                 income <- as_data_frame (t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% 
                                                 summarise (mean_inc = mean(zip_median_household_income, na.rm=T))))
@@ -434,7 +434,7 @@ library(eatATA)
                 schtype <- schtype %>% mutate(hs_school_control = ifelse(is.na(hs_school_control), "school unknown", hs_school_control))
                 schtype<- schtype %>% remove_rownames %>% column_to_rownames(var="hs_school_control")
                 schtype<- schtype %>% rename(V1 = school_type)
-                row.names(schtype) <- c("Pct Private", "Pct Public", "Pct School Unknown")
+                row.names(schtype) <- c("Pct Private", "Pct Public", "Pct School Unknown") #NEED TO RE_DO THIS LIKE RACE ABOVE
                 
                 
                 #concatenate all row_dfs for i-column
@@ -464,7 +464,7 @@ library(eatATA)
         vars <- c("n", "race", "income", "schtype") #all possible vars: n, race, income, schtype
         
         #all possible columns: all_domestic, in_state, out_of_state, research_univ, regional_univ, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate,
-        cols <- c("all_domestic","in_state", "out_of_state", "research_univ", "regional_univ", "research_univ_instate", "research_univ_outofstate") 
+        cols <- c("all_domestic","in_state", "out_of_state", "research_univ", "regional_univ", "research_univ_instate", "research_univ_outofstate", "regional_univ_instate", "regional_univ_outofstate") 
         df_rq2a<- table_rq2a(vars, cols) 
         
         #format table
