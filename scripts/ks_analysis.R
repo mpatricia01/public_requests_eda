@@ -8,7 +8,8 @@ library(tidyverse)
 library(lubridate)
 library(labelled)
 library(tidyr)
-
+library(stringr)
+library(eatATA)
 
 ################### OPEN DATA BY OJ
 
@@ -27,8 +28,16 @@ library(tidyr)
     # Run script that creates analysis data frames from order data and list data
     # NOTE: this script relies on data frames created by above create_secondary_datasets.R script
     source(file = file.path(scripts_dir, 'create_combined_order_list_analysis_datasets.R'))
-    
 
+
+################### NEED TO REDUCE OBS TO MAKE MANIPULATIONS MANAGEABLE         
+    
+    #already removed ASU in create_combine.R; removing secondary R1 in CA (UC Davis); IL (UI Chicago)
+    #lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="145600" & univ_id!="110644")
+
+    # remove ASU from orders_df too
+    orders_df <- orders_df %>% filter(univ_id!="104151") 
+    
 ################### CREATING OUT_OF_STATE VAR NEEDED FOR FUNCTION
     
     # KS CHECKS
@@ -66,13 +75,308 @@ library(tidyr)
     lists_orders_zip_hs_df %>% count(stu_in_us, stu_nonres)
     
 
+################### ANALYSIS VISUALS FOR RQ1: CHARACTERISTICS OF ORDERS
+    
+    # how many orders total + students total; then by university/carnegie
+        orders_df %>% count()
+        orders_fig_totals <- orders_df %>% 
+            group_by(univ_id) %>%
+            summarise(total_orders = n(),
+                      total_students = sum(num_students, na.rm = T))
+        
+        orders_fig_totals <-  orders_fig_totals %>% arrange(-total_students) %>%
+            mutate(university = as.factor(row_number()),
+                   total_orders = as.character(total_orders))
+        
+        orders_fig_totals$total_orders_st <- str_c(orders_fig_totals$total_orders, ' orders')
+        
+        orders_fig_totals<- merge(x = orders_fig_totals, y = univ_data[ , c("c15basic", "univ_id", "univ_name")], by = "univ_id", all.x=TRUE)
+        
+        
+        orders_fig_totals<- orders_fig_totals %>%
+            mutate(carnegie = recode(c15basic,
+                                     `15`= "Research Extensive",
+                                     `18`= "Master's",
+                                     `19`= "Master's",
+                                     `22`= "Baccalaureate"))
+        
+    
+        ggplot(orders_fig_totals, aes(x=reorder(university, -total_students), y=total_students, fill=carnegie)) +
+            geom_bar(stat = "identity") +
+            geom_text(aes(label=total_orders_st), vjust=0, size=2.5) 
+        
+    # Frequency of Filters Used Across Orders
+        orders_filters <- orders_df %>% 
+                        select(hs_grad_class, zip_code, state_name, cbsa_name, intl_region, segment, race_ethnicity,
+                                gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
+                                psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
+                                gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
+            mutate(
+                hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
+                zip = ifelse(!is.na(zip_code), 1, 0), #KSshould this include zip_code_file not missing too?
+                states_fil = ifelse(!is.na(state_name), 1, 0), 
+                cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
+                intl = ifelse(!is.na(intl_region), 1, 0), 
+                segment = ifelse(!is.na(segment), 1, 0), 
+                race = ifelse(!is.na(race_ethnicity), 1, 0), 
+                gender = ifelse(!is.na(gender), 1, 0), 
+                sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
+                psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
+                gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
+                rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
+                geomarket = ifelse(!is.na(geomarket), 1, 0), 
+                ap_score = ifelse(!is.na(ap_scores), 1, 0))
+        
+        
+        orders_filters1 <- orders_filters %>% 
+            select(hsgrad_class, zip, states_fil, cbsa, 
+                   intl, segment, race, gender,sat, psat,
+                   gpa, rank, geomarket, ap_score) %>%
+            summarize_if(is.numeric, sum, na.rm=TRUE)
+        
+        orders_filters1  <- as.data.frame(t(orders_filters1))
+        orders_filters1$filters <- rownames(orders_filters1)
 
+        orders_filters1  <- orders_filters1 %>%
+            mutate(
+                percent= round((V1/486)*100)
+            )
+        
+        orders_filters1$percent <- str_c(orders_filters1$percent, '%')
+        
+        ggplot(orders_filters1, aes(x=reorder(filters, V1), y=V1)) +
+            geom_bar(stat = "identity") +
+            ylab("Number of Orders") +
+            geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) +
+            coord_flip()
+        
+        
+     # descriptive stats on GPA Filter
+        orders_df %>% count(gpa_low)
+        orders_df %>% count(gpa_high)
+        
+        #replace empty strings with NA
+        orders_df <- orders_df %>%
+            mutate(across(c("gpa_low","gpa_high"), ~ifelse(.=="", NA, as.character(.))))
+        
+        orders_df %>% count(gpa_low)
+        orders_df %>% count(gpa_high)
+        
+        table_gpalow <- orders_df %>% group_by(gpa_low) %>%
+            summarise(n_low = n()) %>%
+            mutate(pct_low = round(n_low / sum(n_low)*100, digits=1))
+        
+        table_gpahigh <-orders_df %>% group_by(gpa_high) %>%
+            summarise(n_high = n()) %>%
+            mutate(pct_high = round(n_high / sum(n_high)*100, digits=1))
+                                     
+        table_gpa <- merge(table_gpalow, table_gpahigh, by.x = "gpa_low", by.y = "gpa_high", all = T)
+        table_gpa <- table_gpa %>%
+            rename(gpa = gpa_low)
+        
+        #remove orders that did not use GPA filter
+        table_gpa <- table_gpa %>% filter(!is.na(gpa))
+        
+        # descriptive stats on PSAT/SAT Filter
+        orders_df %>% count(psat_score_max)
+        orders_df %>% count(psat_score_min) 
+        
+        test_scores <- orders_df %>% 
+            select(psat_score_min, psat_score_max, 
+                   sat_score_min, sat_score_max, 
+                   sat_score_old_min, sat_score_old_max) %>%
+            summarise(across(
+                .cols = where(is.numeric), 
+                .fns = list(Mean = mean), na.rm = TRUE, 
+                .names = "{col}_{fn}"
+            ))
+        
+                    test_scores1 <- test_scores %>%
+                        select(psat_score_min_Mean, psat_score_max_Mean, 
+                               sat_score_min_Mean, sat_score_max_Mean, 
+                               sat_score_old_min_Mean, sat_score_old_max_Mean) #subset and assign to new object
+                    names(test_scores1)<-c("psat_score_min", "psat_score_max", 
+                                    "sat_score_min", "sat_score_max", 
+                                    "sat_score_old_min", "sat_score_old_max")
+                    
+                    testscores_long <- test_scores1 %>% 
+                        gather(`psat_score_min`, `psat_score_max`, 
+                               `sat_score_min`, `sat_score_max`, 
+                               `sat_score_old_min`, `sat_score_old_max`,key=score,value=mean)  #arrange by state and year
+                    
+                    
+        test_scores2 <- orders_df %>% 
+                select(psat_score_min, psat_score_max, 
+                        sat_score_min, sat_score_max, 
+                        sat_score_old_min, sat_score_old_max) %>%
+                    summarise(across(
+                     .cols = where(is.numeric), 
+                     .fns = list(SD = sd), na.rm = TRUE, 
+                     .names = "{col}_{fn}"
+                        ))
+                    
+                    test_scores3 <- test_scores2 %>%
+                        select(psat_score_min_SD, psat_score_max_SD, 
+                               sat_score_min_SD, sat_score_max_SD, 
+                               sat_score_old_min_SD, sat_score_old_max_SD) #subset and assign to new object
+                    names(test_scores3)<-c("psat_score_min", "psat_score_max", 
+                                           "sat_score_min", "sat_score_max", 
+                                           "sat_score_old_min", "sat_score_old_max")
+                    
+                    tests_long <- test_scores3 %>% 
+                        gather(`psat_score_min`, `psat_score_max`, 
+                               `sat_score_min`, `sat_score_max`, 
+                               `sat_score_old_min`, `sat_score_old_max`,key=score,value=sd)  #arrange by state and year
+                    
+                    
+            testscores_fig <- merge(testscores_long,tests_long, by="score", sort=FALSE)       
+                    
+            rm(test_scores, test_scores1, test_scores2, test_scores3, tests_long, testscores_long)
+             
+            ggplot(testscores_fig, aes(x=score, y=mean)) + 
+                geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) +
+                geom_line() +
+                geom_point()
+            
+           
+    # descriptive stats on HS RANK Filter
+        orders_df %>% count(rank_high)
+        orders_df %>% count(rank_low)    
+        
+        
+    # descriptive stats on AP SCORES Filter
+        orders_df %>% count(ap_scores)
+        orders_df %>% filter(!is.na(ap_scores)) %>% count(univ_id) # only UC Davis (5) and UCSD (17)
+        
+        ap_filters <- orders_df %>% filter(!is.na(ap_scores)) %>% select(ap_scores, order_num)
+        #ap_filters_list <- as.list(ap_filters$ap_scores)
+        
+        
+        ap_filters_list <- ap_filters %>%
+            unnest(ap_scores)
+        
+        ap_filters_list<-  ap_filters_list %>% group_by(order_num) %>% data.frame(do.call("rbind", strsplit(as.character(ap_filters_list$ap_scores), "|", fixed = TRUE)))
     
-    
-################### BUILDING TABLE for RQ2A
+        
+        ap_filters_list_long <- ap_filters_list %>% gather(ap_score_filters, value, -c(ap_scores, order_num))
+        ap_filters_list_long$ap_score_filters<-gsub("X","",as.character(ap_filters_list_long$ap_score_filters))
+        
+        
+        table_ap <- ap_filters_list_long %>% group_by(value) %>%
+            summarise(n = n()) %>%
+            mutate(pct = round(n / sum(n)*100, digits=1))
+        
+        ggplot(table_ap, aes(x=reorder(value, n), y=n)) +
+            geom_bar(stat = "identity") +
+            ylab("Number of Orders") +
+            geom_text(aes(label = pct), hjust = -0.1, colour = "black", size=2) +
+            coord_flip()
+       
+        
+        # descriptive stats on SEGMENT Filter
+        orders_df %>% count(segment)
+        orders_df %>% filter(!is.na(segment)) %>% count(univ_id) # only Urbana-Champagne (21) and Northeastern (1)
+        
+        segment_filters <- orders_df %>% filter(!is.na(segment))%>% select(segment, order_num)
+        
+        
+    # Descriptives on Filter Combos
+        
+       filter_combos <- orders_filters %>%
+            select(hsgrad_class, zip, states_fil, cbsa, 
+                   intl, segment, race, gender,sat, psat,
+                   gpa, rank, geomarket, ap_score) %>%
+            mutate(filter_sum = hsgrad_class + zip + states_fil + cbsa + 
+                             intl + segment + race + gender + sat + psat +
+                             gpa + rank + geomarket + ap_score)
+        
+       filter_combosum <- filter_combos %>% count(filter_sum)
+        colnames(filter_combosum) <- c("num_of_filters", "freq")
+       
+        ggplot(filter_combosum, aes(x = "", y=freq, fill = factor(num_of_filters))) +
+            geom_bar(stat="identity", width=1) +
+            coord_polar("y") 
+        
+        
+        filter_combos <- filter_combos %>% 
+            mutate(
+                hsgrad_class = ifelse(hsgrad_class==1, "grad_class", NA),
+                zip = ifelse(zip==1, "zip", NA), #KSshould this include zip_code_file not missing too?
+                states_fil = ifelse(states_fil==1, "state", NA), 
+                cbsa = ifelse(cbsa==1, "cbsa", NA), 
+                intl = ifelse(intl==1, "intl", NA), 
+                segment = ifelse(segment==1, "segment", NA), 
+                race = ifelse(race==1, "race", NA), 
+                gender = ifelse(gender==1, "gender", NA), 
+                sat = ifelse(sat==1, "sat", NA), 
+                psat = ifelse(psat==1, "psat", NA), 
+                gpa = ifelse(gpa==1, "gpa", NA), 
+                rank = ifelse(rank==1, "rank", NA), 
+                geomarket = ifelse(geomarket==1, "geomarket", NA), 
+                ap_score = ifelse(ap_score==1, "APscores", NA))
+        
+        
+        filter_combos[filter_combos == "NA"] <- NA_character_
+        
+        
+       combos <- unique(filter_combos[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
+                      "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+        
+        
+            filter_combos %>% count(hsgrad_class, zip, states_fil, cbsa, intl, 
+                                    segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score, sort = TRUE) %>% top_n(10, n)
+            
+       
+            
+            df_0 <- group_by(filter_combos, hsgrad_class, zip, states_fil, 
+                          cbsa, intl, segment, race, gender, 
+                          sat, psat, gpa, rank, geomarket, ap_score) %>% count()
+            
+            df_0 %>% arrange(-n)
+            #df_0[is.na(df_0)] <- ""                     # Replace NA with blank
+            
+            df_0 <- df_0  %>% unite("string", c(hsgrad_class, zip, states_fil, 
+                                                cbsa, intl, segment, race, gender, 
+                                                sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
+            
+            
+            df_0 <- df_0 %>% arrange(-n) %>% head(10)
+            
+            
+            library(treemapify)                                  # for visualization
+            ggplot(df_0, 
+                   aes(fill = string, 
+                       area = n, 
+                       label = string)) +
+                geom_treemap() + 
+                geom_treemap_text(colour = "white", 
+                                  place = "centre") +
+                labs(title = "Filter Combinations") +
+                theme(legend.position = "none")
+            
+            
+            ggplot(df_0, 
+                   aes(x=string, 
+                       y=n)) +
+                geom_point(color="blue", 
+                           size = 2) +
+                geom_segment(aes(x = 40, 
+                                 xend = string, 
+                                 y = n, 
+                                 yend = n),
+                             color = "azure3") +
+                labs (x = "Life Expectancy (years)",
+                      y = "",
+                      title = "Life Expectancy by Country",
+                      subtitle = "GapMinder data for Asia - 2007") +
+                theme_minimal() + 
+                theme(panel.grid.major = element_blank(),
+                      panel.grid.minor = element_blank())
+            
+################### ANALYSIS VISUALS FOR RQ2A
     
                 
-    #FUNCTION FOR TABLE_RQ2A
+    #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
         table_rq2a <- function(variables, columns) {
             
             #create counter
@@ -154,13 +458,13 @@ library(tidyr)
         
         
     
-    # Call Function to Create Table for RQ2A
+    # CALL FUNCTION TO CREATE TABLE 
         
         #all possible vars: n, race, income, schtype
         vars <- c("n", "race", "income", "schtype") #all possible vars: n, race, income, schtype
         
         #all possible columns: all_domestic, in_state, out_of_state, research_univ, regional_univ, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate,
-        cols <- c("all_domestic", "in_state", "out_of_state", "research_univ", "regional_univ", "research_univ_instate", "research_univ_outofstate") 
+        cols <- c("all_domestic","in_state", "out_of_state", "research_univ", "regional_univ", "research_univ_instate", "research_univ_outofstate") 
         df_rq2a<- table_rq2a(vars, cols) 
         
         #format table
