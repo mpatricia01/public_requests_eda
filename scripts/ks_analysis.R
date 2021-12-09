@@ -471,5 +471,71 @@ library(eatATA)
         df_rq2a <- df_rq2a %>% mutate_if(is.numeric, round, 0)
         df_rq2a <- df_rq2a %>%  mutate_each(funs(prettyNum(., big.mark=",")))
 
+ 
+        
+    # CHARACTERISTICS BY FILTER COMBOS
+        
+        
+        orders_filters2 <- orders_df %>% 
+            select(order_num, hs_grad_class, zip_code, state_name, cbsa_name, intl_region, segment, race_ethnicity,
+                   gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
+                   psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
+                   gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
+            mutate(
+                hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
+                zip = ifelse(!is.na(zip_code), 1, 0), #KSshould this include zip_code_file not missing too?
+                states_fil = ifelse(!is.na(state_name), 1, 0), 
+                cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
+                intl = ifelse(!is.na(intl_region), 1, 0), 
+                segment = ifelse(!is.na(segment), 1, 0), 
+                race = ifelse(!is.na(race_ethnicity), 1, 0), 
+                gender = ifelse(!is.na(gender), 1, 0), 
+                sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
+                psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
+                gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
+                rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
+                geomarket = ifelse(!is.na(geomarket), 1, 0), 
+                ap_score = ifelse(!is.na(ap_scores), 1, 0))
+        
+        
+        #merge in filters into student list data
+        lists_orders_zip_hs_df_1<- merge(x = lists_orders_zip_hs_df, y = orders_filters2[ , c("zip", "order_num", "segment")], by = "order_num", all.x=TRUE)
+        
+        
+########## RESEARCH QUESTION 3: CHARACTERISTICS OF STUDENT LISTS IN COMPARISON TO OTHER MSA STUDENTS
+        
+        
+        # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD; 37980
+        # students purchased
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '37980') %>%
+            summarize(
+                n_obs = sum(n()),
+                pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
+                pct_stu_asian =  mean(stu_asian_common, na.rm = TRUE)*100,
+                pct_stu_black =  mean(stu_black_common, na.rm = TRUE)*100,
+                pct_stu_hispanic =  mean(stu_is_hisp_common, na.rm = TRUE)*100,
+                #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+                #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+                pct_stu_native =  mean(stu_american_indian_common, na.rm = TRUE)*100,
+                pct_stu_tworaces =  mean(stu_multi_race_common, na.rm = TRUE)*100,
+            ) 
+    
+        
+        # racial composition of all students in public high schools in the CBSA
+        pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
+            summarize(
+                n_obs = sum(n()),
+                tot_students = sum(total_students, na.rm = TRUE),
+                #tot_white = sum(total_white, na.rm = TRUE),
+                #tot_asian = sum(total_asian, na.rm = TRUE),
+                pct_white = sum(total_white, na.rm = TRUE)/tot_students*100,
+                pct_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+                pct_black = sum(total_black, na.rm = TRUE)/tot_students*100,
+                pct_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+                pct_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+                pct_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+                pct_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+                #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+            )
         
     
