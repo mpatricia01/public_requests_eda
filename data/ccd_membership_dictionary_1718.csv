@@ -1,0 +1,62 @@
+New Field?,Variable Name,Changes from prior years,Variable Type,Length,File Position,Description,Categorical Values,Change to Categorical Values Flag,EDFacts File Specification,Data Source - EDFacts Data Group,Derived Field Flag,Variables Used to Derive Field
+,SCHOOL_YEAR,Var name: SURVYEAR,Char,9,1,Year corresponding to survey record,,,NA,,,
+,FIPST,,Char,2,2,American National Standards Institute (ANSI) state code,,,029 - Directory,559,,
+,STATENAME,,Char,44,3,State name,,,,,YES,FIPST
+,ST,Var name: STABR,Char,2,4,Postal state abbreviation code,,,,,YES,FIPST
+,SCH_NAME,,Char,60,5,School name,,,029 - Directory,7,,
+,STATE_AGENCY_NO,New for 2016-17,Char,3,6,Identifier of the reporting state agency,,,029 - Directory,570,,
+,UNION,,Char,3,7,"Supervisory Union (SU) Identification Number. For SU administrative centers and component agencies, this is assigned by the state. If the agency is a county superintendent, this is the ANSI county number. If not reported, the field is null",,,029 - Directory,551,,
+,ST_LEAID,,Char,35,8,State Local Education Number. State’s own ID for the education agency.,,,029 - Directory,4,,
+,LEAID,,Char,7,9,NCES Agency Identification Number,,,029 - Directory,1,,
+,ST_SCHID,,Char,45,10,State school identifier,,,029 - Directory,5,,
+,NCESSCH,,Char,12,11,School Identifier (NCES),,,029 - Directory,529,,
+,SCHID,,Char,7,12,Unique school ID,,,,,Yes,NCESSCH
+,GRADE,New for 2016-17,Char,17,13,Grade,"Pre-Kindergarten
+Kindergarten
+Grade 1
+Grade 2
+Grade 3
+Grade 4
+Grade 5
+Grade 6
+Grade 7
+Grade 8
+Grade 9
+Grade 10
+Grade 11
+Grade 12
+Grade 13
+Ungraded
+Adult Education
+Not Specified
+No Category Codes",,052- Membership,39,,
+,RACE_ETHNICITY,New for 2016-17,Char,41,14,Race or Ethnicity,"American Indian or Alaska Native
+Asian
+Black or African American
+Hispanic/Latino
+Native Hawaiian or Other Pacific Islander
+Not Specified
+Two or more races
+White
+No Category Codes",,052- Membership,39,,
+,SEX,New for 2016-17,Char,17,15,Sex,"Female
+Male
+Not Specified
+No Category Codes",,052- Membership,39,,
+,STUDENT_COUNT,New for 2016-17,Numb,8,16,Student count,,,052- Membership,39,,
+,TOTAL_INDICATOR,New for 2016-17,Char,72,17,Total indicator description,"Category Set A - By Race/Ethnicity; Sex; Grade 
+Derived - Education Unit Total minus Adult Education Count
+Derived - Subtotal by Race/Ethnicity and Sex minus Adult Education Count
+Education Unit Total
+Subtotal 4 - By Grade",,052- Membership,39,,
+,DMS_FLAG,New for 2016-17,Char,21,18,Data flag,"Derived
+Imputation
+Manual adjustment
+Missing
+Not applicable
+Not reported
+Post-submission edit
+Raked
+Reported
+Suppressed
+Value carried forward",,,,,

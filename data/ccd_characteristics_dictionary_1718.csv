@@ -1,0 +1,67 @@
+New Field?,Variable Name,Changes from prior years,Variable Type,Length,File Position,Description,Categorical Values,EDFacts File Specification,Data Source - EDFacts Data Group,Derived Field Flag,Variables Used to Derive Field,,
+,SCHOOL_YEAR,"Var name: 
+SURVYEAR",Char,9,1,Year corresponding to survey record,,NA,,,,,
+,FIPST,,Char,2,2,American National Standards Institute (ANSI) state code,,029 - Directory,559,,,,
+,STATENAME,,Char,44,3,State name,,,,YES,FIPST,,
+,ST,"Var name: 
+STABR",Char,2,4,Postal state abbreviation code,,,,YES,FIPST,,
+,SCH_NAME,,Char,60,5,School name,,029 - Directory,7,,,,
+,STATE_AGENCY_NO,New for 2016-17,Char,3,6,Identifier of the reporting state agency,,029 - Directory,570,,,,
+,UNION,,Char,3,7,"Supervisory Union (SU) Identification Number. For SU administrative centers and component agencies, this is assigned by the state. If the agency is a county superintendent, this is the ANSI county number. If not reported, the field is null",,029 - Directory,551,,,,
+,ST_LEAID,,Char,35,8,State Local Education Number. State’s own ID for the education agency.,,029 - Directory,4,,,,
+,LEAID,,Char,7,9,NCES Agency Identification Number,,029 - Directory,1,,,,
+,ST_SCHID,,Char,45,10,State school identifier,,029 - Directory,5,,,,
+,NCESSCH,,Char,12,11,School Identifier (NCES),,029 - Directory,529,,,,
+,SCHID,,Char,7,12,Unique school ID,,,,YES,NCESSCH,,
+,SHARED_TIME,,Char,12,13,Shared Time Indicator,"Missing
+No
+Not reported
+Yes",129 - CCD School,573,,,,
+,TITLEI_STATUS,,Char,13,14,Title I status (code),"MISSING
+Not reported
+NOTTITLE1ELIG
+SWELIGNOPROG
+SWELIGSWPROG
+SWELIGTGPROG
+TGELGBNOPROG
+TGELGBTGPROG",129 - CCD School,22,,,,
+,TITLEI_STATUS_TEXT,,Char,63,15,Title I status (description),"Missing
+Not a Title I school
+Not reported
+Title I schoolwide eligible school-No program
+Title I schoolwide eligible-Title I targeted assistance program
+Title I schoolwide school
+Title I targeted assistance eligible school-No program
+Title I targeted assistance school",,,Yes,TITLEI_STATUS,,
+,MAGNET_TEXT,,Char,14,16,Magnet School Indicator,"Missing
+No
+Not applicable
+Not reported
+Yes",,,Yes,MAGNET_STATUS (DG24),,
+,NSLP_STATUS,,Char,12,17,National School Lunch Program (NSLP) Status (code),"MISSING
+Not reported
+NSLPCEO
+NSLPNO
+NSLPPRO1
+NSLPPRO2
+NSLPPRO3
+NSLPWOPRO",129 - CCD School,791,,,,
+,NSLP_STATUS_TEXT,,Char,56,18,National School Lunch Program (NSLP) Status (description),"Missing
+No
+Not reported
+Yes participating without using any Provision or
+ the CEO
+Yes under Community Eligibility Option (CEO)
+Yes under Provision 1
+Yes under Provision 2
+Yes under Provision 3",,,Yes,NSLP_STATUS,,
+,VIRTUAL,Yes/No in 2015-16,Char,12,19,School virtual status (code),"FACEVIRTUAL
+FULLVIRTUAL
+Not reported
+NOTVIRTUAL
+SUPPVIRTUAL",129 - CCD School,803,,,,
+,VIRTUAL_TEXT,,Char,33,20,School virtual status (description),"Full Virtual
+Not reported
+Not Virtual
+Supplemental Virtual
+Virtual with face to face options",,,Yes,VIRTUAL,,

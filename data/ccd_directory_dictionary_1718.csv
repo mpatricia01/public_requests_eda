@@ -1,0 +1,190 @@
+﻿New Field?,Variable Name,Changes from prior years,Variable Type,Length,File Position,Description,Categorical Values,EDFacts File Specification,Data Source - EDFacts Data Group,Derived Field Flag,Variables Used to Derive Field
+,SCHOOL_YEAR,Var name: SURVYEAR,Char,9,1,Year corresponding to survey record,,029 - Directory,,,
+,FIPST,,Char,2,2,American National Standards Institute (ANSI) state code,,029 - Directory,559,,
+,STATENAME,,Char,44,3,State name,,,,YES,FIPST
+,ST,Var name: STABR,Char,2,4,Postal state abbreviation code,,,,YES,FIPST
+,SCH_NAME,,Char,60,5,School name,,029 - Directory,7,,
+,LEA_NAME,,Char,60,6,Education Agency Name,,029 - Directory,7,,
+,STATE_AGENCY_NO,New for 2016-17,Char,3,7,Identifier of the reporting state agency,,029 - Directory,570,,
+,UNION,,Char,3,8,"Supervisory Union (SU) Identification Number. For SU administrative centers and component agencies, this is assigned by the state. If the agency is a county superintendent, this is the ANSI county number. If not reported, the field is null",,029 - Directory,551,,
+,ST_LEAID,,Char,35,9,State Local Education Number. State’s own ID for the education agency.,,029 - Directory,4,,
+,LEAID,,Char,7,10,NCES Agency Identification Number,,029 - Directory,1,,
+,ST_SCHID,,Char,45,11,State school identifier,,029 - Directory,5,,
+,NCESSCH,,Char,12,12,School Identifier (NCES),,029 - Directory,529,,
+,SCHID,,Char,7,13,Unique school ID,,,,YES,NCESSCH
+,MSTREET1,,Char,60,14,Mailing address; street 1,,029 - Directory,8,,
+,MSTREET2,,Char,60,15,Mailing address; street 2,,029 - Directory,8,,
+,MSTREET3,,Char,60,16,Mailing address; street 3,,029 - Directory,8,,
+,MCITY,,Char,30,17,Mailing city,,029 - Directory,8,,
+,MSTATE,,Char,2,18,Mailing state. Two-letter U.S. Postal Service abbreviation of the state where the mailing address is located,,029 - Directory,8,,
+,MZIP,,Char,5,19,Mailing 5 digit ZIP code,,029 - Directory,8,,
+,MZIP4,,Char,4,20,Mailing Secondary ZIP code,,029 - Directory,8,,
+,LSTREET1,,Char,60,21,Location address; street 1,,029 - Directory,9,,
+,LSTREET2,,Char,60,22,Location address; street 2,,029 - Directory,9,,
+,LSTREET3,,Char,60,23,Location address; street 3,,029 - Directory,9,,
+,LCITY,,Char,30,24,Location city,,029 - Directory,9,,
+,LSTATE,,Char,2,25,Location state. Two-letter U.S. Postal Service abbreviation,,029 - Directory,9,,
+,LZIP,,Char,5,26,Location 5 digit ZIP code,,029 - Directory,9,,
+,LZIP4,,Char,4,27,Location Secondary ZIP code,,029 - Directory,9,,
+,PHONE,,Char,13,28,Telephone number,,029 - Directory,10,,
+,WEBSITE,,Char,80,29,The Uniform Resource Locator (URL) for the unique address of a Web Page of an education entity.,,029 - Directory,11,,
+,SY_STATUS,,Char,1,30,Start of year Status (code),"1-Open
+2-Closed
+3-New
+4-Added
+5-Changed Boundary/Agency
+6-Inactive
+7-Future
+8-Reopened",,,YES,SY_STATUS_TEXT
+,SY_STATUS_TEXT,,Char,30,31,Start of year Status (description),"Added
+Changed Boundary/Agency
+Closed
+Future
+Inactive
+New
+Open
+Reopened",029 - Directory,531,,
+,UPDATED_STATUS,,Char,1,32,Updated status (code),"1-Open
+2-Closed
+3-New
+4-Added
+5-Changed Boundary/Agency
+6-Inactive
+7-Future
+8-Reopened",,,YES,UPDATED_STATUS_TEXT
+,UPDATED_STATUS_TEXT,,Char,30,33,Updated status (description),"Added
+Changed Boundary/Agency
+Closed
+Future
+Inactive
+New
+Open
+Reopened",029 - Directory,531,,
+,EFFECTIVE_DATE,,Char,20,34,Effective date of updated status,,029 - Directory,571,,
+,SCH_TYPE_TEXT,,Char,28,35,School type (description),"Alternative School
+Regular School
+Career and Technical School
+Special Education School",,,Yes,SCH_TYPE_TEXT
+,SCH_TYPE,,Char,1,36,School type (code),"1-Regular School
+2-Special Education School
+3-Career and Technical School
+4-Alternative Education School",029 - Directory,21,,
+,RECON_STATUS,,Char,3,37,Reconstituted flag,"No
+Yes
+Null",029 - Directory,743,,
+,OUT_OF_STATE_FLAG,,Char,3,38,Mailing or Location address is in another state,"No
+Yes",029 - Directory,669,,
+,CHARTER_TEXT,,Char,30,39,Whether a Charter school,"No
+Not Applicable
+Yes",029 - Directory,27,,
+,CHARTAUTH1,,Char,20,40,Charter authorizer state ID (1). The identifier assigned to the primary public charter school authorizing agency by the SEA.,,029 - Directory,804,,
+,CHARTAUTHN1,,Char,60,41,Charter authorizer name (1),,190- Charter Authorizer Directory,798,,
+,CHARTAUTH2,,Char,20,42,Charter authorizer state ID (2). The identifier assigned to the primary public charter school authorizing agency by the SEA.,,029 - Directory,804,,
+,CHARTAUTHN2,,Char,60,43,Charter authorizer name (2),,190- Charter Authorizer Directory,798,,
+,NOGRADES,,Char,12,44,No grades offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_PK_OFFERED,Var name: PKOFFERED,Char,12,45,PK Grade Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_KG_OFFERED,Var name: KGOFFERED,Char,12,46,KG Grade Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_1_OFFERED,Var name: G1OFFERED,Char,12,47,Grade 01 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_2_OFFERED,Var name: G2OFFERED,Char,12,48,Grade 02 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_3_OFFERED,Var name: G3OFFERED,Char,12,49,Grade 03 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_4_OFFERED,Var name: G4OFFERED,Char,12,50,Grade 04 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_5_OFFERED,Var name: G5OFFERED,Char,12,51,Grade 05 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_6_OFFERED,Var name: G6OFFERED,Char,12,52,Grade 06 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_7_OFFERED,Var name: G7OFFERED,Char,12,53,Grade 07 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_8_OFFERED,Var name: G8OFFERED,Char,12,54,Grade 08 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_9_OFFERED,Var name: G9OFFERED,Char,12,55,Grade 09 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_10_OFFERED,Var name: G10OFFERED,Char,12,56,Grade 10 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_11_OFFERED,Var name: G11OFFERED,Char,12,57,Grade 11 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_12_OFFERED,Var name: G12OFFERED,Char,12,58,Grade 12 Offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,G_13_OFFERED,Var name: G13OFFERED,Char,12,59,Grade 13 Offered,"No
+Yes
+Not reported","SEA EMAPS, LEA and School 039 - Grades Offered","SEA - EMAPS, LEA and School data group 18",,
+,G_UG_OFFERED,Var name: UGOFFERED,Char,12,60,UG Grade offered,"No
+Yes
+Not reported","SEA EMAPS, LEA and School 039 - Grades Offered","SEA - EMAPS, LEA and School data group 18",,
+,G_AE_OFFERED,Var name: AEOFFERED,Char,12,61,Adult education offered,"No
+Yes
+Not reported",039 - Grades Offered,18,,
+,GSLO,,Char,2,62,Grades Offered - Lowest,"01—1st grade students
+02—2nd grade students
+03—3rd grade students
+04—4th grade students
+05—5th grade students
+06—6th grade students
+07—7th grade students
+08—8th grade students
+09—9th grade students
+10—10th grade students
+11—11th grade students
+12—12th grade students
+13—13th grade students
+AE—Adult education students
+KG—Kindergarten students
+N—Not applicable
+PK—Prekindergarten students
+UG—Students in ungraded classes
+M—Missing",,,YES,G_PK_OFFERED;G_KG_OFFERED;G_1_OFFERED;G_2_OFFERED;G_3_OFFERED;G_4_OFFERED;G_5_OFFERED;G_6_OFFERED;G_7_OFFERED;G_8_OFFERED;G_9_OFFERED;G_10_OFFERED;G_11_OFFERED;G_12_OFFERED;G_13_OFFERED;G_AE_OFFERED;G_UG_OFFERED;NOGRADES
+,GSHI,,Char,2,63,Grades Offered - Highest,"01—1st grade students
+02—2nd grade students
+03—3rd grade students
+04—4th grade students
+05—5th grade students
+06—6th grade students
+07—7th grade students
+08—8th grade students
+09—9th grade students
+10—10th grade students
+11—11th grade students
+12—12th grade students
+13—13th grade students
+AE—Adult education students
+KG—Kindergarten students
+N—Not applicable
+PK—Prekindergarten students
+UG—Students in ungraded classes
+M—Missing",,,YES,G_PK_OFFERED;G_KG_OFFERED;G_1_OFFERED;G_2_OFFERED;G_3_OFFERED;G_4_OFFERED;G_5_OFFERED;G_6_OFFERED;G_7_OFFERED;G_8_OFFERED;G_9_OFFERED;G_10_OFFERED;G_11_OFFERED;G_12_OFFERED;G_13_OFFERED;G_AE_OFFERED;G_UG_OFFERED;NOGRADES
+,LEVEL,"Categorical values added in SY 2017-18: Prekindergarten
+Secondary
+
+Adjustments made to how this variable is derived from SY 2016-17 to SY 2017-18.  Refer to the document Changes to CCD-assigned school and LEA levels (here:  https://nces.ed.gov/ccd/reference_library.asp) for more information.",Char,16,64,LEA or school level,"Elementary
+High
+Other
+Middle
+Not reported
+Not applicable
+Ungraded
+Adult Education
+Prekindergarten
+Secondary",,,YES,G_PK_OFFERED;G_KG_OFFERED;G_1_OFFERED;G_2_OFFERED;G_3_OFFERED;G_4_OFFERED;G_5_OFFERED;G_6_OFFERED;G_7_OFFERED;G_8_OFFERED;G_9_OFFERED;G_10_OFFERED;G_11_OFFERED;G_12_OFFERED;G_13_OFFERED;G_AE_OFFERED;G_UG_OFFERED;NOGRADES
+,IGOFFERED,,Char,14,65,Whether any grades-offered field was adjusted,"Adjustment
+As reported",,,YES,G_PK_OFFERED;G_KG_OFFERED;G_1_OFFERED;G_2_OFFERED;G_3_OFFERED;G_4_OFFERED;G_5_OFFERED;G_6_OFFERED;G_7_OFFERED;G_8_OFFERED;G_9_OFFERED;G_10_OFFERED;G_11_OFFERED;G_12_OFFERED;G_13_OFFERED;G_AE_OFFERED;G_UG_OFFERED;NOGRADES
