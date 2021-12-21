@@ -186,9 +186,9 @@ The number of total prospects purchased within each order varied widely. Across 
 
 ### Frequency of Filters Used
 
-Filters used to select prospect lists varied across academic criteria (e.g., gpa, PSAT, SAT, academic rank, AP Score), geographic location (e.g., zip code, state, segment, metropolitan area, geomarket, international), and demographic characteristics (e.g., high school graduation class, race/ethnicity, gender). 
+Filters used to select prospect lists varied across academic criteria (e.g., grade point average, PSAT, SAT, academic rank, AP Score), geographic location (e.g., zip code, state, segment, metropolitan area, geomarket, international), and demographic characteristics (e.g., high school graduation class, race/ethnicity, gender). 
 
-Figure X shows how often filters were used across orders. All 486 orders 
+Figure X shows how often filters were used across orders. All 486 orders filtered by high school graduation class. The most frequently used filters include grade point average (94%), PSAT (60%), SAT (56%), and zip code (43%). About two in every five orders also filtered by state. Only a subset of orders filtered by race/ethnicity (19%), academic rank (10%), 
 
 # References
 
