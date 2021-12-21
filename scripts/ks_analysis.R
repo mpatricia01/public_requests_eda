@@ -112,6 +112,28 @@ library(eatATA)
             geom_bar(stat = "identity") +
             geom_text(aes(label=total_orders_st), vjust=0, size=2.5) 
         
+        
+        orders_df %>% select(num_students) %>%
+          summarise(across(
+            .cols = where(is.numeric), 
+            .fns = list(Mean = mean, SD=sd, median =median), na.rm = TRUE, 
+            .names = "{col}_{fn}"
+          ))
+        
+        orders_df<- orders_df %>%
+          mutate(carnegie = recode(univ_c15basic,
+                                   `15`= "Research Extensive",
+                                   `18`= "Master's",
+                                   `19`= "Master's",
+                                   `22`= "Baccalaureate"))
+        
+        orders_df %>% group_by(carnegie) %>% select(num_students) %>%
+          summarise(across(
+            .cols = where(is.numeric), 
+            .fns = list(Mean = mean, SD=sd, median =median), na.rm = TRUE, 
+            .names = "{col}_{fn}"
+          ))
+        
     # Frequency of Filters Used Across Orders
         orders_filters <- orders_df %>% 
                         select(hs_grad_class, zip_code, state_name, cbsa_name, intl_region, segment, race_ethnicity,
@@ -188,15 +210,22 @@ library(eatATA)
         orders_df %>% count(psat_score_max)
         orders_df %>% count(psat_score_min) 
         
-        test_scores <- orders_df %>% 
+        test_scores <- orders_df %>% group_by(univ_c15basic) %>%
             select(psat_score_min, psat_score_max, 
                    sat_score_min, sat_score_max, 
                    sat_score_old_min, sat_score_old_max) %>%
             summarise(across(
                 .cols = where(is.numeric), 
-                .fns = list(Mean = mean), na.rm = TRUE, 
+                .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
                 .names = "{col}_{fn}"
             ))
+        
+        
+        #ggplot average max/min scores by institution type
+
+        
+        ggplot(longer_data, aes(fill=condition, y=value, x=specie)) + 
+            geom_bar(position="dodge", stat="identity")
         
                     test_scores1 <- test_scores %>%
                         select(psat_score_min_Mean, psat_score_max_Mean, 
