@@ -210,6 +210,77 @@ library(eatATA)
         orders_df %>% count(psat_score_max)
         orders_df %>% count(psat_score_min) 
         
+        orders_df %>% count(psat_score_old_max)
+        orders_df %>% count(psat_score_old_min)
+        
+        # PSAT cutoffs tabulations
+        
+        orders_df$psat_minbrks <- cut(orders_df$psat_score_min, 
+                               breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
+                               labels=c("<1000", "1000-1100", "1110-1200", 
+                                        "1210-1300", "1310-1400", "1410-1500"))
+        
+        orders_df %>% group_by(psat_score_min) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+
+        orders_df %>% filter(!is.na(psat_minbrks)) %>% group_by(psat_minbrks) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        orders_df$psat_maxbrks <- cut(orders_df$psat_score_max, 
+                                      breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
+                                      labels=c("<1000", "1000-1100", "1110-1200", 
+                                               "1210-1300", "1310-1400", "1410-1500"))
+        
+        orders_df %>% filter(!is.na(psat_maxbrks)) %>% group_by(psat_maxbrks) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        orders_df %>% group_by(psat_score_max) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        
+        # SAT cutoffs tabulations
+
+        orders_df$sat_minbrks <- cut(orders_df$sat_score_min, 
+                                      breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
+                                      labels=c("<1000", "1000-1100", "1110-1200", 
+                                               "1210-1300", "1310-1400", "1410-1500"))
+        
+        orders_df %>% group_by(sat_score_min) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        orders_df %>% filter(!is.na(sat_minbrks)) %>% group_by(sat_minbrks) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        orders_df %>% group_by(sat_score_max) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+        orders_df$sat_maxbrks <- cut(orders_df$sat_score_max, 
+                                      breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
+                                      labels=c("<1000", "1000-1100", "1110-1200", 
+                                               "1210-1300", "1310-1400", "1410-1500", "1500+"))
+        
+        orders_df %>% filter(!is.na(sat_maxbrks)) %>% group_by(sat_maxbrks) %>%
+          summarise(n_high = n()) %>%
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+        
+        
+    
+        
+        
         test_scores <- orders_df %>% group_by(univ_c15basic) %>%
             select(psat_score_min, psat_score_max, 
                    sat_score_min, sat_score_max, 
@@ -221,59 +292,16 @@ library(eatATA)
             ))
         
         
-        #ggplot average max/min scores by institution type
-
-        
-        ggplot(longer_data, aes(fill=condition, y=value, x=specie)) + 
-            geom_bar(position="dodge", stat="identity")
-        
-                    test_scores1 <- test_scores %>%
-                        select(psat_score_min_Mean, psat_score_max_Mean, 
-                               sat_score_min_Mean, sat_score_max_Mean, 
-                               sat_score_old_min_Mean, sat_score_old_max_Mean) #subset and assign to new object
-                    names(test_scores1)<-c("psat_score_min", "psat_score_max", 
-                                    "sat_score_min", "sat_score_max", 
-                                    "sat_score_old_min", "sat_score_old_max")
-                    
-                    testscores_long <- test_scores1 %>% 
-                        gather(`psat_score_min`, `psat_score_max`, 
-                               `sat_score_min`, `sat_score_max`, 
-                               `sat_score_old_min`, `sat_score_old_max`,key=score,value=mean)  #arrange by state and year
-                    
-                    
-        test_scores2 <- orders_df %>% 
-                select(psat_score_min, psat_score_max, 
-                        sat_score_min, sat_score_max, 
-                        sat_score_old_min, sat_score_old_max) %>%
-                    summarise(across(
-                     .cols = where(is.numeric), 
-                     .fns = list(SD = sd), na.rm = TRUE, 
-                     .names = "{col}_{fn}"
-                        ))
-                    
-                    test_scores3 <- test_scores2 %>%
-                        select(psat_score_min_SD, psat_score_max_SD, 
-                               sat_score_min_SD, sat_score_max_SD, 
-                               sat_score_old_min_SD, sat_score_old_max_SD) #subset and assign to new object
-                    names(test_scores3)<-c("psat_score_min", "psat_score_max", 
-                                           "sat_score_min", "sat_score_max", 
-                                           "sat_score_old_min", "sat_score_old_max")
-                    
-                    tests_long <- test_scores3 %>% 
-                        gather(`psat_score_min`, `psat_score_max`, 
-                               `sat_score_min`, `sat_score_max`, 
-                               `sat_score_old_min`, `sat_score_old_max`,key=score,value=sd)  #arrange by state and year
-                    
-                    
-            testscores_fig <- merge(testscores_long,tests_long, by="score", sort=FALSE)       
-                    
-            rm(test_scores, test_scores1, test_scores2, test_scores3, tests_long, testscores_long)
-             
-            ggplot(testscores_fig, aes(x=score, y=mean)) + 
-                geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) +
-                geom_line() +
-                geom_point()
-            
+        #average max/min scores by institution type
+        test_scores <- orders_df %>% group_by(carnegie) %>%
+          select(psat_score_min, psat_score_max, 
+                 sat_score_min, sat_score_max, 
+                 sat_score_old_min, sat_score_old_max) %>%
+          summarise(across(
+            .cols = where(is.numeric), 
+            .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
+            .names = "{col}_{fn}"
+          ))
            
     # descriptive stats on HS RANK Filter
         orders_df %>% count(rank_high)
@@ -308,6 +336,18 @@ library(eatATA)
             geom_text(aes(label = pct), hjust = -0.1, colour = "black", size=2) +
             coord_flip()
        
+        
+  # GEOGRAPHIC FILTERS
+        
+        #zip code filters
+        orders_df %>% count(zip_code)
+          #KS NOTES: all 3-digits: https://en.wikipedia.org/wiki/List_of_ZIP_Code_prefixes
+        
+        #ZIP CODES
+        orders_df %>% filter(!is.na(zip_code)) %>% count(carnegie)
+        orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_state)
+        orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_name)
+        
         
         # descriptive stats on SEGMENT Filter
         orders_df %>% count(segment)
