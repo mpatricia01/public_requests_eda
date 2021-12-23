@@ -136,13 +136,13 @@ library(eatATA)
         
     # Frequency of Filters Used Across Orders
         orders_filters <- orders_df %>% 
-                        select(hs_grad_class, zip_code, state_name, cbsa_name, intl_region, segment, race_ethnicity,
+                        select(hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
                                 gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
                                 psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
                                 gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
             mutate(
                 hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
-                zip = ifelse(!is.na(zip_code), 1, 0), #KSshould this include zip_code_file not missing too?
+                zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
                 states_fil = ifelse(!is.na(state_name), 1, 0), 
                 cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
                 intl = ifelse(!is.na(intl_region), 1, 0), 
@@ -354,6 +354,19 @@ library(eatATA)
         orders_df %>% filter(!is.na(segment)) %>% count(univ_id) # only Urbana-Champagne (21) and Northeastern (1)
         
         segment_filters <- orders_df %>% filter(!is.na(segment))%>% select(segment, order_num)
+        
+        
+        # descriptive stats of STATE filter  
+        
+        orders_df %>% count(state_name) %>% print(n=50)
+        
+        orders_df %>% count(state_name, univ_state) %>% print(n=50)
+        
+        
+        # descriptive stats for segment filter
+        orders_df %>% count(segment, univ_id)
+        orders_df %>% filter(univ_id == '145637') %>% count(segment)
+        orders_df %>% filter(univ_id == '147776') %>% count(segment) #just says include all students, did this Northeastern order use segment?
         
         
     # Descriptives on Filter Combos
