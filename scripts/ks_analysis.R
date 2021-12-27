@@ -134,6 +134,10 @@ library(eatATA)
             .names = "{col}_{fn}"
           ))
         
+        
+        orders_df<-orders_df %>% mutate_if(is.character, list(~na_if(.,""))) 
+        
+        
     # Frequency of Filters Used Across Orders
         orders_filters <- orders_df %>% 
                         select(hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
@@ -369,6 +373,12 @@ library(eatATA)
         orders_df %>% filter(univ_id == '147776') %>% count(segment) #just says include all students, did this Northeastern order use segment?
         
         
+    # Demographic filters
+        
+        orders_df %>% count(race_ethnicity) %>% print(n=40)
+        
+        orders_df %>% count(gender) %>% print(n=40)
+        
     # Descriptives on Filter Combos
         
        filter_combos <- orders_filters %>%
@@ -413,7 +423,7 @@ library(eatATA)
         
         
             filter_combos %>% count(hsgrad_class, zip, states_fil, cbsa, intl, 
-                                    segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score, sort = TRUE) %>% top_n(10, n)
+                                    segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score, sort = TRUE) %>% top_n(30, n)
             
        
             
@@ -422,27 +432,19 @@ library(eatATA)
                           sat, psat, gpa, rank, geomarket, ap_score) %>% count()
             
             df_0 %>% arrange(-n)
-            #df_0[is.na(df_0)] <- ""                     # Replace NA with blank
-            
+
             df_0 <- df_0  %>% unite("string", c(hsgrad_class, zip, states_fil, 
                                                 cbsa, intl, segment, race, gender, 
                                                 sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0 <- df_0 %>% arrange(-n) %>% head(10)
+            df_0 <- df_0 %>% arrange(-n) 
             
+            sum(df_0$n)
+          
             
-            library(treemapify)                                  # for visualization
-            ggplot(df_0, 
-                   aes(fill = string, 
-                       area = n, 
-                       label = string)) +
-                geom_treemap() + 
-                geom_treemap_text(colour = "white", 
-                                  place = "centre") +
-                labs(title = "Filter Combinations") +
-                theme(legend.position = "none")
-            
+          # Descriptives for geomarket
+             orders_df %>% count(geomarket)
             
             
 ################### ANALYSIS VISUALS FOR RQ2A
