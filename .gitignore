@@ -13,6 +13,7 @@
 
 # pdf
 *.pdf
+!text/*/*.pdf
 
 # excel
 *.xls

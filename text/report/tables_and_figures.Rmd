@@ -1,0 +1,275 @@
+---
+title: 'Tables & Figures'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include = F}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = F)
+
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(scales)
+
+data_dir <- file.path('..', '..', 'data')
+
+color_palette <- c('#ba9a88', '#bbcfd7')
+
+load(file.path(data_dir, 'tbl_fig_data.RData'))
+```
+
+## Figure
+
+```{r, fig.height = 5}
+create_cb_figure <- function(categories, values, plot_title) {
+  cb_fig_df <- data.frame(
+    category = rep(categories, each = 2),
+    subcategory = rep(c('Not Licensed', 'Gain from being Licensed'), length(categories)), 
+    value = values
+  )
+  
+  cb_fig_df$category <- factor(cb_fig_df$category, levels = categories)
+  
+  cb_fig_df %>%
+    left_join(
+      cb_fig_df %>%
+        pivot_wider(id_cols = category, names_from = subcategory, values_from = value) %>%
+        mutate(
+          total = `Not Licensed` + `Gain from being Licensed`,
+          pct_change = `Gain from being Licensed` / `Not Licensed` * 100
+        ),
+      by = 'category') %>% 
+    ggplot(aes(x = category, y = value, fill = subcategory, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity') +
+    geom_text(aes(y = value, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', value), '%'), '')), color = '#444444', size = 2, position = position_stack(vjust = 0.5)) +
+    geom_text(aes(y = total + 3, label = if_else(subcategory == 'Not Licensed', str_c('(', sprintf('%.1f', pct_change), '%)'), '')), color = '#444444', size = 2) +
+    geom_text(aes(y = total + 7, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', `Gain from being Licensed`), 'pp'), '')), color = '#444444', size = 2) +
+    ggtitle(plot_title) +
+    xlab('') + ylab('') + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 80)) +
+    scale_fill_manual(values = color_palette) +
+    theme(
+        text = element_text(size = 7),
+        plot.margin = margin(t = 0.6, unit = 'cm'),
+        plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+        panel.background = element_blank(),
+        panel.grid.major.y = element_line(size = 0.1, color = 'gray'),
+        axis.ticks = element_blank(),
+        legend.title = element_blank(),
+        legend.position = 'bottom',
+        legend.margin = margin(t = -0.5, unit = 'cm'),
+        legend.text = element_text(margin = margin(r = 0.2, unit = 'cm')),
+        legend.key.size = unit(0.3, 'cm')
+      ) +
+      guides(fill = guide_legend(reverse = T))
+}
+
+grid.arrange(
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'HI/PI', 'White'),
+    c(32.8, 8.3, 37.5, 5.7, 31.8, 7.8, 24.1, 8.3, 26.5, 6.3, 22.2, 5.8, 44.4, 9.6),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'White'),
+    c(15.7, 4.9, 17.7, 5.0, 7.2, 2.9, 6.7, 2.9, 8.7, 4.2, 24.0, 6.7),
+    'BA Completion within 4 Years'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(32.8, 8.3, 24.9, 10.1, 36.5, 11.0, 53.4, 10.1),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(15.7, 4.9, 13.6, 6.8, 21.3, 8.5, 39.9, 10.1),
+    'BA Completion within 4 Years'
+  ),
+  ncol = 2
+)
+```
+
+```{r, warning = F}
+ipeds_df <- read_csv(file.path(data_dir, 'ipeds_data.csv'), na = 'NULL', col_types = c('unitid' = 'c', 'endyear' = 'c', 'satactcomp25' = 'n', 'satactcomp75' = 'n', 'freshoutstpct' = 'n', 'pgrnt_n' = 'n', 'cohortsfaef' = 'n')) %>% filter(endyear == '2017')
+hd_df <- read_csv(file.path(data_dir, 'hd2017.csv'), col_types = c('UNITID' = 'c', 'SECTOR' = 'c', 'UGOFFER' = 'c', 'LOCALE' = 'c'))
+carnegie_df <- read_csv(file.path(data_dir, 'carnegie_2018.csv'), col_types = c('UNITID' = 'c', 'BASIC2015' = 'c'))
+
+univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>% 
+  left_join(carnegie_df %>% select(UNITID, BASIC2015), by = 'UNITID') %>% 
+  filter(
+    STABBR %in% c('CA', 'TX', 'IL', 'MN'),
+    SECTOR == 1,
+    UGOFFER == 1,
+    !BASIC2015 %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+    !UNITID %in% c('488800', '229337', '229300', '228644', '416801', '228653')
+  ) %>% 
+  left_join(ipeds_df %>% select(unitid, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_n, cohortsfaef, ugftptfreshwhmf, ugftptfreshblmf, ugftptfreshapmf, ugftptfreshhimf, ugftptfreshalmf), by = c('UNITID' = 'unitid')) %>% 
+  mutate(
+    system = case_when(
+      str_detect(INSTNM, 'University of California') ~ 'UC',
+      STABBR == 'CA' ~ 'CSU',
+      str_detect(INSTNM, 'Texas A') | UNITID %in% c('228529', '227526') ~ 'TX A&M',
+      str_detect(INSTNM, 'University of Houston') ~ 'U of Houston',
+      str_detect(INSTNM, 'University of North Texas') ~ 'U of N. TX',
+      str_detect(INSTNM, 'University of Texas') ~ 'U of TX',
+      UNITID %in% c('222831', '229115') ~ 'TX Tech',
+      UNITID %in% c('226091', '227881', '228501', '228459') ~ 'TX State U',
+      STABBR == 'TX' ~ 'Indy TX',
+      str_detect(INSTNM, 'University of Illinois') ~ 'U of IL',
+      str_detect(INSTNM, 'Southern Illinois University') ~ 'SIU',
+      STABBR == 'IL' ~ 'IL State U',
+      str_detect(INSTNM, 'University of Minnesota') ~ 'UMN',
+      STABBR == 'MN' ~ 'MN State U'
+    ),
+    locale = str_sub(LOCALE, end = 1),
+    locale_text = recode_factor(
+      locale,
+      `4` = 'Rural',
+      `3` = 'Town',
+      `2` = 'Suburban',
+      `1` = 'City'
+    ),
+    carnegie = recode_factor(
+      BASIC2015,
+      `-2` = 'Unknown',
+      `15` = 'Doctoral Universities: Highest Research Activity',
+      `16` = 'Doctoral Universities: Higher Research Activity',
+      `17` = 'Doctoral Universities: Moderate Research Activity',
+      `18` = 'Master\'s Colleges & Universities: Larger Programs',
+      `19` = 'Master\'s Colleges & Universities: Medium Programs',
+      `20` = 'Master\'s Colleges & Universities: Small Programs',
+      `21` = 'Baccalaureate Colleges: Arts & Sciences Focus',
+      `22` = 'Baccalaureate Colleges: Diverse Fields',
+      `26` = 'Special Focus Four-Year: Other Health Professions Schools'
+    )
+  )
+```
+
+## Figure
+
+```{r, fig.height = 2, message = F}
+univ_df %>% 
+  group_by(STABBR, carnegie) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 40)) +
+  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
+## Figure
+
+```{r, fig.height = 2, message = F}
+univ_df %>% 
+  group_by(STABBR, locale_text) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 40)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
+## Table
+
+```{r}
+univ_df %>%
+  mutate(
+    pgrnt_p = pgrnt_n / cohortsfaef * 100,
+    pctfreshwh = ugftptfreshwhmf / ugftptfreshtot * 100, 
+    pctfreshbl = ugftptfreshblmf / ugftptfreshtot * 100, 
+    pctfreshap = ugftptfreshapmf / ugftptfreshtot * 100, 
+    pctfreshhi = ugftptfreshhimf / ugftptfreshtot * 100, 
+    pctfreshal = ugftptfreshalmf / ugftptfreshtot * 100
+  ) %>% 
+  select(STABBR, system, INSTNM, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_p, pctfreshwh, pctfreshbl, pctfreshap, pctfreshhi, pctfreshal) %>% 
+  arrange(STABBR, system, INSTNM) %>% 
+  kable(booktabs = F) %>%
+  collapse_rows(columns = 1:2, latex_hline = 'custom', custom_latex_hline = 1:2, valign = 'middle') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+## Figure
+
+```{r, fig.height = 3}
+orders_fig_totals %>% 
+  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_replace(total_orders_st, '1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
+  xlab('') + ylab('Total students') +
+  scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks.x = element_blank(),
+      axis.text.x = element_blank(),
+      axis.title = element_text(face = 'bold'),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    )
+```
+
+## Figure
+
+```{r, fig.height = 3}
+orders_filters1 %>% 
+  ggplot(aes(x = reorder(filters, V1), y = V1)) +
+  geom_bar(stat = 'identity', fill = '#d2c8bc') +
+  geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2, fontface = 'bold') +
+  xlab('') + ylab('Number of Orders') +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.title = element_text(face = 'bold'),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+  coord_flip()
+```
+
+## Table
+
+```{r}
+table_gpa %>% 
+  mutate(
+    pct_low = str_c(pct_low, '%'),
+    pct_high = str_c(pct_high, '%')
+  ) %>% 
+  kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high')) %>% 
+  row_spec(0, align = 'c', bold = T) %>%
+  row_spec(1:nrow(table_gpa), align = 'c') %>%
+  column_spec(1, bold = T) %>%
+  kable_styling(position = 'center')
+```
