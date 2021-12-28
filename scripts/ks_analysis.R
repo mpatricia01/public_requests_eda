@@ -29,7 +29,10 @@ library(eatATA)
     # NOTE: this script relies on data frames created by above create_secondary_datasets.R script
     source(file = file.path(scripts_dir, 'create_combined_order_list_analysis_datasets.R'))
 
-
+    # Workaround to Crystal errors with Ozan's source script
+    save(lists_orders_zip_hs_df, file = file.path(data_dir, 'tbl_fig_listdata.RData'))    
+    
+    
 ################### NEED TO REDUCE OBS TO MAKE MANIPULATIONS MANAGEABLE         
     
     #remove extra lists_orders_dfs
@@ -438,7 +441,7 @@ library(eatATA)
                                                 sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0 <- df_0 %>% arrange(-n) 
+            df_0 <- df_0 %>% arrange(-n) %>% head(10)
             
             sum(df_0$n)
           
@@ -542,7 +545,7 @@ library(eatATA)
         
         
     
-    # CALL FUNCTION TO CREATE TABLE 
+    # CALL FUNCTION TO CREATE TABLE 1
         
         #all possible vars: n, race, income, schtype
         vars <- c("n", "race", "income", "schtype") #all possible vars: n, race, income, schtype
@@ -560,31 +563,35 @@ library(eatATA)
     # CHARACTERISTICS BY FILTER COMBOS
         
         
-        orders_filters2 <- orders_df %>% 
-            select(order_num, hs_grad_class, zip_code, state_name, cbsa_name, intl_region, segment, race_ethnicity,
-                   gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
-                   psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
-                   gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
+        lists_orders_zip_hs_df <- lists_orders_zip_hs_df  %>%
             mutate(
-                hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
-                zip = ifelse(!is.na(zip_code), 1, 0), #KSshould this include zip_code_file not missing too?
-                states_fil = ifelse(!is.na(state_name), 1, 0), 
-                cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
-                intl = ifelse(!is.na(intl_region), 1, 0), 
-                segment = ifelse(!is.na(segment), 1, 0), 
-                race = ifelse(!is.na(race_ethnicity), 1, 0), 
-                gender = ifelse(!is.na(gender), 1, 0), 
-                sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
-                psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
-                gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
-                rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
-                geomarket = ifelse(!is.na(geomarket), 1, 0), 
-                ap_score = ifelse(!is.na(ap_scores), 1, 0))
+                filter_hsgrad_class = ifelse(!is.na(ord_hs_grad_class), 1, 0),
+                filter_zip = ifelse(!is.na(ord_zip_code) | !is.na(ord_zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
+                filter_states_fil = ifelse(!is.na(ord_state_name), 1, 0), 
+                filter_cbsa = ifelse(!is.na(ord_cbsa_name), 1, 0), 
+                filter_intl = ifelse(!is.na(ord_intl_region), 1, 0), 
+                filter_segment = ifelse(!is.na(ord_segment), 1, 0), 
+                filter_race = ifelse(!is.na(ord_race_ethnicity), 1, 0), 
+                filter_gender = ifelse(!is.na(ord_gender), 1, 0), 
+                filter_sat = ifelse((!is.na(ord_sat_score_min) | !is.na(ord_sat_score_max)), 1, 0), 
+                filter_psat = ifelse((!is.na(ord_psat_score_min) | !is.na(ord_psat_score_max)), 1, 0), 
+                filter_gpa = ifelse((!is.na(ord_gpa_low) | !is.na(ord_gpa_high)), 1, 0), 
+                filter_rank = ifelse((!is.na(ord_rank_low) | !is.na(ord_rank_high)), 1, 0), 
+                filter_geomarket = ifelse(!is.na(ord_geomarket), 1, 0))
         
-        
-        #merge in filters into student list data
-        lists_orders_zip_hs_df_1<- merge(x = lists_orders_zip_hs_df, y = orders_filters2[ , c("zip", "order_num", "segment")], by = "order_num", all.x=TRUE)
-        
+        # racial characteristics by filters
+        lists_orders_zip_hs_df %>% group_by(filter_) %>%
+          summarize(
+            n_obs = sum(n()),
+            pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
+            pct_stu_asian =  mean(stu_asian_common, na.rm = TRUE)*100,
+            pct_stu_black =  mean(stu_black_common, na.rm = TRUE)*100,
+            pct_stu_hispanic =  mean(stu_is_hisp_common, na.rm = TRUE)*100,
+            #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+            #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+            pct_stu_native =  mean(stu_american_indian_common, na.rm = TRUE)*100,
+            pct_stu_tworaces =  mean(stu_multi_race_common, na.rm = TRUE)*100,
+          )         
         
 ########## RESEARCH QUESTION 3: CHARACTERISTICS OF STUDENT LISTS IN COMPARISON TO OTHER MSA STUDENTS
         
