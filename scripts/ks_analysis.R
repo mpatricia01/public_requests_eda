@@ -30,7 +30,7 @@ library(eatATA)
     source(file = file.path(scripts_dir, 'create_combined_order_list_analysis_datasets.R'))
 
     # Workaround to Crystal errors with Ozan's source script
-    save(lists_orders_zip_hs_df, file = file.path(data_dir, 'tbl_fig_listdata.RData'))    
+    #save(lists_orders_zip_hs_df, file = file.path(data_dir, 'tbl_fig_listdata.RData'))    
     
     
 ################### NEED TO REDUCE OBS TO MAKE MANIPULATIONS MANAGEABLE         
@@ -450,7 +450,7 @@ library(eatATA)
              orders_df %>% count(geomarket)
             
             
-################### ANALYSIS VISUALS FOR RQ2A
+################### ANALYSIS & VISUALS FOR RQ2 
     
                 
     #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
@@ -559,8 +559,17 @@ library(eatATA)
         df_rq2a <- df_rq2a %>%  mutate_each(funs(prettyNum(., big.mark=",")))
 
  
+      # international students
         
-    # CHARACTERISTICS BY FILTER COMBOS
+        df_int <- lists_orders_zip_hs_df %>% filter(stu_country!="united states") %>% group_by(stu_country) %>%
+          summarise(n= n()) %>%
+          mutate(pct = round(n / sum(n)*100, digits=1))
+        
+        df_int <- df_int %>% arrange(-n)
+        
+        
+        
+################### ANALYSIS & VISUALS FOR RQ3
         
         
         lists_orders_zip_hs_df <- lists_orders_zip_hs_df  %>%

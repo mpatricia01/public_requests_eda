@@ -239,14 +239,20 @@ The differences in the racial characteristics of in-state versus out-of-state pr
 
 Figure X presents the average median income of the zip code where prospects live by in-state versus out-of-state status for research and regional university purchases. Purchased prospects, across all orders by the 12 universities in the study, live in areas with an average median household income of \$92,000. 
 
-Similar to the racial characteristics of prospects, out-of-state prospects
+Overall, Figure X shows out-of-state prospects tended to live in more affluent areas than in-state prospects. Across all institution types, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospects that live in areas where the average median household income is \$100,000. In comparison, purchases for prospects residing in the same state as the institution's campus resulted in prospects that live in areas where the average median household income is \$87,000.   
+
+This disparity is also likely driven by several differences across purchases by research versus regional universities. For example, out-of-state prospects purchased by research universities live in areas where the average median household income is \$101,000, whereas in-state prospects purchased live in areas with a \$91,000. However, the opposite pattern is evident for purchases by regional universities. Out-of-state prospects purchased by regional universities on average live in less affluent areas (\$69,000 median household income) than in-state prospects ($84,000 median household income). 
 
 ### High Schools Attended
+
+Given some of the College Board products link individual prospects to high schools for services like high school segment clusters, we are able to analyze some of the characteristics of high schools purchased prospects attend.
+
+Figure X presents school type for purchased prospects by in-state versus out-of-state status for research and regional university purchases. Overall, 82% of prospects purchased attend public high schools, 9% attend private schools, and 9% did not report their high school. While these overall proportions are comparable to national averages, there are several differences across in-state versus out-of-state purchases by research and regional universities. For research universities, students attending private high schools made up a greater share of out-of-state prospect lists (12%) than in-state lists purchases (7%). Student list purchases by regional universities also exhibited this patter, where private high school students made up 10% of out-of-state prospects versus 6% of in-state prospects purchased.
 
 
 ### International Prospects
 
-Nearly 100,000 of the 2M propspects purchased were international students. 
+Nearly 100,000 of the 2M prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).. 
 
 # References
 
