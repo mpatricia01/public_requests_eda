@@ -217,7 +217,7 @@ library(eatATA)
             rename(gpa = gpa_low)
         
         #remove orders that did not use GPA filter
-        table_gpa <- table_gpa %>% filter(!is.na(gpa))
+        table_gpa <- table_gpa %>% filter(!is.na(gpa), nchar(gpa) > 0)
         
         # descriptive stats on PSAT/SAT Filter
         orders_df %>% count(psat_score_max)
@@ -561,8 +561,8 @@ library(eatATA)
         df_rq2a<- table_rq2a(vars, cols) 
         
         #format table
-        df_rq2a <- df_rq2a %>% mutate_if(is.numeric, round, 0)
-        df_rq2a <- df_rq2a %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+        # df_rq2a <- df_rq2a %>% mutate_if(is.numeric, round, 0)
+        # df_rq2a <- df_rq2a %>%  mutate_each(funs(prettyNum(., big.mark=",")))
 
  
       # international students
@@ -721,8 +721,8 @@ library(eatATA)
         
         
         #format table
-        df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
-        df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+        # df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
+        # df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
         
         
         
@@ -782,4 +782,6 @@ library(eatATA)
                 #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
             )
         
-    
+
+save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_rq3, file = file.path(data_dir, 'tbl_fig_data.RData'))
+            
