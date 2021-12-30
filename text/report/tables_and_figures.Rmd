@@ -7,7 +7,7 @@ output:
 
 ```{r setup, include = F}
 options(knitr.kable.NA = '')
-knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
 
 library(tidyverse)
 library(gridExtra)
@@ -19,6 +19,12 @@ data_dir <- file.path('..', '..', 'data')
 color_palette <- c('#ba9a88', '#bbcfd7')
 
 load(file.path(data_dir, 'tbl_fig_data.RData'))
+
+orders_df <- orders_df %>% 
+  filter(univ_id != '104151') %>%
+  mutate_if(is.character, list(~na_if(., ''))) 
+
+lists_orders_zip_hs_df <- readRDS(file.path(data_dir, 'lists_orders_zip_hs_df.RDS'))
 ```
 
 ## Figure
@@ -150,7 +156,7 @@ univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>%
 
 ## Figure
 
-```{r, fig.height = 2, message = F}
+```{r, fig.height = 2}
 univ_df %>% 
   group_by(STABBR, carnegie) %>% 
   summarise(count = n()) %>% 
@@ -175,7 +181,7 @@ univ_df %>%
 
 ## Figure
 
-```{r, fig.height = 2, message = F}
+```{r, fig.height = 2}
 univ_df %>% 
   group_by(STABBR, locale_text) %>% 
   summarise(count = n()) %>% 
@@ -220,10 +226,35 @@ univ_df %>%
 ## Figure
 
 ```{r, fig.height = 3}
-orders_fig_totals %>% 
+univ_data <- readRDS(file.path(data_dir, 'univ_data.RDS'))
+orders_df %>% 
+  group_by(univ_id) %>%
+  summarise(
+    total_orders = n(),
+    total_students = sum(num_students, na.rm = T)
+  ) %>% 
+  mutate(
+    university = as.factor(row_number()),
+    total_orders = as.character(total_orders),
+    total_orders_st = str_c(total_orders, ' orders')
+  ) %>% 
+  merge(
+    univ_data %>% select(c15basic, univ_id, univ_name),
+    by = 'univ_id',
+    all.x = T
+  ) %>%
+  mutate(
+    carnegie = recode_factor(
+      as.numeric(c15basic),
+      `22`= "Baccalaureate",
+      `18`= "Master's",
+      `19`= "Master's",
+      `15`= "Research Extensive"
+    )
+  ) %>% 
   ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
   geom_bar(stat = 'identity', alpha = 0.6) +
-  geom_text(aes(label = str_replace(total_orders_st, '1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
+  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
   xlab('') + ylab('Total students') +
   scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
   scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
@@ -242,11 +273,44 @@ orders_fig_totals %>%
 ## Figure
 
 ```{r, fig.height = 3}
+orders_filters <- orders_df %>% 
+  select(hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity, gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max, psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max, gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
+  mutate(
+    hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
+    zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0),
+    states_fil = ifelse(!is.na(state_name), 1, 0), 
+    cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
+    intl = ifelse(!is.na(intl_region), 1, 0), 
+    segment = ifelse(!is.na(segment), 1, 0), 
+    race = ifelse(!is.na(race_ethnicity), 1, 0), 
+    gender = ifelse(!is.na(gender), 1, 0), 
+    sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
+    psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
+    gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
+    rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
+    geomarket = ifelse(!is.na(geomarket), 1, 0), 
+    ap_score = ifelse(!is.na(ap_scores), 1, 0)
+  ) 
+  
+orders_filters1 <- orders_filters %>% 
+  select(hsgrad_class, zip, states_fil, cbsa, intl, segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score) %>%
+  summarize_if(is.numeric, sum, na.rm = T)
+        
+orders_filters1 <- as.data.frame(t(orders_filters1))
+orders_filters1$filters <- rownames(orders_filters1)
+
+orders_filters1 <- orders_filters1 %>%
+  mutate(
+    percent = round((V1 / 486) * 100)
+  )
+
+orders_filters1$percent <- str_c(orders_filters1$percent, '%')
+        
 orders_filters1 %>% 
   ggplot(aes(x = reorder(filters, V1), y = V1)) +
   geom_bar(stat = 'identity', fill = '#d2c8bc') +
   geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2, fontface = 'bold') +
-  xlab('') + ylab('Number of Orders') +
+  xlab('') + ylab('Number of orders') +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   theme(
       text = element_text(size = 7),
@@ -262,14 +326,316 @@ orders_filters1 %>%
 ## Table
 
 ```{r}
+table_gpalow <- orders_df %>%
+  group_by(gpa_low) %>%
+  summarise(n_low = n()) %>%
+  mutate(pct_low = round(n_low / sum(n_low) * 100, digits = 1))
+        
+table_gpahigh <- orders_df %>%
+  group_by(gpa_high) %>%
+  summarise(n_high = n()) %>%
+  mutate(pct_high = round(n_high / sum(n_high) * 100, digits = 1))
+                             
+table_gpa <- merge(
+  table_gpalow,
+  table_gpahigh,
+  by.x = 'gpa_low', 
+  by.y = 'gpa_high', 
+  all = T
+) %>%
+  rename(gpa = gpa_low) %>% 
+  filter(nchar(gpa) > 0)
+
 table_gpa %>% 
   mutate(
     pct_low = str_c(pct_low, '%'),
     pct_high = str_c(pct_high, '%')
   ) %>% 
-  kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high')) %>% 
-  row_spec(0, align = 'c', bold = T) %>%
-  row_spec(1:nrow(table_gpa), align = 'c') %>%
-  column_spec(1, bold = T) %>%
+  kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high'), align = c('l', rep('c', 4))) %>% 
+  row_spec(0, bold = T) %>%
   kable_styling(position = 'center')
+```
+
+## Table
+
+```{r}
+orders_df %>%
+  filter(nchar(state_name) > 0) %>% 
+  mutate(
+    state_name = case_when(
+      str_detect(state_name, '\\|') ~ 'Multi-state', 
+      state_name == 'California' ~ 'CA', 
+      state_name == 'Texas' ~ 'TX', 
+      state_name == 'Illinois' ~ 'IL', 
+      T ~ state_name
+    )
+  ) %>% 
+  group_by(univ_state, state_name) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  kable(booktabs = T, col.names = c('University state', 'Purchased state(s)', 'Count'), align = rep('c', 3)) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
+
+## Figure
+
+```{r, echo = F, out.width = '100%'}
+knitr::include_graphics(file.path(data_dir, 'cluster_EN.png'))
+knitr::include_graphics(file.path(data_dir, 'cluster_HS.png'))
+```
+
+## Table
+
+```{r}
+filter_combos <- orders_filters %>%
+  select(hsgrad_class, zip, states_fil, cbsa, intl, segment, race, gender,sat, psat, gpa, rank, geomarket, ap_score) %>%
+  mutate(
+    filter_sum = hsgrad_class + zip + states_fil + cbsa + intl + segment + race + gender + sat + psat + gpa + rank + geomarket + ap_score,
+    hsgrad_class = ifelse(hsgrad_class == 1, 'grad_class', NA),
+    zip = ifelse(zip == 1, 'zip', NA),
+    states_fil = ifelse(states_fil == 1, 'state', NA), 
+    cbsa = ifelse(cbsa == 1, 'cbsa', NA), 
+    intl = ifelse(intl == 1, 'intl', NA), 
+    segment = ifelse(segment == 1, 'segment', NA), 
+    race = ifelse(race == 1, 'race', NA), 
+    gender = ifelse(gender == 1, 'gender', NA), 
+    sat = ifelse(sat == 1, 'sat', NA), 
+    psat = ifelse(psat == 1, 'psat', NA), 
+    gpa = ifelse(gpa == 1, 'gpa', NA), 
+    rank = ifelse(rank == 1, 'rank', NA), 
+    geomarket = ifelse(geomarket == 1, 'geomarket', NA), 
+    ap_score = ifelse(ap_score == 1, 'APscores', NA)
+  )
+
+filter_combos[filter_combos == 'NA'] <- NA_character_
+
+df_0 <- group_by(filter_combos, hsgrad_class, zip, states_fil, cbsa, intl, segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score) %>% 
+  count() %>% 
+  unite('string', c(hsgrad_class, zip, states_fil, cbsa, intl, segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score), sep = ',', remove = T, na.rm = T) %>% 
+  arrange(-n) %>% 
+  head(10)
+            
+df_0 %>% 
+  kable(booktabs = T, col.names = c('Filters', 'Count'), align = c('l', 'c')) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
+
+## Figure
+
+```{r}
+table_rq2a <- function(variables, columns) {
+            
+    # Create counter
+    counter = 0
+
+    # Loop through columns via filters (ex. all students, in-state, out-state, etc.)
+    for (i in columns) {
+        
+        counter = counter + 1
+        
+        if (i == 'all_domestic') {
+         filter_string=c('stu_in_us==1')
+        } else if (i == 'in_state') {
+        filter_string=c('stu_nonres==0')
+        } else if (i == 'out_of_state') {
+        filter_string=c('stu_nonres==1')
+        } else if (i == 'research_univ') {
+        filter_string=c("stu_in_us==1 & univ_c15basic=='15'")
+        } else if (i == 'regional_univ') {
+        filter_string=c("stu_in_us==1 & univ_c15basic!='15'")
+        } else if (i == "research_univ_instate") {
+        filter_string=c("stu_in_us==1 & stu_nonres==0 & univ_c15basic=='15'")
+        } else if (i == "research_univ_outofstate") {
+        filter_string=c("stu_in_us==1 & stu_nonres==1 & univ_c15basic=='15'")
+        } else if (i == "regional_univ_instate") {
+        filter_string=c("stu_in_us==1 & stu_nonres==0 & univ_c15basic!='15'")
+        } else if (i == "regional_univ_outofstate") {
+        filter_string=c("stu_in_us==1 & stu_nonres==1 & univ_c15basic!='15'")
+        }
+        
+        # Create N row
+        n <- as_data_frame(t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% count()))
+        row.names(n) <- 'Total N'
+        
+        # Create race rows
+        race <- lists_orders_zip_hs_df %>% 
+          filter(!! rlang::parse_expr(filter_string)) %>%
+          count(stu_race_cb) %>%
+          mutate(V1 = n / sum(n) * 100) %>% 
+          select(stu_race_cb, V1) %>% 
+          mutate(
+            stu_race_cb = ifelse(is.na(stu_race_cb), 'Pct- Race Missing', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 0, 'Pct Race-No Response', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 1, 'Pct AI/AN', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 2, 'Pct Asian', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 3, 'Pct Black', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 4, 'Pct Latinx', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 8, 'Pct NH/PI', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 9, 'Pct White', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 10, 'Pct Other Race', stu_race_cb),
+            stu_race_cb = ifelse(stu_race_cb == 12, 'Pct Multiracial', stu_race_cb)
+          ) %>% 
+          remove_rownames() %>% 
+          column_to_rownames(var = 'stu_race_cb')
+
+        # Create income row
+        income <- as_data_frame(t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% summarise(mean_inc = mean(zip_median_household_income, na.rm = T))))
+        row.names(income) <- 'Median Household Income (mean)'
+        
+        # Create school type rows
+        schtype <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+          count(hs_school_control) %>%
+          mutate(school_type = n / sum(n) * 100) %>% 
+          select(hs_school_control, school_type) %>% 
+          mutate(hs_school_control = ifelse(is.na(hs_school_control), 'school unknown', hs_school_control)) %>% 
+          remove_rownames() %>% 
+          column_to_rownames(var = 'hs_school_control') %>% 
+          rename(V1 = school_type)
+        row.names(schtype) <- c('Pct Private', 'Pct Public', 'Pct School Unknown')
+        
+        # Concatenate all row_dfs for i-column
+        temp_df <- bind_rows(mget(variables))
+        temp_df <- temp_df %>% rename(!!paste0('', i) := V1)
+        temp_df <- rownames_to_column(temp_df, 'row_subj')
+
+        # First loop creates the master_df
+        # Second+ loops appends the master_df
+        if (counter == 1){master_df <- as.data.frame(temp_df)}
+        if (counter > 1){master_df <- merge(master_df,temp_df, by = 'row_subj', sort = F)}
+    }
+
+    return(master_df)
+}
+        
+
+vars <- c('n', 'race', 'income', 'schtype')
+cols <- c('all_domestic','in_state', 'out_of_state', 'research_univ', 'regional_univ', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate') 
+
+df_rq2a <- table_rq2a(vars, cols) 
+
+df_int <- lists_orders_zip_hs_df %>% 
+  filter(stu_country != 'united states') %>%
+  group_by(stu_country) %>%
+  summarise(n = n()) %>%
+  mutate(pct = round(n / sum(n) * 100, digits = 1)) %>% 
+  arrange(-n)
+```
+
+```{r, fig.height = 2.5}
+df_rq2a_counts <- df_rq2a %>% 
+  filter(row_subj == 'Total N') %>% 
+  select(all_domestic, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_counts <- data.frame(df_rq2a_counts, row.names = rownames(df_rq2a_counts)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_counts) %>% 
+  mutate(loc_type = 'Domestic') %>% 
+  rbind(c('all_domestic', sum(df_int$n), 'International')) %>% 
+  arrange(count_type, loc_type)
+
+df_rq2a_counts$count <- as.numeric(df_rq2a_counts$count)
+df_rq2a_counts$count_type <- factor(df_rq2a_counts$count_type, levels = rev(c('all_domestic', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+df_rq2a_counts$loc_type <- factor(df_rq2a_counts$loc_type, levels = rev(c('Domestic', 'International')))
+
+df_rq2a_counts %>% 
+  ggplot(aes(x = count_type, y = count, fill = loc_type, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  xlab('') + ylab('') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1967000)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm'),
+      legend.position = 'top'
+    ) +
+    guides(fill = guide_legend(reverse = T)) +
+  coord_flip()
+```
+
+```{r}
+create_rq2a_figure <- function(categories, legend_title) {
+  df_rq2a_fig <- df_rq2a %>% 
+    filter(row_subj %in% categories) %>% 
+    select(row_subj, all_domestic, research_univ_instate, regional_univ_instate, research_univ_outofstate, regional_univ_outofstate) %>% 
+    pivot_longer(-row_subj, names_to = 'pct_type', values_to = 'pct')
+  
+  df_rq2a_fig$pct_type <- factor(df_rq2a_fig$pct_type, levels = rev(c('all_domestic', 'research_univ_instate', 'regional_univ_instate', 'research_univ_outofstate', 'regional_univ_outofstate')))
+  df_rq2a_fig$row_subj <- factor(df_rq2a_fig$row_subj, levels = rev(categories))
+  
+  df_rq2a_fig %>% 
+    mutate(row_subj = recode(
+      row_subj,
+      'Pct- Race Missing' = 'Pct-Race Missing'
+    )) %>% 
+    ggplot(aes(x = pct, y = pct_type, fill = row_subj, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+    geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+    xlab('') + ylab('') +
+    scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
+    scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = legend_title) +
+    theme(
+        text = element_text(size = 7),
+        plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+        panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text.x = element_blank(),
+        legend.title = element_text(face = 'bold'),
+        legend.key.size = unit(0.3, 'cm')
+      ) +
+      guides(fill = guide_legend(reverse = T))
+}
+```
+
+## Figure
+
+```{r, fig.height = 2.3}
+create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct- Race Missing'), 'Race/ethnicity')
+```
+
+## Figure
+
+```{r, fig.height = 2.5}
+df_rq2a_income <- df_rq2a %>% 
+  filter(row_subj == 'Median Household Income (mean)') %>% 
+  select(all_domestic, in_state, out_of_state, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_income <- data.frame(df_rq2a_income, row.names = rownames(df_rq2a_income)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_income)
+
+df_rq2a_income$count_type <- factor(df_rq2a_income$count_type, levels = rev(c('all_domestic', 'in_state', 'out_of_state', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+
+df_rq2a_income %>% 
+  ggplot(aes(x = count, y = count_type, width = 0.6)) +
+  geom_bar(stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
+  geom_text(aes(x = count + 1000, label = str_c('$', round(count / 1000, 0), 'K')), color = '#555555', size = 2, hjust = 0) +
+  xlab('') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 110000)) +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm'),
+      legend.position = 'top'
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
+## Figure
+
+```{r, fig.height = 2.3}
+create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School type')
 ```
