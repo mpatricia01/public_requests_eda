@@ -252,7 +252,21 @@ Figure X presents school type for purchased prospects by in-state versus out-of-
 
 ### International Prospects
 
-Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).. 
+Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
+
+
+
+## Filter Criteria and Characteristics of Prospects
+
+We analyze the relationship between filter criteria and the characteristics of purchased prospects in two different ways. First, we analyze prospect characteristics (e.g., race/ethnicity, income, in-state versus out-of-state) across individual filters to understand broad patterns. Second, we analyze prospect characteristics across common combinations of filters. Here we use selected universities, purchases and/or localities that convey commonly observed or thematically important patterns across combinations of filters. We also contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups based on the selected examples.
+
+
+#### Prospect Characteristics Across Individual Filters
+
+Table X presents the prospect characteristics across individual filters. 
+
+#### Prospect Characteristics Across Combinations of Filters
+
 
 # References
 

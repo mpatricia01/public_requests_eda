@@ -716,7 +716,7 @@ library(eatATA)
         vars <- c("n", "race", "income", "oos","schtype") #all possible vars: n, race, income, schtype
         
         #all possible columns: all_domestic, in_state, out_of_state, research_univ, regional_univ, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate,
-        cols <- c("all_domestic", "GPA", "PSAT", "SAT", "ZIP", "STATE", "RACE", "HS RANK", "GENDER", "SEGMENT", "CBSA") 
+        cols <- c("all_domestic", "GPA", "PSAT", "SAT","HS RANK", "RACE", "GENDER", "ZIP", "STATE","SEGMENT", "CBSA") 
         df_rq3<- table_rq3(vars, cols) 
         
         
