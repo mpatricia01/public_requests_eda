@@ -48,7 +48,7 @@ library(eatATA)
     # remove ASU from orders_df too
     orders_df <- orders_df %>% filter(univ_id!="104151") 
     
-################### CREATING OUT_OF_STATE VAR NEEDED FOR FUNCTION
+################### CREATING AND CLEANING OUT_OF_STATE & GENDER VARS NEEDED FOR FUNCTION
     
     # KS CHECKS
     # # non-res categories based on country + state (check for missingness)
@@ -83,6 +83,12 @@ library(eatATA)
                stu_nonres = ifelse((stu_in_us==1 & univ_state!=stu_state), 1, stu_nonres))
     
     lists_orders_zip_hs_df %>% count(stu_in_us, stu_nonres)
+    
+    
+    # consolidate gender/sex categories
+    
+    lists_orders_zip_hs_df %>% count(stu_gender)
+    
     
 
 ################### ANALYSIS VISUALS FOR RQ1: CHARACTERISTICS OF ORDERS
@@ -571,7 +577,7 @@ library(eatATA)
         
 ################### ANALYSIS & VISUALS FOR RQ3
         
-        
+        #create filter dummies for student list data
         lists_orders_zip_hs_df <- lists_orders_zip_hs_df  %>%
             mutate(
                 filter_hsgrad_class = ifelse(!is.na(ord_hs_grad_class), 1, 0),
@@ -587,6 +593,144 @@ library(eatATA)
                 filter_gpa = ifelse((!is.na(ord_gpa_low) | !is.na(ord_gpa_high)), 1, 0), 
                 filter_rank = ifelse((!is.na(ord_rank_low) | !is.na(ord_rank_high)), 1, 0), 
                 filter_geomarket = ifelse(!is.na(ord_geomarket), 1, 0))
+        
+        
+        
+        # Create table function for lists across single filters
+        #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
+        table_rq3 <- function(variables, columns) {
+          
+          #create counter
+          counter = 0
+          
+          #loop through columns via filters (ex: all students, in-state, out-state, etc. )
+          for (i in columns) {
+            
+            counter = counter+1
+            
+            if(i=="all_domestic") {
+              filter_string=c("stu_in_us==1")
+            } else if(i=="GPA")
+            {filter_string=c("stu_in_us==1 & filter_gpa==1")
+            } else if(i=="PSAT")
+            {filter_string=c("stu_in_us==1 & filter_psat==1")
+            } else if(i=="SAT")
+            {filter_string=c("stu_in_us==1 & filter_sat==1")
+            } else if(i=="ZIP")
+            {filter_string=c("stu_in_us==1 & filter_zip==1")
+            } else if(i=="STATE")
+            {filter_string=c("stu_in_us==1 & filter_states_fil==1")
+            } else if(i=="RACE")
+            {filter_string=c("stu_in_us==1 & filter_race==1")
+            } else if(i=="HS Rank")
+            {filter_string=c("stu_in_us==1 & filter_rank==1")
+            } else if(i=="GENDER")
+            {filter_string=c("stu_in_us==1 & filter_gender==1")
+            } else if(i=="SEGMENT")
+            {filter_string=c("stu_in_us==1 & filter_segment==1")
+            } else if(i=="CBSA")
+            {filter_string=c("stu_in_us==1 & filter_cbsa==1")}
+            
+            
+            #create N row
+            n <- as_data_frame(t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% count()))
+            row.names(n) <- "Total N"
+            
+            #create race rows
+            race <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+              count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+            
+            race <- race %>% select(stu_race_cb, V1)
+            race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==3, "Pct Black", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==4, "Pct Latinx", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==8, "Pct NH/PI", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==9, "Pct White", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==10, "Pct Other Race", stu_race_cb),
+                                    stu_race_cb = ifelse(stu_race_cb==12, "Pct Multiracial", stu_race_cb)                                        )
+            
+            
+            race<- race %>% remove_rownames %>% column_to_rownames(var="stu_race_cb")
+            
+            
+            #create gender row
+            #gender <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+              #count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+            
+
+            #create income row
+            income <- as_data_frame (t(lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>% 
+                                         summarise (mean_inc = mean(zip_median_household_income, na.rm=T))))
+            row.names(income) <- "Median Household Income (mean)"
+            
+            # create in-state versus out-of-state rows
+            oos <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+              count(stu_nonres) %>% mutate(V1 = n / sum(n) * 100)
+            
+            oos <- oos %>% select(stu_nonres, V1)
+            oos <- oos %>% mutate(stu_nonres = ifelse(is.na(stu_nonres), "Pct- Residency Missing", stu_nonres),
+                                  stu_nonres = ifelse(stu_nonres==0, "Pct In-State", stu_nonres),
+                                  stu_nonres = ifelse(stu_nonres==1, "Pct Out-of-State", stu_nonres))
+                                  
+            oos<- oos %>% remove_rownames %>% column_to_rownames(var="stu_nonres")
+            
+            
+            #create school type rows
+            schtype <- lists_orders_zip_hs_df %>% filter(!! rlang::parse_expr(filter_string)) %>%
+              count(hs_school_control) %>% mutate(school_type = n / sum(n) * 100)
+            
+            schtype <- schtype %>% select(hs_school_control, school_type)
+            schtype <- schtype %>% mutate(hs_school_control = ifelse(is.na(hs_school_control), "school unknown", hs_school_control))
+            schtype<- schtype %>% remove_rownames %>% column_to_rownames(var="hs_school_control")
+            schtype<- schtype %>% rename(V1 = school_type)
+            row.names(schtype) <- c("Pct Private", "Pct Public", "Pct School Unknown") #NEED TO RE_DO THIS LIKE RACE ABOVE
+            
+            
+            #concatenate all row_dfs for i-column
+            temp_df <- bind_rows(mget(variables))
+            #temp_df <- bind_rows(n, race, income, schtype)
+            temp_df <- temp_df %>% rename(!!paste0("", i) := V1)
+            temp_df <- rownames_to_column(temp_df, "row_subj")
+            
+            
+            #first loop creates the master_df
+            #second + loops appends the master df
+            if(counter==1){master_df <- as.data.frame(temp_df)}
+            if(counter>1){master_df <- merge(master_df,temp_df, by="row_subj", sort=FALSE)}
+            
+            
+          }
+          
+          return(master_df)
+          
+        }
+        
+        
+        
+        # CALL FUNCTION TO CREATE TABLE 2
+        
+        #all possible vars: n, race, income, oos, schtype
+        vars <- c("n", "race", "income", "oos","schtype") #all possible vars: n, race, income, schtype
+        
+        #all possible columns: all_domestic, in_state, out_of_state, research_univ, regional_univ, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate,
+        cols <- c("all_domestic", "GPA", "PSAT", "SAT", "ZIP", "STATE", "RACE", "HS RANK", "GENDER", "SEGMENT", "CBSA") 
+        df_rq3<- table_rq3(vars, cols) 
+        
+        
+        #format table
+        df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
+        df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+        
+        
+        
+        
+        
+        
+        
+        
         
         # racial characteristics by filters
         lists_orders_zip_hs_df %>% group_by(filter_) %>%

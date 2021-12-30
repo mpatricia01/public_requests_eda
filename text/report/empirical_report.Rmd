@@ -252,7 +252,7 @@ Figure X presents school type for purchased prospects by in-state versus out-of-
 
 ### International Prospects
 
-Nearly 100,000 of the 2M prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).. 
+Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).. 
 
 # References
 
