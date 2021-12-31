@@ -721,19 +721,19 @@ library(eatATA)
         
         
         #format table
-        # df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
-        # df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+        df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
+        df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
         
         
         
-        
+        # create categorical variable with 
         
         
         
         
         
         # racial characteristics by filters
-        lists_orders_zip_hs_df %>% group_by(filter_) %>%
+        lists_orders_zip_hs_df %>% filter() %>%
           summarize(
             n_obs = sum(n()),
             pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
