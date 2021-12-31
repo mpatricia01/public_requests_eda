@@ -752,19 +752,25 @@ library(eatATA)
           group_by(filter_combo) %>%
           summarise(n=n_distinct(ord_num)) 
         
+        lists_orders_zip_hs_df %>% 
+          group_by(filter_combo) %>%
+          count(ord_num) 
+        
         # top two filter combos across race/ethnicity
-        common_combo_race <- lists_orders_zip_hs_df %>% group_by(filter_combo) %>%
-                              summarize(
-                                n_obs = sum(n()),
-                                pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
-                                pct_stu_asian =  mean(stu_asian_common, na.rm = TRUE)*100,
-                                pct_stu_black =  mean(stu_black_common, na.rm = TRUE)*100,
-                                pct_stu_hispanic =  mean(stu_is_hisp_common, na.rm = TRUE)*100,
-                                #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
-                                #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
-                                pct_stu_native =  mean(stu_american_indian_common, na.rm = TRUE)*100,
-                                pct_stu_tworaces =  mean(stu_multi_race_common, na.rm = TRUE)*100,
-                              )         
+        common_combo_chars <- lists_orders_zip_hs_df %>% group_by(filter_combo) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+        
+        common_combo_chars <- common_combo_chars %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==3, "Pct Black", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==4, "Pct Latinx", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==8, "Pct NH/PI", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==9, "Pct White", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==10, "Pct Other Race", stu_race_cb),
+                                stu_race_cb = ifelse(stu_race_cb==12, "Pct Multiracial", stu_race_cb))
+        
         
         
         # racial characteristics by filters

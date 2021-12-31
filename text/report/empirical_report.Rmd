@@ -219,7 +219,7 @@ Lastly, ten orders used graduation class, SAT, and geomarket. These orders filte
 
 ## Characteristics of Prospects 
 
-The 486 orders made by the 12 universities in the study resulted in the purchase of 1,967,352 prospects' contact and demographic information. Figure X shows the total number of prospects by domestic versus international status. Of the nearly 2 Million prospects purchased, 95% of them were domestic students. 
+Our analysis on the characteristics of prospects purchased by universities includes 388 orders resulting in 1,967,352 prospects. Figure X shows the total number of prospects by domestic versus international status. Of the nearly 2 Million prospects purchased, 95% of them were domestic students. 
 
 Figure X also shows the number of domestic prospects purchased by in-state versus out-of-state and by institutional type. Overall, the majority of prospects purchased across all orders by all institutions in the study were in-state students (58%). However, the percent of in-state versus out-of-state prospects varied across institutional type. Research universities purchased more students overall and a greater proportion of out-of-state students than master's universities. For example, research universities in the study purchased more than 1.2 Million prospects of which 62% were out-of-state. In comparison, master's universities purchased less than 650,000 prospects of which only 4% were out-of-state students. 
 
@@ -228,7 +228,7 @@ Below we also describe the racial, economic, and schooling characteristics of do
 
 ### Racial Characteristics
 
-Figure X presents the racial characteristics of all domestic prospects resulting from the 486 purchased orders in the study by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
+Figure X presents the racial characteristics of all domestic prospects resulting from the 388 purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
 
 Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of 43% White students, 22% Asian students, 19% Latinx students, 6% Black, 6% multiracial, and 4% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of 34% White students, 11% Asian, 25% Latinx, 5% Black, 4% multiracial, and 19% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of Native American students (N=7,885 DOUBLE CHECK THIS) that can be glossed over when only looking at overall proportions.
 
@@ -252,7 +252,7 @@ Figure X presents school type for purchased prospects by in-state versus out-of-
 
 ### International Prospects
 
-Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 486 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
+Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 388 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
 
 
 
@@ -275,6 +275,8 @@ Lastly, table X shows the difference in proportions of prospects that attend pub
 
 
 ### Prospect Characteristics Across Combinations of Filters
+
+We begin analyzing the characteristics of prospects across the most common combination of filters.  Figure X presents the average racial and economic characteristics across two most common combinations of filters. For orders that filtered by high school graduation class, zip code, PSAT scores, and GPA, the resulting lists 
 
 
 # References
