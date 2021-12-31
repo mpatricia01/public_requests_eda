@@ -93,6 +93,10 @@ library(eatATA)
 
 ################### ANALYSIS VISUALS FOR RQ1: CHARACTERISTICS OF ORDERS
     
+    # unique IDs for order nums
+    orders_df %>% 
+      summarise(n=n_distinct(order_num)) 
+    
     # how many orders total + students total; then by university/carnegie
         orders_df %>% count()
         orders_fig_totals <- orders_df %>% 
@@ -458,6 +462,11 @@ library(eatATA)
             
 ################### ANALYSIS & VISUALS FOR RQ2 
     
+             
+    # how many students lists do we have?
+        lists_orders_zip_hs_df %>% 
+            summarise(n=n_distinct(ord_num)) 
+             
                 
     #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
         table_rq2a <- function(variables, columns) {
@@ -726,10 +735,36 @@ library(eatATA)
         
         
         
-        # create categorical variable with 
+        # create categorical variable that use different combos of filters
+        lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% 
+                          mutate(filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_psat==1 & filter_gpa==1, "HS Grad, Zip, PSAT, GPA", NA),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_sat==1 & filter_gpa==1, "HS Grad, Zip, SAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil=1 & filter_race==1 & filter_sat==1 & filter_psat==1 & filter_gpa==1 & filter_rank==1, "HS Grad, State, Race, SAT, PSAT, GPA, Rank", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_sat==1 & filter_psat==1 & filter_gpa==1, "HS Grad, Zip, SAT, PSAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, SAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, PSAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_race==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, Race, PSAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_segment==1 & filter_gender==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, Segment, Gender, SAT, GPA", filter_combo))
+    
         
+        # number of orders across common filter combos
+        lists_orders_zip_hs_df %>% 
+          group_by(filter_combo) %>%
+          summarise(n=n_distinct(ord_num)) 
         
-        
+        # top two filter combos across race/ethnicity
+        common_combo_race <- lists_orders_zip_hs_df %>% group_by(filter_combo) %>%
+                              summarize(
+                                n_obs = sum(n()),
+                                pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
+                                pct_stu_asian =  mean(stu_asian_common, na.rm = TRUE)*100,
+                                pct_stu_black =  mean(stu_black_common, na.rm = TRUE)*100,
+                                pct_stu_hispanic =  mean(stu_is_hisp_common, na.rm = TRUE)*100,
+                                #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
+                                #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
+                                pct_stu_native =  mean(stu_american_indian_common, na.rm = TRUE)*100,
+                                pct_stu_tworaces =  mean(stu_multi_race_common, na.rm = TRUE)*100,
+                              )         
         
         
         # racial characteristics by filters
