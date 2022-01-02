@@ -2,7 +2,6 @@
 title: 'Tables & Figures'
 output:
   pdf_document: default
-  html_document: default
 ---
 
 ```{r setup, include = F}
@@ -13,12 +12,15 @@ library(tidyverse)
 library(gridExtra)
 library(kableExtra)
 library(scales)
+library(leaflet)
+library(rgdal)
 
 data_dir <- file.path('..', '..', 'data')
 
 color_palette <- c('#ba9a88', '#bbcfd7')
 
 load(file.path(data_dir, 'tbl_fig_data.RData'))
+zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
 ```
 
 ## Figure
@@ -113,7 +115,7 @@ univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>%
       STABBR == 'CA' ~ 'CSU',
       str_detect(INSTNM, 'Texas A') | UNITID %in% c('228529', '227526') ~ 'TX A&M',
       str_detect(INSTNM, 'University of Houston') ~ 'U of Houston',
-      str_detect(INSTNM, 'University of North Texas') ~ 'U of N. TX',
+      str_detect(INSTNM, 'University of North Texas') ~ 'UNT',
       str_detect(INSTNM, 'University of Texas') ~ 'U of TX',
       UNITID %in% c('222831', '229115') ~ 'TX Tech',
       UNITID %in% c('226091', '227881', '228501', '228459') ~ 'TX State U',
@@ -146,6 +148,9 @@ univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>%
       `26` = 'Special Focus Four-Year: Other Health Professions Schools'
     )
   )
+
+univ_df$STABBR = factor(univ_df$STABBR, levels = c('IL', 'MN', 'CA', 'TX'))
+univ_df$system = factor(univ_df$system, levels = c('U of IL', 'IL State U', 'SIU', 'UMN', 'MN State U', 'UC', 'CSU', 'U of TX', 'TX State U', 'TX A&M', 'U of Houston', 'UNT', 'TX Tech', 'Indy TX'))
 ```
 
 ## Figure
@@ -203,17 +208,52 @@ univ_df %>%
 ```{r}
 univ_df %>%
   mutate(
-    pgrnt_p = pgrnt_n / cohortsfaef * 100,
-    pctfreshwh = ugftptfreshwhmf / ugftptfreshtot * 100, 
-    pctfreshbl = ugftptfreshblmf / ugftptfreshtot * 100, 
-    pctfreshap = ugftptfreshapmf / ugftptfreshtot * 100, 
-    pctfreshhi = ugftptfreshhimf / ugftptfreshtot * 100, 
-    pctfreshal = ugftptfreshalmf / ugftptfreshtot * 100
+    satactcomp25 = if_else(is.na(satactcomp25), '', prettyNum(round(satactcomp25, 0), ',')),
+    satactcomp75 = if_else(is.na(satactcomp75), '', prettyNum(round(satactcomp75, 0), ',')),
+    tfuginst = str_c('$', prettyNum(sprintf('%.2f', tfuginst), ',')),
+    tfugoutst = str_c('$', prettyNum(sprintf('%.2f', tfugoutst), ',')),
+    freshoutstpct = if_else(is.na(freshoutstpct), '', str_c(sprintf('%.1f', freshoutstpct * 100), '%')),
+    pgrnt_p = if_else(is.na(pgrnt_n), '', str_c(sprintf('%.1f', pgrnt_n / cohortsfaef * 100), '%')),
+    pctfreshwh = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshwhmf / ugftptfreshtot * 100), '%')), 
+    pctfreshbl = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshblmf / ugftptfreshtot * 100), '%')), 
+    pctfreshhi = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshhimf / ugftptfreshtot * 100), '%')), 
+    pctfreshap = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshapmf / ugftptfreshtot * 100), '%')), 
+    pctfreshal = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshalmf / ugftptfreshtot * 100), '%')),
+    ugftptfreshtot = if_else(ugftptfreshtot == 0, '', prettyNum(ugftptfreshtot, ','))
   ) %>% 
-  select(STABBR, system, INSTNM, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_p, pctfreshwh, pctfreshbl, pctfreshap, pctfreshhi, pctfreshal) %>% 
-  arrange(STABBR, system, INSTNM) %>% 
-  kable(booktabs = F) %>%
+  select(STABBR, system, INSTNM, carnegie, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_p, pctfreshwh, pctfreshbl, pctfreshhi, pctfreshap, pctfreshal) %>% 
+  arrange(STABBR, system, desc(carnegie), INSTNM) %>% 
+  kable(booktabs = F, col.names = c('State', 'System', 'University', 'Carnegie', '25th pctl SAT/ACT', '75th pctl SAT/ACT', 'In-state tuition', 'Out-of-state tuition', '# Freshmen' , '% Out-of-state freshmen', '% Pell', '% White', '% Black', '% Latinx', '% Asian/PI', '% Non-resident alien')) %>%
   collapse_rows(columns = 1:2, latex_hline = 'custom', custom_latex_hline = 1:2, valign = 'middle') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+## Table
+
+```{r}
+appendix_df <- univ_df %>% 
+  select(INSTNM, STABBR, system, carnegie, locale_text) %>% 
+  mutate(
+  'num_received_summary' = rep_len(c(T, F), 91),
+  'num_not_received_summary' = rep_len(c(F, T), 91),
+  'num_received_list' = rep_len(c(T, F), 91),
+  'num_not_received_list' = rep_len(c(F, T), 91),
+  'num_received_both' = rep_len(c(T, F), 91),
+  'num_not_received_both' = rep_len(c(F, T), 91)
+) 
+
+appendix_df %>% 
+  group_by(STABBR) %>% 
+  summarise(
+    'num_received_summary' = sum(num_received_summary),
+    'num_not_received_summary' = sum(num_not_received_summary),
+    'num_received_list' = sum(num_received_list),
+    'num_not_received_list' = sum(num_not_received_list),
+    'num_received_both' = sum(num_received_both),
+    'num_not_received_both' = sum(num_not_received_both)
+  ) %>% 
+  kable(booktabs = T, col.names = c('State', '# received order summary', '# no order summary', '# received list', '# no list', '# received both', '# did not receive both'), align = rep('c', 7)) %>% 
+  row_spec(0, bold = T) %>%
   kable_styling(latex_options = 'scale_down')
 ```
 
@@ -428,3 +468,14 @@ df_rq2a_income %>%
 ```{r, fig.height = 2.3}
 create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School type')
 ```
+
+## Figure
+
+```{r}
+zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
+```
+
