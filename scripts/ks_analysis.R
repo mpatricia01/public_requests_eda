@@ -606,6 +606,7 @@ library(eatATA)
                 filter_geomarket = ifelse(!is.na(ord_geomarket), 1, 0))
         
         
+    # PROSPECT CHARS ACROSS INDIVIDUAL FILTERS
         
         # Create table function for lists across single filters
         #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
@@ -735,7 +736,9 @@ library(eatATA)
         df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
         df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
         
-        
+
+  # PROSPECT CHARS ACROSS COMBOS of FILTERS
+      
         
         # create categorical variable that use different combos of filters
         lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% 
@@ -775,28 +778,31 @@ library(eatATA)
         
         #### ZOOM INTO TEXAS A&M ZIP CODE ORDERS
        
-         # average out racial chars across zip codes filtered by Texas A&M Texerkana
-        texasam <- lists_orders_zip_hs_df %>% filter(univ_id=="224545" & filter_combo=="HS Grad, Zip, PSAT, GPA")
-        
-        
-              texasam <- texasam %>% group_by(filter_combo) %>%
-                count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
-        
-        common_combo_chars <- common_combo_chars %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct Race-Missing", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==3, "Pct Black", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==4, "Pct Latinx", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==8, "Pct NH/PI", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==9, "Pct White", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==10, "Pct Other Race", stu_race_cb),
-                                                            stu_race_cb = ifelse(stu_race_cb==12, "Pct Multiracial", stu_race_cb))
-        
-        
+         # average out racial chars across orders using zip filters by Texas A&M Texerkana
+        texasam <- lists_orders_zip_hs_df %>% filter(univ_id=="224545" & (filter_combo=="HS Grad, Zip, PSAT, GPA"|filter_combo=="HS Grad, Zip, PSAT, GPA"))
         texasam %>% count(ord_zip_code)
+        texasam %>% count(ord_zip_code, ord_num)
         
-          # switch zip to character
+        texasam <- texasam %>% mutate(order_type_zips = recode(ord_zip_code, 
+                                         "754|717|747|719|712|762|711|710|758|759|757" = "1",
+                                         "754|773|770|774|775|762|758|759|757|717|747|719|712|711|710" = "2",
+                                         "755|752|718|750|760|751|761|756" = "3",
+                                         "773|770|774|775" = "4",
+                                         .default = NA_character_))
+        
+        texasam %>% count(ord_zip_code, order_type_zips)
+        
+        # racial characteristics
+         texasam %>% group_by(order_type_zips) %>%
+                count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=50)
+        
+        # economic characteristics 
+         texasam %>% group_by(order_type_zips) %>% 
+           summarise (mean_inc = mean(zip_median_household_income, na.rm=T))
+
+      # Get ZIPCODE Characteristics 
+         
+         #switch zip to character
         acs_race_zipcodev3 <- acs_race_zipcodev3 %>% mutate(
                 zip_char = as.character(zip_code)
               )
@@ -881,6 +887,10 @@ library(eatATA)
            pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
            avg_med_inc = mean(median_household_income, na.rm = TRUE)
          ) 
+       
+       
+       
+       
 ########## RESEARCH QUESTION 3: CHARACTERISTICS OF STUDENT LISTS IN COMPARISON TO OTHER MSA STUDENTS
         
         

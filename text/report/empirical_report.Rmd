@@ -276,9 +276,15 @@ Lastly, table X shows the difference in proportions of prospects that attend pub
 
 ### Prospect Characteristics Across Combinations of Filters
 
-We begin analyzing the characteristics of prospects across the most common combination of filters.  Figure X presents the average racial and economic characteristics across two most common combinations of filters. For orders that filtered by high school graduation class, zip code, PSAT scores, and GPA, the resulting lists were 43% White, 27% Latinx, 13% Asian, 8% Black, 1% Native American, and 4% multiracial. Orders that filtered by high school graduation class, zip code, SAT scores, and GPA percentages resulted in similar percentages.
+We begin analyzing the characteristics of prospects across the most common combination of filters.  [SWITCH THIS TO JUST TEXAS A&M --MENTION THIS IS AN IN_STATE ORDERS FOCUS ]. DESCRIBE THE 4 TYPES OF PSAT ORDERS, BY ZIP CODE(AREAS); PSAT SCORE THRESHOLDS, GPA, ETC. 
+
+Figure X presents the average racial and economic characteristics across PROSPECTS IN COMPARISON TO ZIP CODES FILTERED [Proportionally White and Latino, but More Asian and Consistently Less Black.] For orders that filtered by high school graduation class, zip code, PSAT scores, and GPA, the resulting lists were 43% White, 27% Latinx, 13% Asian, 8% Black, 1% Native American, and 4% multiracial. Orders that filtered by high school graduation class, zip code, SAT scores, and GPA percentages resulted in similar percentages.
 
 COMPARE TO THREE DIGIT ZIPS. 
+
+
+
+
 
 # References
 
