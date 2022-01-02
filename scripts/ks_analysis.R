@@ -744,12 +744,12 @@ library(eatATA)
         lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% 
                           mutate(filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_psat==1 & filter_gpa==1, "HS Grad, Zip, PSAT, GPA", NA),
                                  filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_sat==1 & filter_gpa==1, "HS Grad, Zip, SAT, GPA", filter_combo),
-                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil=1 & filter_race==1 & filter_sat==1 & filter_psat==1 & filter_gpa==1 & filter_rank==1, "HS Grad, State, Race, SAT, PSAT, GPA, Rank", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_race==1 & filter_sat==1 & filter_psat==1 & filter_gpa==1 & filter_rank==1, "HS Grad, State, Race, SAT, PSAT, GPA, Rank", filter_combo),
                                  filter_combo = ifelse(filter_hsgrad_class==1 & filter_zip==1 & filter_sat==1 & filter_psat==1 & filter_gpa==1, "HS Grad, Zip, SAT, PSAT, GPA", filter_combo),
-                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, SAT, GPA", filter_combo),
-                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, PSAT, GPA", filter_combo),
-                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_race==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, Race, PSAT, GPA", filter_combo),
-                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_state==1 & filter_segment==1 & filter_gender==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, Segment, Gender, SAT, GPA", filter_combo))
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, SAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, PSAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_race==1 & filter_psat==1 & filter_gpa==1, "HS Grad, State, Race, PSAT, GPA", filter_combo),
+                                 filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_segment==1 & filter_gender==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, Segment, Gender, SAT, GPA", filter_combo))
     
         
         # number of orders across common filter combos
@@ -765,6 +765,7 @@ library(eatATA)
         common_combo_chars <- lists_orders_zip_hs_df %>% group_by(filter_combo) %>%
                     count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
         
+        #code doesnt work
         common_combo_chars <- common_combo_chars %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct Race-Missing", stu_race_cb),
                                 stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
                                 stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
@@ -813,9 +814,7 @@ library(eatATA)
          texasam %>% group_by(order_type_zips) %>%
                 count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=50)
         
-        # economic characteristics 
-         texasam %>% group_by(order_type_zips) %>% 
-           summarise (mean_inc = mean(zip_median_household_income, na.rm=T))
+        
 
       # Get ZIPCODE Characteristics 
          
@@ -906,83 +905,107 @@ library(eatATA)
       table_texasam_zip <- table_texasam_zip %>% mutate_if(is.numeric, round, 0)
       table_texasam_zip <- table_texasam_zip %>%  mutate_each(funs(prettyNum(., big.mark=",")))
       
+      table_texasam_zip <- table_texasam_zip %>%  mutate(
+                              ppt_diff_stu_pop = as.numeric(stu_pct) - as.numeric(pop_pct))
+      
+      table_texasam_zip <- table_texasam_zip %>% arrange(stu_race_cb, ppt_diff_stu_pop)
+      
       # NOTE  ZIPS less than 750 are out of state             
+      ggplot(table_texasam_zip, aes(fill=stu_race_cb, y=ppt_diff_stu_pop, x=zip_3digit)) + 
+        geom_bar(position="dodge", stat="identity") + coord_flip()
       
       
+      
+      
+      # median income of zip codes fro student prospects versus population
+      
+          # economic characteristics of population at zip
+          pop_zip_inc <- texasam_zips_orderall %>% 
+              group_by(zip_3digit) %>%
+              summarize(
+                pop_med_inc = mean(median_household_income, na.rm = TRUE)
+              )   
+      
+          # economic characteristics of prospects
+          stu_zip_inc <-texasam %>% group_by(zip_3digit) %>% 
+            summarise (stu_mean_inc = mean(zip_median_household_income, na.rm=T))
+          
+          table_texasam_zip_inc <- merge(stu_zip_inc, pop_zips_inc, by="zip_3digit")
+          
       # EXPLORATORY ANALYSIS BY AVERAGING ACROSS ORDER GROUPINGS
-        # racial & economic characteristics by filter order for texas a&m 
-       texasam_zips_orderall %>% 
-         summarize(
-           n_obs = sum(n()),
-           pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
-           pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
-           pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
-           pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
-           #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
-           #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
-           pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
-           pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
-           avg_med_inc = mean(median_household_income, na.rm = TRUE)
-         )   
-       
-       
-       texasam_zips_order1 %>% 
-          summarize(
-            n_obs = sum(n()),
-            pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
-            pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
-            pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
-            pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
-            #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
-            #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
-            pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
-            pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
-            avg_med_inc = mean(median_household_income, na.rm = TRUE)
-          )   
-       
-       texasam_zips_order2 %>% 
-         summarize(
-           n_obs = sum(n()),
-           pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
-           pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
-           pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
-           pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
-           #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
-           #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
-           pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
-           pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
-           avg_med_inc = mean(median_household_income, na.rm = TRUE)
-         )   
-       
-       texasam_zips_order3 %>% 
-         summarize(
-           n_obs = sum(n()),
-           pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
-           pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
-           pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
-           pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
-           #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
-           #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
-           pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
-           pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
-           avg_med_inc = mean(median_household_income, na.rm = TRUE)
-         ) 
-        
-       
-       texasam_zips_order4 %>% 
-         summarize(
-           n_obs = sum(n()),
-           pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
-           pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
-           pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
-           pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
-           #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
-           #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
-           pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
-           pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
-           avg_med_inc = mean(median_household_income, na.rm = TRUE)
-         ) 
-       
+       #  # racial & economic characteristics by filter order for texas a&m 
+       # texasam_zips_orderall %>% 
+       #   summarize(
+       #     n_obs = sum(n()),
+       #     pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
+       #     pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+       #     pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+       #     #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+       #     #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+       #     pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+       #     avg_med_inc = mean(median_household_income, na.rm = TRUE)
+       #   )   
+       # 
+       # 
+       # texasam_zips_order1 %>% 
+       #    summarize(
+       #      n_obs = sum(n()),
+       #      pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
+       #      pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+       #      pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+       #      pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+       #      #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+       #      #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+       #      pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+       #      pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+       #      avg_med_inc = mean(median_household_income, na.rm = TRUE)
+       #    )   
+       # 
+       # texasam_zips_order2 %>% 
+       #   summarize(
+       #     n_obs = sum(n()),
+       #     pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
+       #     pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+       #     pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+       #     #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+       #     #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+       #     pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+       #     avg_med_inc = mean(median_household_income, na.rm = TRUE)
+       #   )   
+       # 
+       # texasam_zips_order3 %>% 
+       #   summarize(
+       #     n_obs = sum(n()),
+       #     pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
+       #     pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+       #     pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+       #     #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+       #     #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+       #     pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+       #     avg_med_inc = mean(median_household_income, na.rm = TRUE)
+       #   ) 
+       #  
+       # 
+       # texasam_zips_order4 %>% 
+       #   summarize(
+       #     n_obs = sum(n()),
+       #     pct_pop_white =  mean(pop_white_15_19_pct, na.rm = TRUE),
+       #     pct_pop_asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+       #     pct_pop_hispanic =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+       #     #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+       #     #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+       #     pct_pop_native =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+       #     pct_pop_tworaces =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+       #     avg_med_inc = mean(median_household_income, na.rm = TRUE)
+       #   ) 
+       # 
        
        
        
@@ -1026,5 +1049,10 @@ library(eatATA)
         
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
-save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, file = file.path(data_dir, 'tbl_fig_data.RData'))
+# FOR CRYSTAL
+save(lists_orders_zip_hs_df, file = file.path("/Users/karinasalazar/Dropbox", 'lists_orders_zip_hs_df.RData'))
+save(orders_df, file = file.path("/Users/karinasalazar/Dropbox", 'orders_df.RData'))
+save(acs_race_zipcodev3, file = file.path("/Users/karinasalazar/Dropbox", 'acs_race_zipcodev3.RData'))
+
+save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, file = file.path(data_dir, 'tbl_fig_data.RData'))
             
