@@ -508,7 +508,7 @@ library(eatATA)
                     count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
                 
                 race <- race %>% select(stu_race_cb, V1)
-                race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+                race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct Race-Missing", stu_race_cb),
                                         stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
                                         stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
                                         stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
@@ -582,6 +582,8 @@ library(eatATA)
         
         df_int <- df_int %>% arrange(-n)
         
+        df_int2 <- lists_orders_zip_hs_df %>% count(stu_internat)
+        
         
         
 ################### ANALYSIS & VISUALS FOR RQ3
@@ -650,7 +652,7 @@ library(eatATA)
               count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
             
             race <- race %>% select(stu_race_cb, V1)
-            race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+            race <- race %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct Race-Missing", stu_race_cb),
                                     stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
                                     stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
                                     stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
@@ -760,7 +762,7 @@ library(eatATA)
         common_combo_chars <- lists_orders_zip_hs_df %>% group_by(filter_combo) %>%
                     count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
         
-        common_combo_chars <- common_combo_chars %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct- Race Missing", stu_race_cb),
+        common_combo_chars <- common_combo_chars %>% mutate(stu_race_cb = ifelse(is.na(stu_race_cb), "Pct Race-Missing", stu_race_cb),
                                 stu_race_cb = ifelse(stu_race_cb==0, "Pct Race-No Response", stu_race_cb),
                                 stu_race_cb = ifelse(stu_race_cb==1, "Pct AI/AN", stu_race_cb),
                                 stu_race_cb = ifelse(stu_race_cb==2, "Pct Asian", stu_race_cb),
@@ -824,5 +826,8 @@ library(eatATA)
             )
         
 
-save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_rq3, file = file.path(data_dir, 'tbl_fig_data.RData'))
+        
+lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
+        
+save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, file = file.path(data_dir, 'tbl_fig_data.RData'))
             

@@ -362,7 +362,7 @@ df_rq2a_counts <- data.frame(df_rq2a_counts, row.names = rownames(df_rq2a_counts
   rownames_to_column(var = 'count_type') %>% 
   dplyr::rename(count = df_rq2a_counts) %>% 
   mutate(loc_type = 'Domestic') %>% 
-  rbind(c('all_domestic', sum(df_int$n), 'International')) %>% 
+  rbind(c('all_domestic', df_int2$n[[2]], 'International')) %>% 
   arrange(count_type, loc_type)
 
 df_rq2a_counts$count <- as.numeric(df_rq2a_counts$count)
@@ -374,7 +374,7 @@ df_rq2a_counts %>%
   geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
   geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
   xlab('') + ylab('') +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1967000)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1968000)) +
   scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
   theme(
       text = element_text(size = 7),
@@ -401,10 +401,6 @@ create_rq2a_figure <- function(categories, legend_title) {
   df_rq2a_fig$row_subj <- factor(df_rq2a_fig$row_subj, levels = rev(categories))
   
   df_rq2a_fig %>% 
-    mutate(row_subj = recode(
-      row_subj,
-      'Pct- Race Missing' = 'Pct-Race Missing'
-    )) %>% 
     ggplot(aes(x = pct, y = pct_type, fill = row_subj, width = 0.6)) +
     geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
     geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
@@ -427,7 +423,7 @@ create_rq2a_figure <- function(categories, legend_title) {
 ## Figure
 
 ```{r, fig.height = 2.3}
-create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct- Race Missing'), 'Race/ethnicity')
+create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct Race-Missing'), 'Race/ethnicity')
 ```
 
 ## Figure
