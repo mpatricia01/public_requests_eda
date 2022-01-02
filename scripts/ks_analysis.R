@@ -779,7 +779,8 @@ library(eatATA)
         #### ZOOM INTO TEXAS A&M ZIP CODE ORDERS
        
          # average out racial chars across orders using zip filters by Texas A&M Texerkana
-        texasam <- lists_orders_zip_hs_df %>% filter(univ_id=="224545" & (filter_combo=="HS Grad, Zip, PSAT, GPA"|filter_combo=="HS Grad, Zip, PSAT, GPA"))
+        texasam <- lists_orders_zip_hs_df %>% filter(univ_id=="224545" & filter_combo=="HS Grad, Zip, PSAT, GPA")
+        
         texasam %>% count(ord_zip_code)
         texasam %>% count(ord_zip_code, ord_num)
         
@@ -792,6 +793,22 @@ library(eatATA)
         
         texasam %>% count(ord_zip_code, order_type_zips)
         
+            # how many orders using this combo?
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% summarise(n=n_distinct(ord_num)) 
+            
+            # descriptives on filters
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(ord_hs_grad_class)
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(ord_psat_score_max)
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(ord_psat_score_min)
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(ord_gpa_low)
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(ord_gpa_high)
+            
+            #number of orders within each zip code grouping
+            texasam %>% group_by(order_type_zips) %>% summarise(n=n_distinct(ord_num)) 
+            
+            
+            texasam %>% filter(filter_combo=="HS Grad, Zip, PSAT, GPA") %>% count(order_type_zips, ord_psat_score_max)
+            
         # racial characteristics
          texasam %>% group_by(order_type_zips) %>%
                 count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=50)
@@ -814,7 +831,85 @@ library(eatATA)
        texasam_zips_orderall <-  dplyr::filter(acs_race_zipcodev3, grepl('^710|^711|^712|^717|^718|^719|^747|^750|^751|^752|^754|^755|^756|^757|^758|^759|^760|^761|^762|^770|^773|^774|^775', zip_char))
        
         
+       
+       
+       
+       # create vars for zip codes at 3-digit
+       texasam <- texasam %>% mutate(
+         zip_3digit = str_sub(stu_zip_code, 1, 3)  
+       )
+        
+       texasam_zips_orderall <- texasam_zips_orderall %>% mutate(
+         zip_3digit = str_sub(zip_char, 1, 3)  
+       )
+       
+       
+      stu_zips_race <- texasam %>% filter(zip_3digit!="060" & zip_3digit!="201" & zip_3digit!="274" & zip_3digit!="301" & zip_3digit!="303" & zip_3digit!="778" & zip_3digit!="780" & zip_3digit!="781" & zip_3digit!="786" & zip_3digit!="800" & zip_3digit!="804" & zip_3digit!="917" & zip_3digit!="953") %>%
+        group_by(zip_3digit) %>%
+         count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=50)
       
+      
+      stu_zips_race <- as.data.frame(stu_zips_race)
+      
+      
+                          # NEED TO EXPLORE THESE IN JANUARY-- but % is MINIMAL
+                          stu_zips_race <- stu_zips_race %>% mutate(stu_race_cb= as.character(stu_race_cb))
+                          #stu_zips <- stu_zips %>% filter(stu_race_cb>=0) # IDK where the NA came from
+                          
+                          
+                          #Can't get this to work to apply labels
+                          # stu_zips_race <- stu_zips_race %>% mutate(
+                          #   zip_char = as.character(zip_code)
+                          # )
+                          
+                          stu_zips_race <- stu_zips_race %>% select(-n)
+                          stu_zips_race <-  rename(stu_zips_race, stu_pct=V1)
+                          
+                          stu_zips_race <- stu_zips_race %>% mutate(stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+           
+                 
+                          
+                          
+        # NOTE  ZIPS less than 750 are out of state             
+       
+      pop_zips_race <- texasam_zips_orderall %>% 
+        group_by(zip_3digit) %>%
+        summarize(
+          #n_obs = sum(n()),
+          pop_pct.White =  mean(pop_white_15_19_pct, na.rm = TRUE),
+          pop_pct.Asian =  mean(pop_asian_15_19_pct, na.rm = TRUE),
+          pop_pct.Black =  mean(pop_black_15_19_pct, na.rm = TRUE),
+          pop_pct.Latinx =  mean(pop_hispanic_15_19_pct, na.rm = TRUE),
+          #pct_pop_amerindian =  mean(pop_amerindian, na.rm = TRUE)*100,
+          #pct_pop_nativehawaii =  mean(pop_nativehawaii, na.rm = TRUE)*100,
+          pop_pct.AIAN =  mean(pop_amerindian_15_19_pct, na.rm = TRUE),
+          pop_pct.Multiracial =  mean(pop_tworaces_15_19_pct, na.rm = TRUE),
+          #pop_med.inc = mean(median_household_income, na.rm = TRUE)
+        )   
+      
+      # reshape pop wide to long, drops NA stu_race_cb
+      pop_zips_race <- pop_zips_race %>% gather(stu_race_cb, pop_pct, -c(zip_3digit))
+      pop_zips_race <- pop_zips_race %>% mutate_all(~gsub("pop_pct.", "", .))
+      
+      
+      # merge by three digit zip CREATE FIGURE OBJECT
+      table_texasam_zip <- merge(stu_zips_race, pop_zips_race, by=c("zip_3digit", "stu_race_cb"))
+      table_texasam_zip$pop_pct <- as.numeric( table_texasam_zip$pop_pct)
+      table_texasam_zip <- table_texasam_zip %>% mutate_if(is.numeric, round, 0)
+      table_texasam_zip <- table_texasam_zip %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+      
+      # NOTE  ZIPS less than 750 are out of state             
+      
+      
+      # EXPLORATORY ANALYSIS BY AVERAGING ACROSS ORDER GROUPINGS
         # racial & economic characteristics by filter order for texas a&m 
        texasam_zips_orderall %>% 
          summarize(
