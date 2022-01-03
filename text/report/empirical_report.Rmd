@@ -276,7 +276,7 @@ Lastly, table X shows the difference in proportions of prospects that attend pub
 
 ### Prospect Characteristics Across Combinations of Filters
 
-### In-State Order
+### In-State Order Combinations
 
 We begin analyzing the characteristics of prospects across some of the most common combination of filters. Many of the orders in our analysis filtered by high school graduation class, PSAT scores, GPA, and zip code. Analyses above suggest orders using this combination of filters were made by master's universities to identify in-state prospects. We "zoom" into orders by one of these master's universities in order analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters. 
 
@@ -298,6 +298,8 @@ Economic disparities are also evident when we compare the average median income 
 
 Figure X shows student lists resulting from 22 of the 23 zip code filters included more affluent prospects than the average population of those zip codes. This disparity was largest for prospects purchased from 774 zip codes (communities within Richmond, Texas), which had an average median income nearly $40,000 greater than the average median income of the population across all nested 774 zip codes. Prospects purchased from 758 zip codes (communities within Palestine, Texas) were the only across all filters to have an average median income less than the population across all nested zip codes (\$43,000 versus
 \$50,000). 
+
+<!-- COMPLETE IN JANUARY Another common combination of filters used across orders include the same academic filters (i.e., PSAT scores and GPA) but geographically filtered by specific states and filtered for specific race/ethnicity groups. Some of these orders were made by research universities in the study -->
 
 
 ### Out-of-State Order
