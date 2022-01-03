@@ -2,7 +2,7 @@
 title: ""
 subtitle: ""
 author: ""
-bibliography: ../bib/spencer_2021.bib
+bibliography: ../bib/student_list_empirics.bib
 citeproc: no
 output: 
   bookdown::pdf_document2:
@@ -18,15 +18,39 @@ fontsize: 12pt
 header-includes:
       - \usepackage{floatrow}
       - \floatsetup{capposition=top}
-      - \usepackage{setspace}\doublespacing
+      - \usepackage{setspace}\onehalfspacing #\doublespacing
 ---
 
 ```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
+
 library(knitr)
 library(bookdown)
-library(kableExtra)
 library(tidyverse)
 library(gridExtra)
+library(kableExtra)
+library(scales)
+library(leaflet)
+library(rgdal)
+
+data_dir <- file.path('..', '..', 'data')
+
+load(file.path(data_dir, 'tbl_fig_data.RData'))
+zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm')
+  )
+)
 ```
 
 
@@ -38,7 +62,6 @@ TEXT
 
 In the enrollment management industry, the "enrollment funnel" is a conceptual model that describes stages in the process of recruiting students. Depicted in Figure \@ref(fig:em-funnel), the funnel begins with a large pool of "prospects" that the university would like to "convert" into customers. At each successive stage -- inquiries, applicants, admits -- the funnel narrows in order to convey the assumption of "melt" (e.g., a subset of "inquiries" will apply), ending with the cohort of enrolled students. Practically, the enrollment funnel informs interventions that increase the probability of "conversion" from one stage to another [CITE]. For example, emails and brochures encourage prospects and inquiries to apply. Financial aid packages -- institutional grant aid and loan guidance -- convert admits to enrolled students.
 
-INSERT FIGURE \@ref(fig:em-funnel) ABOUT HERE 
 <!-- 
 - [HOW TO REVISE FIGURE: MAKE PROSPECTS THE UNKNOWN GROUP OF PEOPLE YOU WANT TO APPLY TO YOUR INSTITUTION; LEADS ARE NAMES YOU PURCHASE; INQUIRIES; SPLIT INQUIRIES INTO TWO COLUMNS; INSTITUTION-AS-FIRST-CONTACT AND STUDENT-AS FIRST CONTACT; SPLIT APPLICANTS INTO TWO COLUMNS; INQUIRIES WHO APPLY VS. APPLICATION AS FIRST CONTACT]
 -->
@@ -54,9 +77,77 @@ At the top of the enrollment funnel, universities identify leads by buying "stud
 
 __Student lists and student outcomes__. [CONDENSE TEXT] Research suggests that student lists substantially affect college access outcomes -- and in turn degree completion outcomes -- for millions of students each year [@RN4739; @RN4752]. College Board encourages test takers to opt into the Colege Board Student Search Service, which enables "accredited colleges, universities, nonprofit scholarship programs, and nonprofit educational organizations" [CITE](https://studentsearch.collegeboard.org/) to "license" their contact information. @RN4739 analyzed the college access and degree completion outcomes of SAT test-takers who graduated from high school between 2015-2018, comparing students who opted into Student Search Service to students who opted out. After controlling for covariates -- including gender/sex, race/ethnicity, parental education, SAT score, and high school -- 58.0\% of students who participated in Search attended any college compared to 50.2\% of students who opted out of Search, representing a 15.5\% relative increase in the probability of college enrollment ((58-50.2)/50.2=15.5).
 
-Figure X -- reproduced from @RN4739 -- presents results for four-year college enrollment and degree completion. [CRYSTAL - RECREATE FIGURES 2 AND 3 FROM THIS ARTICLE; ADD FIGURE NOTES W/ LIST OF COVARIATES AND RELEVANT INFO] 41.1\% of students who participated in Search attended a 4-year college compared to 32.8\% of students who opted out, representing a 25.3\% relative increase in the probability of attending a 4-year college. Furthermore, change in the relative probability of attending a four-year college associated with opting in to Search out was higher for students who identified as Black (24.5%), Hispanic (34.4%), American Indian or Alaska Native (AI/AN) (23.8%), and Native Hawaian or Pacific Islander (26.1\%) than it was for students who identified as White (21.6\%) or Asian (15.2\%). Similarly, change in the relative probability of attending a four-year college was higher for students whose parents did not attend college (40.6\%) than it was for students whose parents had a BA (18.9\%). 
+Figure \@ref(fig:cb-fig) -- reproduced from @RN4739 -- presents results for four-year college enrollment and degree completion. 41.1\% of students who participated in Search attended a 4-year college compared to 32.8\% of students who opted out, representing a 25.3\% relative increase in the probability of attending a 4-year college. Furthermore, change in the relative probability of attending a four-year college associated with opting in to Search out was higher for students who identified as Black (24.5%), Hispanic (34.4%), American Indian or Alaska Native (AI/AN) (23.8%), and Native Hawaiian or Pacific Islander (26.1\%) than it was for students who identified as White (21.6\%) or Asian (15.2\%). Similarly, change in the relative probability of attending a four-year college was higher for students whose parents did not attend college (40.6\%) than it was for students whose parents had a BA (18.9\%). 
 
-With respect to BA degree completion, the bottom panel of Figure X shows that 20.6\% of students who participated in Search obtained a BA compared within four years to 15.7\% of students who opted out, representing a relative increase of 31.2\%  ((20.6-15.7)/15.7=31.2). Additionally, the relative increase in the probability of obtaining a BA within four years was higher for Black, Hispanic, and AI/AN students than it was for White and Asian students and higher for first-generation students than for students whose parents had a BA.
+```{r cb-fig, fig.height = 5, out.width = '85%', fig.cap = 'Effects of College Board Student Search Service'}
+create_cb_figure <- function(categories, values, plot_title) {
+  cb_fig_df <- data.frame(
+    category = rep(categories, each = 2),
+    subcategory = rep(c('Not Licensed', 'Gain from being Licensed'), length(categories)), 
+    value = values
+  )
+  
+  cb_fig_df$category <- factor(cb_fig_df$category, levels = categories)
+  
+  cb_fig_df %>%
+    left_join(
+      cb_fig_df %>%
+        pivot_wider(id_cols = category, names_from = subcategory, values_from = value) %>%
+        mutate(
+          total = `Not Licensed` + `Gain from being Licensed`,
+          pct_change = `Gain from being Licensed` / `Not Licensed` * 100
+        ),
+      by = 'category') %>% 
+    ggplot(aes(x = category, y = value, fill = subcategory, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity') +
+    geom_text(aes(y = value, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', value), '%'), '')), color = '#444444', size = 2, position = position_stack(vjust = 0.5)) +
+    geom_text(aes(y = total + 3, label = if_else(subcategory == 'Not Licensed', str_c('(', sprintf('%.1f', pct_change), '%)'), '')), color = '#444444', size = 2) +
+    geom_text(aes(y = total + 7, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', `Gain from being Licensed`), 'pp'), '')), color = '#444444', size = 2) +
+    ggtitle(plot_title) +
+    xlab('') + ylab('') + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 80)) +
+    scale_fill_manual(values = c('#ba9a88', '#bbcfd7')) +
+    theme(
+        plot.margin = margin(t = 0.6, unit = 'cm'),
+        panel.grid.major.y = element_line(size = 0.1, color = 'gray'),
+        legend.title = element_blank(),
+        legend.position = 'bottom',
+        legend.margin = margin(t = -0.5, unit = 'cm'),
+        legend.text = element_text(margin = margin(r = 0.2, unit = 'cm'))
+      ) +
+      guides(fill = guide_legend(reverse = T))
+}
+
+grid.arrange(
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'HI/PI', 'White'),
+    c(32.8, 8.3, 37.5, 5.7, 31.8, 7.8, 24.1, 8.3, 26.5, 6.3, 22.2, 5.8, 44.4, 9.6),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'White'),
+    c(15.7, 4.9, 17.7, 5.0, 7.2, 2.9, 6.7, 2.9, 8.7, 4.2, 24.0, 6.7),
+    'BA Completion within 4 Years'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(32.8, 8.3, 24.9, 10.1, 36.5, 11.0, 53.4, 10.1),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(15.7, 4.9, 13.6, 6.8, 21.3, 8.5, 39.9, 10.1),
+    'BA Completion within 4 Years'
+  ),
+  ncol = 2
+)
+```
+
+\pagebreak\begingroup\fontsize{8}{12}\selectfont
+_Note: AI/AN = American Indian or Alaska Native. HI/PI = Hawaiian or Pacific Islander. The sample for enrollment outcomes includes all SAT takers in the 2015–2018 high school graduation cohorts. The sample for completion outcomes is restricted to students in the 2015–2016 cohorts. Completion results are not reported for HI/PI students due to very small sample size (N=2,749), which returns imprecise estimates. Results are estimated from regressions that include student-level controls for: sex, race/ethnicity, SAT score, parental education level, last Student Search Service opt-in status, and graduation cohort and high school fixed effects. All differences between students whose names were licensed and those whose names were not licensed are statistically significant at the 1% level._
+\endgroup
+
+With respect to BA degree completion, the bottom panel of Figure \@ref(fig:cb-fig) shows that 20.6\% of students who participated in Search obtained a BA compared within four years to 15.7\% of students who opted out, representing a relative increase of 31.2\%  ((20.6-15.7)/15.7=31.2). Additionally, the relative increase in the probability of obtaining a BA within four years was higher for Black, Hispanic, and AI/AN students than it was for White and Asian students and higher for first-generation students than for students whose parents had a BA.
 
 A similar study compared the college access outcomes of students who opted into versus opted out of ACT's Educational Opportunity Service (EOS) [@RN4752]. EOS enables accredited postsecondary institutions and scholarship organizations to license the contact information of students who opt in. After controlling for covariates -- including ACT score, number of colleges the student sent scores to, family income, parental education, degree aspirations, race/ethnicity, state -- @RN4752 found that students who opted into EOS had a 3.7 times higher likelihood (odds ratio = $3.7$) of attending college than students who opted out. A second model, which restricted the sample to students who attended college, found that students who opted into EOS had 8.7\% higher odds of attending a four-year college rather than a two-year college.
 
@@ -85,12 +176,13 @@ This section describes, first, the data collection for the broader project. Seco
 
 ## Data Collection
 
-__Data collection sample__.  In 20XX we received funding from the Joyce Foundation and the Kresge Foundation for a research project that would utilize public records requests to collect data about recruiting behavior from all public universities in four states, California, Illinois, Minessota, and Texas. Broadly, we sought two types of data: off-campus recruiting visits (e.g., visit from a university admissions representative to a local high school) and student list purchases. 
+__Data collection sample__.  In 2019 we received funding from the Joyce Foundation and the Kresge Foundation for a research project that would utilize public records requests to collect data about recruiting behavior from all public universities in four states, California, Illinois, Minnesota, and Texas. Broadly, we sought two types of data: off-campus recruiting visits (e.g., visit from a university admissions representative to a local high school) and student list purchases. 
 
 IL and MN are focus states for the Joyce Foundation, while CA and TX are focus states for Kresge. The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In MN, there are 5 universities in the University of Minnesota system and 7 in the Minnesota State University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. We also collected data from Arizona State University and Northern Arizona University.
 
-TABLE/FIGURE(S) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. FIGURES/TABLES TO CREATE:
-
+Table \@ref(tab:univ-characteristics) and Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. 
+\newpage
+<!--
 - FIGURE
   - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND CARNEGIE CLASSIFICATION
   - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND LEVEL OF URBANIZATION (e.g., urban, suburban, rural - you decide on the variable)
@@ -98,7 +190,128 @@ TABLE/FIGURE(S) describe the public universities in our data collection sample. 
   - Same as table 2 from private school chapter, with these differences:
     - add column for system name and carnegie classification; delete column for USNWR rank
     - sort by: state, system, carnegie classification, university name
-    
+-->
+
+```{r, warning = F}
+ipeds_df <- read_csv(file.path(data_dir, 'ipeds_data.csv'), na = 'NULL', col_types = c('unitid' = 'c', 'endyear' = 'c', 'satactcomp25' = 'n', 'satactcomp75' = 'n', 'freshoutstpct' = 'n', 'pgrnt_n' = 'n', 'cohortsfaef' = 'n')) %>% filter(endyear == '2017')
+hd_df <- read_csv(file.path(data_dir, 'hd2017.csv'), col_types = c('UNITID' = 'c', 'SECTOR' = 'c', 'UGOFFER' = 'c', 'LOCALE' = 'c'))
+carnegie_df <- read_csv(file.path(data_dir, 'carnegie_2018.csv'), col_types = c('UNITID' = 'c', 'BASIC2015' = 'c'))
+
+univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>% 
+  left_join(carnegie_df %>% select(UNITID, BASIC2015), by = 'UNITID') %>% 
+  filter(
+    STABBR %in% c('CA', 'TX', 'IL', 'MN'),
+    SECTOR == 1,
+    UGOFFER == 1,
+    !BASIC2015 %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+    !UNITID %in% c('488800', '229337', '229300', '228644', '416801', '228653')
+  ) %>% 
+  left_join(ipeds_df %>% select(unitid, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_n, cohortsfaef, ugftptfreshwhmf, ugftptfreshblmf, ugftptfreshapmf, ugftptfreshhimf, ugftptfreshalmf), by = c('UNITID' = 'unitid')) %>% 
+  mutate(
+    system = case_when(
+      str_detect(INSTNM, 'University of California') ~ 'UC',
+      STABBR == 'CA' ~ 'CSU',
+      str_detect(INSTNM, 'Texas A') | UNITID %in% c('228529', '227526') ~ 'TX A&M',
+      str_detect(INSTNM, 'University of Houston') ~ 'U of Houston',
+      str_detect(INSTNM, 'University of North Texas') ~ 'UNT',
+      str_detect(INSTNM, 'University of Texas') ~ 'U of TX',
+      UNITID %in% c('222831', '229115') ~ 'TX Tech',
+      UNITID %in% c('226091', '227881', '228501', '228459') ~ 'TX State U',
+      STABBR == 'TX' ~ 'Indy TX',
+      str_detect(INSTNM, 'University of Illinois') ~ 'U of IL',
+      str_detect(INSTNM, 'Southern Illinois University') ~ 'SIU',
+      STABBR == 'IL' ~ 'IL State U',
+      str_detect(INSTNM, 'University of Minnesota') ~ 'UMN',
+      STABBR == 'MN' ~ 'MN State U'
+    ),
+    locale = str_sub(LOCALE, end = 1),
+    locale_text = recode_factor(
+      locale,
+      `4` = 'Rural',
+      `3` = 'Town',
+      `2` = 'Suburban',
+      `1` = 'City'
+    ),
+    carnegie = recode_factor(
+      BASIC2015,
+      `-2` = 'Unknown',
+      `15` = 'Doctoral Universities: Highest Research Activity',
+      `16` = 'Doctoral Universities: Higher Research Activity',
+      `17` = 'Doctoral Universities: Moderate Research Activity',
+      `18` = 'Master\'s Colleges & Universities: Larger Programs',
+      `19` = 'Master\'s Colleges & Universities: Medium Programs',
+      `20` = 'Master\'s Colleges & Universities: Small Programs',
+      `21` = 'Baccalaureate Colleges: Arts & Sciences Focus',
+      `22` = 'Baccalaureate Colleges: Diverse Fields',
+      `26` = 'Special Focus Four-Year: Other Health Professions Schools'
+    )
+  )
+
+univ_df$STABBR = factor(univ_df$STABBR, levels = c('IL', 'MN', 'CA', 'TX'))
+univ_df$system = factor(univ_df$system, levels = c('U of IL', 'IL State U', 'SIU', 'UMN', 'MN State U', 'UC', 'CSU', 'U of TX', 'TX State U', 'TX A&M', 'U of Houston', 'UNT', 'TX Tech', 'Indy TX'))
+```
+
+```{r univ-characteristics}
+univ_df %>%
+  mutate(
+    satactcomp25 = if_else(is.na(satactcomp25), '', prettyNum(round(satactcomp25, 0), ',')),
+    satactcomp75 = if_else(is.na(satactcomp75), '', prettyNum(round(satactcomp75, 0), ',')),
+    tfuginst = str_c('$', prettyNum(sprintf('%.2f', tfuginst), ',')),
+    tfugoutst = str_c('$', prettyNum(sprintf('%.2f', tfugoutst), ',')),
+    freshoutstpct = if_else(is.na(freshoutstpct), '', str_c(sprintf('%.1f', freshoutstpct * 100), '%')),
+    pgrnt_p = if_else(is.na(pgrnt_n), '', str_c(sprintf('%.1f', pgrnt_n / cohortsfaef * 100), '%')),
+    pctfreshwh = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshwhmf / ugftptfreshtot * 100), '%')), 
+    pctfreshbl = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshblmf / ugftptfreshtot * 100), '%')), 
+    pctfreshhi = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshhimf / ugftptfreshtot * 100), '%')), 
+    pctfreshap = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshapmf / ugftptfreshtot * 100), '%')), 
+    pctfreshal = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshalmf / ugftptfreshtot * 100), '%')),
+    ugftptfreshtot = if_else(ugftptfreshtot == 0, '', prettyNum(ugftptfreshtot, ','))
+  ) %>% 
+  select(STABBR, system, INSTNM, carnegie, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_p, pctfreshwh, pctfreshbl, pctfreshhi, pctfreshap, pctfreshal) %>% 
+  arrange(STABBR, system, desc(carnegie), INSTNM) %>% 
+  kable(booktabs = F, col.names = c('State', 'System', 'University', 'Carnegie', '25th pctl SAT/ACT', '75th pctl SAT/ACT', 'In-state tuition', 'Out-of-state tuition', '# Freshmen' , '% Out-of-state freshmen', '% Pell', '% White', '% Black', '% Latinx', '% Asian/PI', '% Non-resident alien'), caption = 'University characteristics') %>%
+  collapse_rows(columns = 1:2, latex_hline = 'custom', custom_latex_hline = 1:2, valign = 'middle') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+```{r univ-carnegie, fig.height = 2, fig.cap = 'University by carnegie classification'}
+univ_df %>% 
+  group_by(STABBR, carnegie) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+\bigskip
+
+```{r univ-locale, fig.height = 2, fig.cap = 'University by locale'}
+univ_df %>% 
+  group_by(STABBR, locale_text) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
 __Public records requests__. In 20XX, we signed an agreement with the Lawyers' Committee for Civil Rights Under Law (LCCR) to partner on the data collection. Although We had experience issuing public records requests from a previous data collection about off-campus recruiting visits by public research universities, the greater scale, complexity, and sensitivity of this project motivated us to find a partner with greater legal expertise. LCCR was created by the Kennedy Administration to leverage private sector legal expertise towards civil rights. LCCR typically operates by connecting projects with the pro bono efforts of corporate law firms. 
 
 LCCR recruited firms to work on our project. Several firms expressed initial interest. Unfortunately, these firms withdrew following conflict of interest checks. However, LCCR generously allocated time of an internal staff attorney towards our project. Additionally, one firm offered to help us collect data from Arizona public universities. Although Arizona was not part of the funded project, we gratefully accepted.
@@ -127,8 +340,13 @@ __Data processing__. Records received from universities were visually inspected 
 
 ## Research Design
 
-__Analysis sample__. Given that prior research has not analyzed student list purchases, this report restricts analyses to student lists purchased from College Board in order to keep results as simple as possible, with the idea that future analyses will incorporate lists purchased from ACT. Table/Figure X shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL ADD TEXT SUMMARIZING TABLE]. Our analysis sample consists of X universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data[SPECIFICATIONS FOR THIS FIGURE. SHOULD SHOW:]
+__Analysis sample__. Given that prior research has not analyzed student list purchases, this report restricts analyses to student lists purchased from College Board in order to keep results as simple as possible, with the idea that future analyses will incorporate lists purchased from ACT. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL ADD TEXT SUMMARIZING TABLE]. Our analysis sample consists of X universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data.
 
+To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [CITE]. Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [CITE](https://www.chicagotribune.com/news/ct-illinois-chooses-sat-met-20160211-story.html). In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
+
+Our inability to obtain data from all universities creates external validity concerns. Ideally, our analysis dataset includes all College Board student lists for the entire population of public universities in our data collection sample, or at least a random sample of these universities. Unfortunately, our analysis sample cannot be considered a random sample. Moreover, we suspect that non-response was systematically related to factors of substantive interest. For example, we were less successful obtaining records from universities that outsourced student list purchases to consulting firms. In turn, response bias affects external validity. Based on our results, we cannot make inferences about the population of universities in the four data collection states. Nor can we make inferences about the broader population of US public universities.
+
+<!--
 - WHAT TO SHOW
   - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE ORDER SUMMARY DATA
   - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE STUDENT LIST DATA
@@ -149,10 +367,92 @@ Table/Figure X shows the number of lists and the number of prospects purchased b
   - STATE AND CARNEGIE CLASSIFICATION 
 - SUB-FIGURES? 
   - USE YOUR DISCRETION
+-->
 
-To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [CITE]. Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [CITE](https://www.chicagotribune.com/news/ct-illinois-chooses-sat-met-20160211-story.html). In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
+```{r received-data}
+appendix_df <- univ_df %>% 
+  select(INSTNM, STABBR, system, carnegie, locale_text) %>% 
+  mutate(
+  'num_received_summary' = rep_len(c(T, F), 91),
+  'num_not_received_summary' = rep_len(c(F, T), 91),
+  'num_received_list' = rep_len(c(T, F), 91),
+  'num_not_received_list' = rep_len(c(F, T), 91),
+  'num_received_both' = rep_len(c(T, F), 91),
+  'num_not_received_both' = rep_len(c(F, T), 91)
+) 
 
-Our inability to obtain data from all universities creates external validity concerns. Ideally, our analysis dataset includes all College Board student lists for the entire population of public universities in our data collection sample, or at least a random sample of these universities. Unfortunately, our analysis sample cannot be considered a random sample. Moreover, we suspect that non-response was systematically related to factors of substantive interest. For example, we were less successful obtaining records from universities that outsourced student list purchases to consulting firms. In turn, response bias affects external validity. Based on our results, we cannot make inferences about the population of universities in the four data collection states. Nor can we make inferences about the broader population of US public universities.
+appendix_df %>% 
+  group_by(STABBR) %>% 
+  summarise(
+    'num_received_summary' = sum(num_received_summary),
+    'num_not_received_summary' = sum(num_not_received_summary),
+    'num_received_list' = sum(num_received_list),
+    'num_not_received_list' = sum(num_not_received_list),
+    'num_received_both' = sum(num_received_both),
+    'num_not_received_both' = sum(num_not_received_both)
+  ) %>% 
+  kable(booktabs = T, col.names = c('State', '# received order summary', '# no order summary', '# received list', '# no list', '# received both', '# did not receive both'), align = rep('c', 7), caption = 'Summary of data received') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+```{r purchased-data}
+data.frame(
+  orders_total = orders_df %>% nrow(),
+  orders_with_list = orders_df %>% left_join(lists_df_summary, by = c('order_num' = 'ord_num')) %>% filter(!is.na(n)) %>% nrow(),
+  prospects_total = prettyNum(sum(lists_df_summary$n), ','),
+  prospects_with_order = prettyNum(sum((lists_df_summary %>% filter(!is.na(ord_num)))$n), ',')
+) %>% 
+  kable(booktabs = T, col.names = c('# orders total', '# orders with list', '# prospects total', '# prospects with order'), align = rep('c', 4), caption = 'Summary of orders and prospects purchased') %>% 
+  row_spec(0, bold = T) %>% 
+  kable_styling(position = 'center')
+```
+
+```{r purchased-orders-carnegie, fig.height = 2, fig.cap = 'Summary of orders purchased by carnegie classification'}
+lists_df_summary %>% 
+  mutate(has_order = !is.na(ord_num)) %>% 
+  group_by(has_order, univ_state, univ_c15basic) %>% 
+  summarise(count = sum(n)) %>% 
+  mutate(
+    has_order = factor(has_order, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    univ_c15basic = as_factor(univ_c15basic),
+    carnegie = recode_factor(
+      univ_c15basic,
+      "Doctoral Universities: Highest Research Activity" = "Research Extensive",
+      "Master's Colleges & Universities: Larger Programs" = "Master's",
+      "Master's Colleges & Universities: Medium Programs" = "Master's",
+      "Baccalaureate Colleges: Diverse Fields" = "Baccalaureate"
+    )
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_order, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of prospects') + ylab('') +
+  scale_x_continuous(labels = label_number(suffix = 'K', scale = 1e-3), expand = expansion(mult = c(0, 0.05)), limits = c(0, 855000)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has order summary') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
+
+```{r purchased-prospects-carnegie, fig.height = 2, fig.cap = 'Summary of prospects purchased by carnegie classification'}
+orders_df %>% 
+  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
+  mutate(has_list = !is.na(n)) %>% 
+  group_by(has_list, univ_state, carnegie) %>% 
+  summarise(count = n()) %>% 
+  mutate(
+    has_list = factor(has_list, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    carnegie = factor(carnegie, levels = c("Research Extensive", "Master's", "Baccalaureate"))
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of orders') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 301)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has list') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
 
 __Research questions and analyses__. Choices about research questions were informed by the limitations of our analysis sample and by substantive considerations. We cannot make statements about university behavior that extends beyond our analysis sample. Assuming our data is representative of lists purchased by universities in our sample, 
 we can make statements about the College Board student lists purchased by universities in our analysis sample. This reasoning suggests treating our sample as a multiple case study [@RN4116]. The behaviors observed in our sample identify behaviors that exist in the population of public public universities, but not the prevalence of these behaviors in the population.
@@ -179,34 +479,107 @@ __Secondary data__. Analyses incorporate several secondary data sources. Integra
 
 ### Total Orders and Number of Prospects
 
-Figure X presents the 486 total orders analyzed in this report by university type and total students purchased. The 486 orders were purchased across 12 universities. The six master's universities in the study made the majority of order purchases (N=307), while research universities made 178 orders and the only baccalaureate university in the study made one order. 
+Figure \@ref(fig:orders-purchased) presents the 486 total orders analyzed in this report by university type and total students purchased. The 486 orders were purchased across 12 universities. The six master's universities in the study made the majority of order purchases (N=307), while research universities made 178 orders and the only baccalaureate university in the study made one order. 
 
 The number of total prospects purchased within each order varied widely. Across all 486 orders, the median number of prospects purchased per order was 3,067, whereas the mean was 950 (sd=5,619). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (4,269 versus 2,382). The only baccalaureate college in the study purchased 5,539 prospects in their one College Board order.
 
+```{r orders-purchased, fig.height = 3, fig.cap = 'Orders purchased by carnegie classification'}
+orders_fig_totals %>% 
+  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
+  xlab('') + ylab('Total students') +
+  scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Carnegie classification') +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+```
 
 ### Frequency of Filters Used
 
 Filters used to select prospect lists varied across academic criteria (e.g., GPA, PSAT, SAT, academic rank, AP Score), geographic location (e.g., zip code, state, segment, core based statistical area, geomarket, international), and demographic characteristics (e.g., high school graduation class, race/ethnicity, gender). Some geographic filters are metrics created by the College Board. For example, segment filters come from the College Board’s “Segment Analysis Service” which merges demographic, geographic, and academic data on SAT test takers to create "geodemographic profiles" for college-bound students (The College Board, 2011, p. 3). These profiles are created at the neighborhood-level and at the school-level. Geomarket filters are also created by the College Board within Enrollment Management Services, which uses information about SAT score senders from the past five admissions cycles within a specific geographic locality (e.g., counties, metropolitan areas, cities) to make projections about high high school graduates in the area. 
 
-Figure X shows how often filters were used across all orders. All 486 orders filtered by high school graduation class. The most frequently used filters include GPA (94%), PSAT scores (60%), zip code (57%), and SAT scores (56%). About two in every five orders also filtered by state. Only a subset of orders filtered by race/ethnicity (15%), academic rank (10%), gender (5%), segment (5%), AP score (5%), core based statistical area (3%), geomarket (3%), and international (3%).
+Figure \@ref(fig:orders-filters) shows how often filters were used across all orders. All 486 orders filtered by high school graduation class. The most frequently used filters include GPA (94%), PSAT scores (60%), zip code (57%), and SAT scores (56%). About two in every five orders also filtered by state. Only a subset of orders filtered by race/ethnicity (15%), academic rank (10%), gender (5%), segment (5%), AP score (5%), core based statistical area (3%), geomarket (3%), and international (3%).
+
+```{r orders-filters, fig.height = 3, fig.cap = 'Filters used in order purchases'}
+orders_filters1 %>% 
+  ggplot(aes(x = reorder(filters, V1), y = V1)) +
+  geom_bar(stat = 'identity', fill = '#d2c8bc') +
+  geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2, fontface = 'bold') +
+  xlab('') + ylab('Number of orders') +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  coord_flip()
+```
 
 The three most commonly used academic filters (GPA, PSAT, SAT) were used by specifying a low and/or high threshold. Across the 464 orders using GPA, low thresholds ranged from A to C+, with the majority of orders using a low of B- (50%) or B (15%). All orders using GPA orders indicated a high threshold of A+. For orders using PSAT lowest score thresholds, 30% indicated less than 1000, 18% indicated 1000-1100, 19% indicated 1110-1200, 17% indicated 1210-1300, 7% indicated 1310-1400, and 9% indicated 1410-1500. For orders using PSAT highest score thresholds, 13% indicated less than 1000, 12% indicated 1000-1100, 26% indicated 1110-1200, 19% indicated 1210-1300, 11% indicated 1310-1400, and 19% indicated 1410-1500. ^[Old PSAT scores were converted to equivalent thresholds for new format: STILL NEED TO DO THIS]. Similar thresholds and percentages were evident for orders that used SAT as a filter. Low SAT thresholds across orders were 17% for less than 1000, 30% for 1000-1100, 21% for 1110-1200, 28% for 1210-1300, 10% for indicated 1310-1400, and 6% for 1410-1500. High SAT thresholds across orders were 9% for 1000-1100, 12% for 1110-1200, 18% for 1210-1300, 5% for indicated 1310-1400, 21% for 1410-1500, and 35% indicated scores greater than 1500+.
+
+```{r orders-gpa}
+table_gpa %>% 
+  mutate(
+    pct_low = str_c(pct_low, '%'),
+    pct_high = str_c(pct_high, '%')
+  ) %>% 
+  kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high'), align = c('l', rep('c', 4)), caption = 'Filter by GPA') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
 
 PSAT and SAT score thresholds were consistently higher for orders by research universities in comparison to master's universities. The average low PSAT threshold score for research university orders was 1275 (about 90th percentile) versus 1034 for master's universities (about 50th percentile). Similar patterns were evident for SAT score thresholds. The average low SAT score threshold for research university orders was 1247 versus 1110 for orders by master's universities. 
 
 
-Zip code, state, and segment were the most commonly used geographical filters used across all orders. While we can account for the number of orders that filtered by zipcodes (N=278), we can only analyze patterns for the 208 orders from universities that provided the list of 3-digit zipcodes filtered by. ^[The other 70  orders indicated a zip code filter; however, the actual zipcodes used to filter order lists were not provided to us after multiple requests]  These orders were made by two master's universities, primarily for in-state orders. Figure X shows the three-digit zip code filters used across these orders.  The majority of orders (113 of 118) using zip code filters by the first master's university were to zip codes exclusively in the state where the university resides. The remaining 5 orders included in-state and neighboring state zip codes. Orders using zip code filters by the second master's university reveal similar patterns, except the majority of orders included a mix of in-state and neighboring state zip codes  (70 of 108). 
+Zip code, state, and segment were the most commonly used geographical filters used across all orders. While we can account for the number of orders that filtered by zipcodes (N=278), we can only analyze patterns for the 208 orders from universities that provided the list of 3-digit zipcodes filtered by. ^[The other 70  orders indicated a zip code filter; however, the actual zipcodes used to filter order lists were not provided to us after multiple requests]  These orders were made by two master's universities, primarily for in-state orders. Figure \@ref(fig:orders-zip) shows the three-digit zip code filters used across these orders.  The majority of orders (113 of 118) using zip code filters by the first master's university were to zip codes exclusively in the state where the university resides. The remaining 5 orders included in-state and neighboring state zip codes. Orders using zip code filters by the second master's university reveal similar patterns, except the majority of orders included a mix of in-state and neighboring state zip codes  (70 of 108). 
 
-Figure X shows states that were selected across the 170 orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
+```{r orders-zip, fig.height = 4, fig.cap = 'Filter by 3-digit zip code'}
+zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
 
-The twenty two orders using segment filters were made by two public research universities in the sample. Figure X shows which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY?
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>% 
+  addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
+```
 
-Figure X also shows that 75 (15%) and 24 (5%) of the 486 orders used a filter for race/ethnicity and gender, respectively. Most of the 75 orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 28 orders that filtered by Black, Native American, or Latinx prospects; 19 orders that filtered for Asian or White prospects; 7 orders that filtered for Native American or Latinx prospects; and 7 orders that filtered for Asian, White, or other race. The remaining orders filtered for only one race/ethnicity group, include 2 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander), 1 order filter for Black prospects, and 11 orders filtering for Latinx prospects. For the 24 orders using gender filters, 75% indicated female prospects and 25% indicate Male prospects. 
+Figure \@ref(tab:orders-state) shows states that were selected across the 170 orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
+
+```{r orders-state}
+orders_df %>%
+  filter(nchar(state_name) > 0) %>% 
+  mutate(
+    state_name = case_when(
+      str_detect(state_name, '\\|') ~ 'Multi-state', 
+      state_name == 'California' ~ 'CA', 
+      state_name == 'Texas' ~ 'TX', 
+      state_name == 'Illinois' ~ 'IL', 
+      T ~ state_name
+    )
+  ) %>% 
+  group_by(univ_state, state_name) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count)) %>% 
+  kable(booktabs = T, col.names = c('University state', 'Purchased state(s)', 'Count'), align = rep('c', 3), caption = 'Filter by state') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
+
+The twenty two orders using segment filters were made by two public research universities in the sample. Figure \@ref(fig:orders-cluster) shows which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY?
+
+```{r orders-cluster, out.width = '100%', fig.cap = 'Filter by neighborhood and high school segments', fig.show = 'hold', fig.align = 'center'}
+knitr::include_graphics(c(file.path(data_dir, 'cluster_EN.png'), file.path(data_dir, 'cluster_HS.png')))
+```
+
+Figure \@ref(fig:orders-filters) also shows that 75 (15%) and 24 (5%) of the 486 orders used a filter for race/ethnicity and gender, respectively. Most of the 75 orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 28 orders that filtered by Black, Native American, or Latinx prospects; 19 orders that filtered for Asian or White prospects; 7 orders that filtered for Native American or Latinx prospects; and 7 orders that filtered for Asian, White, or other race. The remaining orders filtered for only one race/ethnicity group, include 2 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander), 1 order filter for Black prospects, and 11 orders filtering for Latinx prospects. For the 24 orders using gender filters, 75% indicated female prospects and 25% indicate Male prospects. 
 
 
 ### Combination of Filters
 
-Universities in the study used 39 different combinations of filters to purchase prospects. The ten most commonly used combination of filters, which account for nearly 80% of all orders, are presented in Table X. More than half of all orders analyzed used a combination of high school graduation class, zip code, GPA, and PSAT and/or SAT scores to filter prospect lists. This includes 143 orders (29%) that used PSAT scores, 107 orders that used SAT scores (22%), and 28 orders that used both PSAT and SAT (5%) in addition to graduation class, zip code, and GPA. Other orders used a similar pattern of filters except for using state geographic filters instead of zip code, including 18 orders using PSAT scores and another 18 orders using SAT scores. 
+Universities in the study used 39 different combinations of filters to purchase prospects. The ten most commonly used combination of filters, which account for nearly 80% of all orders, are presented in Table \@ref(tab:orders-filter-combos). More than half of all orders analyzed used a combination of high school graduation class, zip code, GPA, and PSAT and/or SAT scores to filter prospect lists. This includes 143 orders (29%) that used PSAT scores, 107 orders that used SAT scores (22%), and 28 orders that used both PSAT and SAT (5%) in addition to graduation class, zip code, and GPA. Other orders used a similar pattern of filters except for using state geographic filters instead of zip code, including 18 orders using PSAT scores and another 18 orders using SAT scores. 
+
+```{r orders-filter-combos}
+df_0 %>% 
+  kable(booktabs = T, col.names = c('Filters', 'Count'), align = c('l', 'c'), caption = 'Filter combos used in order purchases') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
 
 About 8% of orders (39 of 486) used high school graduation class, state, sat, psat, gpa, and class rank filters while specifying for the race/ethnicity of prospects. The second most commonly used filter combination that specified the race/ethnicity of prospects includes 16 orders that used it in combination with graduation class, state, PSAT, and GPA filters. 
 
@@ -214,52 +587,150 @@ The remaining combinations followed similar general patterns in targeting both t
 
 Eleven orders used graduation class, state, GPA in combination with APscores. AP score filters tended to be grouped into "fields" and varied across score thresholds. Most orders targeted prospects scoring from 3-5 on AP exams in either STEM fields (e.g., Physics, Calculus, Biology, Chemistry, Computer Science) or Humanities and Fine Arts (e.g., Spanish, French, Art History, Music Theory), although some STEM orders filtered for prospects scoring a 4 or 5 on their AP exans. 
 
-Lastly, ten orders used graduation class, SAT, and geomarket. These orders filtered for geomarkets within Texas and Louisiana. Louisiana geomarket orders targeted prospects in the Baton Rouge and Shreveport areas. Texas geomarkets filtered for include but are not limited to the Dallas/Ft. Worth areas, Central Gulf Coast, Wharton County, Victoria County, City of San Antonio, Southwest Houston Metropolitan Area, Brazos and Trinity Valley, Austin and Central Texas, Galveston area, East Texas. 
+Lastly, nine orders used graduation class, SAT, and geomarket. These orders filtered for geomarkets within Texas and Louisiana. Louisiana geomarket orders targeted prospects in the Baton Rouge and Shreveport areas. Texas geomarkets filtered for include but are not limited to the Dallas/Ft. Worth areas, Central Gulf Coast, Wharton County, Victoria County, City of San Antonio, Southwest Houston Metropolitan Area, Brazos and Trinity Valley, Austin and Central Texas, Galveston area, East Texas. 
 
 
 ## Characteristics of Prospects 
 
-Our analysis on the characteristics of prospects purchased by universities includes 388 orders resulting in 1,967,352 prospects. Figure X shows the total number of prospects by domestic versus international status. Of the nearly 2 Million prospects purchased, 95% of them were domestic students. 
+Our analysis on the characteristics of prospects purchased by universities includes 388 orders resulting in 1,967,352 prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by domestic versus international status. Of the nearly 2 Million prospects purchased, 95% of them were domestic students. 
 
-Figure X also shows the number of domestic prospects purchased by in-state versus out-of-state and by institutional type. Overall, the majority of prospects purchased across all orders by all institutions in the study were in-state students (58%). However, the percent of in-state versus out-of-state prospects varied across institutional type. Research universities purchased more students overall and a greater proportion of out-of-state students than master's universities. For example, research universities in the study purchased more than 1.2 Million prospects of which 62% were out-of-state. In comparison, master's universities purchased less than 650,000 prospects of which only 4% were out-of-state students. 
+Figure \@ref(fig:prospects-count) also shows the number of domestic prospects purchased by in-state versus out-of-state and by institutional type. Overall, the majority of prospects purchased across all orders by all institutions in the study were in-state students (58%). However, the percent of in-state versus out-of-state prospects varied across institutional type. Research universities purchased more students overall and a greater proportion of out-of-state students than master's universities. For example, research universities in the study purchased more than 1.2 Million prospects of which 62% were out-of-state. In comparison, master's universities purchased less than 650,000 prospects of which only 4% were out-of-state students. 
 
 Below we also describe the racial, economic, and schooling characteristics of domestic prospect lists across institutional type and in-state versus out-of-state. The last sub-section then describes the characteristics of international prospects purchased.
+
+```{r prospects-count, fig.height = 2.5, fig.cap = 'Number of prospects purchased'}
+df_rq2a_counts <- df_rq2a %>% 
+  filter(row_subj == 'Total N') %>% 
+  select(all_domestic, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_counts <- data.frame(df_rq2a_counts, row.names = rownames(df_rq2a_counts)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_counts) %>% 
+  mutate(loc_type = 'Domestic') %>% 
+  rbind(c('all_domestic', df_int2$n[[2]], 'International')) %>% 
+  arrange(count_type, loc_type)
+
+df_rq2a_counts$count <- as.numeric(df_rq2a_counts$count)
+df_rq2a_counts$count_type <- factor(df_rq2a_counts$count_type, levels = rev(c('all_domestic', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+df_rq2a_counts$loc_type <- factor(df_rq2a_counts$loc_type, levels = rev(c('Domestic', 'International')))
+
+df_rq2a_counts %>% 
+  ggplot(aes(x = count_type, y = count, fill = loc_type, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  xlab('') + ylab('') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1968000)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T)) +
+  coord_flip()
+```
+
+```{r}
+create_rq2a_figure <- function(categories, legend_title) {
+  df_rq2a_fig <- df_rq2a %>% 
+    filter(row_subj %in% categories) %>% 
+    select(row_subj, all_domestic, research_univ_instate, regional_univ_instate, research_univ_outofstate, regional_univ_outofstate) %>% 
+    pivot_longer(-row_subj, names_to = 'pct_type', values_to = 'pct')
+  
+  df_rq2a_fig$pct_type <- factor(df_rq2a_fig$pct_type, levels = rev(c('all_domestic', 'research_univ_instate', 'regional_univ_instate', 'research_univ_outofstate', 'regional_univ_outofstate')))
+  df_rq2a_fig$row_subj <- factor(df_rq2a_fig$row_subj, levels = rev(categories))
+  
+  df_rq2a_fig %>% 
+    ggplot(aes(x = pct, y = pct_type, fill = row_subj, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+    geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+    xlab('') + ylab('') +
+    scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
+    scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = legend_title) +
+    theme(
+      axis.text.x = element_blank()
+    ) +
+    guides(fill = guide_legend(reverse = T))
+}
+```
 
 
 ### Racial Characteristics
 
-Figure X presents the racial characteristics of all domestic prospects resulting from the 388 purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
+Figure \@ref(fig:prospects-race) presents the racial characteristics of all domestic prospects resulting from the 388 purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
 
 Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of 43% White students, 22% Asian students, 19% Latinx students, 6% Black, 6% multiracial, and 4% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of 34% White students, 11% Asian, 25% Latinx, 5% Black, 4% multiracial, and 19% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of Native American students (N=7,885 DOUBLE CHECK THIS) that can be glossed over when only looking at overall proportions.
 
 The differences in the racial characteristics of in-state versus out-of-state prospects are likely also a function of purchases made by research versus master's universities. While research universities made more out-of-state than in-state prospect purchases, the differences in the racial characteristics of both groups were relatively small in comparison to purchases by master's universities. For example, White students made up 43% and 40% of out-of-state and in-state prospect lists purchased by research universities, respectively. In comparison, White students made up 45% of out-of-state prospect lists and only 30% of in-state prospect lists purchased by master's universities. However, purchases by master's universities also included a much larger proportion of students that did not report their race/ethnicity. 
 
+```{r prospects-race, fig.height = 2.3, fig.cap = 'Prospects purchased by race'}
+create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct Race-Missing'), 'Race/ethnicity')
+```
+
 
 ### Economic Characteristics
 
-Figure X presents the average median income of the zip code where prospects live by in-state versus out-of-state status for research and master's university purchases. Purchased prospects, across all orders by the 12 universities in the study, live in areas with an average median household income of \$92,000. 
+Figure \@ref(fig:prospects-income) presents the average median income of the zip code where prospects live by in-state versus out-of-state status for research and master's university purchases. Purchased prospects, across all orders by the 12 universities in the study, live in areas with an average median household income of \$92,000. 
 
-Overall, Figure X shows out-of-state prospects tended to live in more affluent areas than in-state prospects. Across all institution types, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospects that live in areas where the average median household income is \$100,000. In comparison, purchases for prospects residing in the same state as the institution's campus resulted in prospects that live in areas where the average median household income is \$87,000.   
+Overall, Figure \@ref(fig:prospects-income) shows out-of-state prospects tended to live in more affluent areas than in-state prospects. Across all institution types, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospects that live in areas where the average median household income is \$100,000. In comparison, purchases for prospects residing in the same state as the institution's campus resulted in prospects that live in areas where the average median household income is \$87,000.   
 
 This disparity is also likely driven by several differences across purchases by research versus master's universities. For example, out-of-state prospects purchased by research universities live in areas where the average median household income is \$101,000, whereas in-state prospects purchased live in areas with a \$91,000. However, the opposite pattern is evident for purchases by master's universities. Out-of-state prospects purchased by master's universities on average live in less affluent areas (\$69,000 median household income) than in-state prospects ($84,000 median household income). 
+
+```{r prospects-income, fig.height = 2.5, fig.cap = 'Prospects purchased by income'}
+df_rq2a_income <- df_rq2a %>% 
+  filter(row_subj == 'Median Household Income (mean)') %>% 
+  select(all_domestic, in_state, out_of_state, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_income <- data.frame(df_rq2a_income, row.names = rownames(df_rq2a_income)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_income)
+
+df_rq2a_income$count_type <- factor(df_rq2a_income$count_type, levels = rev(c('all_domestic', 'in_state', 'out_of_state', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+
+df_rq2a_income %>% 
+  ggplot(aes(x = count, y = count_type, width = 0.6)) +
+  geom_bar(stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
+  geom_text(aes(x = count + 800, label = str_c('$', round(count / 1000, 0), 'K')), color = '#555555', size = 2, hjust = 0) +
+  xlab('') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 110000)) +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
 
 ### High Schools Attended
 
 Given some of the College Board products link individual prospects to high schools for services like high school segment clusters, we are able to analyze some of the characteristics of high schools purchased prospects attend.
 
-Figure X presents school type for purchased prospects by in-state versus out-of-state status for research and master's university purchases. Overall, 82% of prospects purchased attend public high schools, 9% attend private schools, and 9% did not report their high school. While these overall proportions are comparable to national averages, there are several differences across in-state versus out-of-state purchases by research and master's universities. For research universities, students attending private high schools made up a greater share of out-of-state prospect lists (12%) than in-state lists purchases (7%). Student list purchases by master's universities also exhibited this patter, where private high school students made up 10% of out-of-state prospects versus 6% of in-state prospects purchased.
+Figure \@ref(fig:prospects-hs) presents school type for purchased prospects by in-state versus out-of-state status for research and master's university purchases. Overall, 82% of prospects purchased attend public high schools, 9% attend private schools, and 9% did not report their high school. While these overall proportions are comparable to national averages, there are several differences across in-state versus out-of-state purchases by research and master's universities. For research universities, students attending private high schools made up a greater share of out-of-state prospect lists (12%) than in-state lists purchases (7%). Student list purchases by master's universities also exhibited this patter, where private high school students made up 10% of out-of-state prospects versus 6% of in-state prospects purchased.
 
+```{r prospects-hs, fig.height = 2.3, fig.cap = 'Prospects purchased by school type'}
+create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School type')
+```
 
 ### International Prospects
 
-Nearly 100,000 of the 2 Million prospects purchased were international students. Figure X presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 388 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
+Nearly 100,000 of the 2 Million prospects purchased were international students. Table \@ref(tab:prospects-intl) presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 388 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
 
-
+```{r prospects-intl}
+df_int %>% 
+  mutate(
+    stu_country = str_to_title(stu_country),
+    n = prettyNum(n, ','),
+    pct = str_c(pct, '%')
+  ) %>% 
+  head(10) %>% 
+  kable(booktabs = T, col.names = c('Country', '# prospects', '% prospects'), align = rep('c', 3), caption = 'Prospects purchased by international country') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center')
+```
 
 ## Filter Criteria and Characteristics of Prospects
 
 We analyze the relationship between filter criteria and the characteristics of purchased prospects in two different ways. First, we analyze prospect characteristics (e.g., race/ethnicity, income, in-state versus out-of-state) across individual filters to understand broad patterns. Second, we analyze prospect characteristics across common combinations of filters. Here we use selected universities, purchases and/or localities that convey commonly observed or thematically important patterns across combinations of filters. We also contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups based on the selected examples.
-
 
 ### Prospect Characteristics Across Individual Filters
 
@@ -288,16 +759,39 @@ For each three-digit zip code used as an order filter, we compare the average ra
 
 For example, the three-digit zip code 752 was included in 27 of the 65 orders that filtered across graduation class, PSAT scores, GPA and zip code. The 49 five-digit zip codes nested within the three-digit 752 zip code includes communities across the Dallas metropolitan area (see Figure X). The student lists for these orders resulted in 8,707 purchased prospects living in one of the 47 five-digit zip codes. About 40% of purchased prospects identified as White, 39% as Latinx, 8% Black, 5% Asian, and 3% multiracial. In comparison, the population of 15-19 year olds in these 49 five-digit zip codes are 24% White, 43% Hispanic, 20% Black, 3% Asian, and 3% multiracial.
 
-Figure X presents the average percentage point difference between the racial/ethnic composition of students lists and of the 15-19 year old population across all zip codes filtered by the master's university in this analysis. For example, Zip Code 752 in Figure X shows a 16 percentage point difference between White prospects purchased living in the zip code and the overall percentage of White 15-19 year olds living in the zip code (40%- 24% = 16 percentage points), suggesting White prospects are overrepresented in purchased lists relative to the population of their home zip code. Similarly, the figure shows a -12 percentage point difference between the Black prospects purchased from the zip code and the percentage of Black 15-19 year olds living in the zip code (8% - 20% = -23 percentage points), suggesting Black prospects are underrepresented in purchased lists relative to the population of their home zip code.
+Figure \@ref(fig:texasam-race) presents the average percentage point difference between the racial/ethnic composition of students lists and of the 15-19 year old population across all zip codes filtered by the master's university in this analysis. For example, Zip Code 752 in Figure \@ref(fig:texasam-race) shows a 16 percentage point difference between White prospects purchased living in the zip code and the overall percentage of White 15-19 year olds living in the zip code (40%- 24% = 16 percentage points), suggesting White prospects are overrepresented in purchased lists relative to the population of their home zip code. Similarly, the figure shows a -12 percentage point difference between the Black prospects purchased from the zip code and the percentage of Black 15-19 year olds living in the zip code (8% - 20% = -23 percentage points), suggesting Black prospects are underrepresented in purchased lists relative to the population of their home zip code.
 
-Overall, Figure X suggests prospect lists from orders that filtered using graduation class, PSAT scores, GPA, and zip code tend to be more White and Asian and less Black and Latinx relative to the population of 15-19 year olds from zip codes filtered by. The overepresentation of White prospects in comparison to zip code populations ranged from 2 to 36 percentage points for 11 of the 23 zip codes filtered by, whereas three zip codes had proportional representation (0 percetage point difference). The remaining 9 zip codes had an underrepresentation of White prospects, where eight orders ranged from 1 to 6 percentage points and one order had -21 percentage points. The overrepresentation of Asian prospects purchased across the 23 zip codes ranged from 1 to 17 percentage points.
+```{r texasam-race, fig.height = 4, fig.cap = 'Texas A&M purchases by zip code and race'}
+table_texasam_zip$stu_race_cb <- factor(table_texasam_zip$stu_race_cb, levels = rev(c('AIAN', 'Asian', 'Black', 'Latinx', 'Multiracial', 'White')))
+
+table_texasam_zip %>% 
+  ggplot(aes(x = ppt_diff_stu_pop, y = zip_3digit, fill = stu_race_cb)) + 
+  geom_bar(position = 'dodge', stat = 'identity') +
+  scale_fill_brewer(palette = 'Set2', direction = -1, name = 'Race/ethnicity') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), breaks = seq(-50, 40, 10), limits = c(-50, 45)) +
+  scale_y_discrete(limits = rev) +
+  xlab('Percentage point difference') + ylab('3-digit zip code') +
+  guides(fill = guide_legend(reverse = T))
+```
+
+Overall, Figure \@ref(fig:texasam-race) suggests prospect lists from orders that filtered using graduation class, PSAT scores, GPA, and zip code tend to be more White and Asian and less Black and Latinx relative to the population of 15-19 year olds from zip codes filtered by. The overepresentation of White prospects in comparison to zip code populations ranged from 2 to 36 percentage points for 11 of the 23 zip codes filtered by, whereas three zip codes had proportional representation (0 percetage point difference). The remaining 9 zip codes had an underrepresentation of White prospects, where eight orders ranged from 1 to 6 percentage points and one order had -21 percentage points. The overrepresentation of Asian prospects purchased across the 23 zip codes ranged from 1 to 17 percentage points.
 
 Black prospects were underrepresented relative to zip code populations across all zip codes used and in the greatest magnitude across all racial/ethnic groups. The underrepresentation of Black prospects purchased across the 23 zip codes ranged from 2 to 47 percentage points. Latinx students were also underrepresented across 12 of the 23 zip codes, although the magnitude was not as large as (ranging from 1 to 10 percentage points). Three of the zip codes filtered by had proportional representation of Latinx students (0 percentage point difference), whereas the remaining zip codes had an overrepresentation ranging from 1 to 4 percentage points. 
 
 Economic disparities are also evident when we compare the average median income of prospects relative to the average median household of the zip code population. Figure X presents the difference in average median household income between prospects (measured at the 5-digit zip code level) and the average median household income across all nested 5-digit zip codes within the 3-digit filters used. Because both prospects' and population income is measured at the zip code level across 5- versus 3-digits, a disparity indicates more prospects living in affluent 5-digit zip codes were purchased than the average median household income across all 5-digit codes within the 3-digit filter. 
 
-Figure X shows student lists resulting from 22 of the 23 zip code filters included more affluent prospects than the average population of those zip codes. This disparity was largest for prospects purchased from 774 zip codes (communities within Richmond, Texas), which had an average median income nearly $40,000 greater than the average median income of the population across all nested 774 zip codes. Prospects purchased from 758 zip codes (communities within Palestine, Texas) were the only across all filters to have an average median income less than the population across all nested zip codes (\$43,000 versus
-\$50,000). 
+Figure \@ref(fig:texasam-income) shows student lists resulting from 22 of the 23 zip code filters included more affluent prospects than the average population of those zip codes. This disparity was largest for prospects purchased from 774 zip codes (communities within Richmond, Texas), which had an average median income nearly $40,000 greater than the average median income of the population across all nested 774 zip codes. Prospects purchased from 758 zip codes (communities within Palestine, Texas) were the only across all filters to have an average median income less than the population across all nested zip codes (\$43,000 versus \$50,000). 
+
+```{r texasam-income, fig.height = 4, fig.cap = 'Texas A&M purchases by zip code and income'}
+table_texasam_zip_inc %>% 
+  mutate(inc_diff_stu_pop = stu_mean_inc - pop_med_inc) %>% 
+  ggplot(aes(x = inc_diff_stu_pop, y = zip_3digit, width = 0.3)) + 
+  geom_bar(position = 'dodge', stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(-10001, 40001), labels = label_number(suffix = 'K', scale = 1e-3)) +
+  scale_y_discrete(limits = rev) +
+  xlab('Income difference ($)') + ylab('3-digit zip code') +
+  guides(fill = guide_legend(reverse = T))
+```
 
 <!-- COMPLETE IN JANUARY Another common combination of filters used across orders include the same academic filters (i.e., PSAT scores and GPA) but geographically filtered by specific states and filtered for specific race/ethnicity groups. Some of these orders were made by research universities in the study -->
 
