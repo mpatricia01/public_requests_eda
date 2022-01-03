@@ -18,10 +18,20 @@ library(rgdal)
 
 data_dir <- file.path('..', '..', 'data')
 
-color_palette <- c('#ba9a88', '#bbcfd7')
-
 load(file.path(data_dir, 'tbl_fig_data.RData'))
 zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm')
+  )
+)
 ```
 
 ## Figure
@@ -53,19 +63,14 @@ create_cb_figure <- function(categories, values, plot_title) {
     ggtitle(plot_title) +
     xlab('') + ylab('') + 
     scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 80)) +
-    scale_fill_manual(values = color_palette) +
+    scale_fill_manual(values = c('#ba9a88', '#bbcfd7')) +
     theme(
-        text = element_text(size = 7),
         plot.margin = margin(t = 0.6, unit = 'cm'),
-        plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-        panel.background = element_blank(),
         panel.grid.major.y = element_line(size = 0.1, color = 'gray'),
-        axis.ticks = element_blank(),
         legend.title = element_blank(),
         legend.position = 'bottom',
         legend.margin = margin(t = -0.5, unit = 'cm'),
-        legend.text = element_text(margin = margin(r = 0.2, unit = 'cm')),
-        legend.key.size = unit(0.3, 'cm')
+        legend.text = element_text(margin = margin(r = 0.2, unit = 'cm'))
       ) +
       guides(fill = guide_legend(reverse = T))
 }
@@ -165,18 +170,13 @@ univ_df %>%
   geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
   geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
   xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 40)) +
   scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
   theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
-    guides(fill = guide_legend(reverse = T))
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
 ```
 
 ## Figure
@@ -190,18 +190,13 @@ univ_df %>%
   geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
   geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
   xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 40)) +
   scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
   theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
-    guides(fill = guide_legend(reverse = T))
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
 ```
 
 ## Table
@@ -271,31 +266,70 @@ lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order)
 
 lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order, univ_state) %>% summarise(n = sum(n))
 lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order, univ_c15basic) %>% summarise(n = sum(n))
+```
 
+## Table
+
+```{r}
+data.frame(
+  orders_total = orders_df %>% nrow(),
+  orders_with_list = orders_df %>% left_join(lists_df_summary, by = c('order_num' = 'ord_num')) %>% filter(!is.na(n)) %>% nrow(),
+  prospects_total = prettyNum(sum(lists_df_summary$n), ','),
+  prospects_with_order = prettyNum(sum((lists_df_summary %>% filter(!is.na(ord_num)))$n), ',')
+) %>% 
+  kable(booktabs = T, col.names = c('# orders total', '# orders with list', '# prospects total', '# prospects with order'), align = rep('c', 4)) %>% 
+  row_spec(0, bold = T) %>% 
+  kable_styling(position = 'center')
+```
+
+## Figure
+
+```{r, fig.height = 2}
 lists_df_summary %>% 
   mutate(has_order = !is.na(ord_num)) %>% 
   group_by(has_order, univ_state, univ_c15basic) %>% 
   summarise(count = sum(n)) %>% 
   mutate(
-    univ_state = as.character(univ_state),
-    univ_c15basic = as_factor(univ_c15basic)
+    has_order = factor(has_order, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    univ_c15basic = as_factor(univ_c15basic),
+    carnegie = recode_factor(
+      univ_c15basic,
+      "Doctoral Universities: Highest Research Activity" = "Research Extensive",
+      "Master's Colleges & Universities: Larger Programs" = "Master's",
+      "Master's Colleges & Universities: Medium Programs" = "Master's",
+      "Baccalaureate Colleges: Diverse Fields" = "Baccalaureate"
+    )
   ) %>% 
-  filter(has_order == T) %>% 
-  ggplot(aes(x = count, y = univ_state, fill = univ_c15basic, width = 0.6)) +
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
-  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
-  xlab('') + ylab('') +
-  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
-  theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
-    guides(fill = guide_legend(reverse = T))
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_order, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of prospects') + ylab('') +
+  scale_x_continuous(labels = label_number(suffix = 'K', scale = 1e-3), expand = expansion(mult = c(0, 0.05)), limits = c(0, 855000)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has order summary') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
+
+## Figure
+
+```{r, fig.height = 2}
+orders_df %>% 
+  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
+  mutate(has_list = !is.na(n)) %>% 
+  group_by(has_list, univ_state, carnegie) %>% 
+  summarise(count = n()) %>% 
+  mutate(
+    has_list = factor(has_list, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    carnegie = factor(carnegie, levels = c("Research Extensive", "Master's", "Baccalaureate"))
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of orders') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 301)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has list') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
 ```
 
 ## Figure
@@ -307,17 +341,11 @@ orders_fig_totals %>%
   geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
   xlab('') + ylab('Total students') +
   scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
-  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Carnegie classification') +
   theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks.x = element_blank(),
-      axis.text.x = element_blank(),
-      axis.title = element_text(face = 'bold'),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    )
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
 ```
 
 ## Figure
@@ -329,14 +357,6 @@ orders_filters1 %>%
   geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2, fontface = 'bold') +
   xlab('') + ylab('Number of orders') +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
-  theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.title = element_text(face = 'bold'),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
   coord_flip()
 ```
 
@@ -418,16 +438,10 @@ df_rq2a_counts %>%
   scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1968000)) +
   scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
   theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm'),
-      legend.position = 'top'
-    ) +
-    guides(fill = guide_legend(reverse = T)) +
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T)) +
   coord_flip()
 ```
 
@@ -449,15 +463,9 @@ create_rq2a_figure <- function(categories, legend_title) {
     scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
     scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = legend_title) +
     theme(
-        text = element_text(size = 7),
-        plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-        panel.background = element_blank(),
-        axis.ticks = element_blank(),
-        axis.text.x = element_blank(),
-        legend.title = element_text(face = 'bold'),
-        legend.key.size = unit(0.3, 'cm')
-      ) +
-      guides(fill = guide_legend(reverse = T))
+      axis.text.x = element_blank()
+    ) +
+    guides(fill = guide_legend(reverse = T))
 }
 ```
 
@@ -488,16 +496,10 @@ df_rq2a_income %>%
   xlab('') + ylab('') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 110000)) +
   theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.text.x = element_blank(),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm'),
-      legend.position = 'top'
-    ) +
-    guides(fill = guide_legend(reverse = T))
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T))
 ```
 
 ## Figure
@@ -524,20 +526,11 @@ table_texasam_zip$stu_race_cb <- factor(table_texasam_zip$stu_race_cb, levels = 
 table_texasam_zip %>% 
   ggplot(aes(x = ppt_diff_stu_pop, y = zip_3digit, fill = stu_race_cb)) + 
   geom_bar(position = 'dodge', stat = 'identity') +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Race/ethnicity') +
+  scale_fill_brewer(palette = 'Set2', direction = -1, name = 'Race/ethnicity') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), breaks = seq(-50, 40, 10), limits = c(-50, 45)) +
   scale_y_discrete(limits = rev) +
   xlab('Percentage point difference') + ylab('3-digit zip code') +
-  theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.title = element_text(face = 'bold'),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
-    guides(fill = guide_legend(reverse = T))
+  guides(fill = guide_legend(reverse = T))
 ```
 
 ## Figure
@@ -550,14 +543,5 @@ table_texasam_zip_inc %>%
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(-10001, 40001), labels = label_number(suffix = 'K', scale = 1e-3)) +
   scale_y_discrete(limits = rev) +
   xlab('Income difference ($)') + ylab('3-digit zip code') +
-  theme(
-      text = element_text(size = 7),
-      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
-      panel.background = element_blank(),
-      axis.ticks = element_blank(),
-      axis.title = element_text(face = 'bold'),
-      legend.title = element_text(face = 'bold'),
-      legend.key.size = unit(0.3, 'cm')
-    ) +
-    guides(fill = guide_legend(reverse = T))
+  guides(fill = guide_legend(reverse = T))
 ```
