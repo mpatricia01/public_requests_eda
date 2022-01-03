@@ -1064,40 +1064,168 @@ library(eatATA)
                     c(x[1,1])
         
         # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD; 37980
-        # students purchased
-        lists_orders_zip_hs_df %>% filter(univ_id == '145637', !is.na(ord_segment),zip_cbsa_1 == '37980') %>%
-            summarize(
-                n_obs = sum(n()),
-                pct_stu_white =  mean(stu_white_common, na.rm = TRUE)*100,
-                pct_stu_asian =  mean(stu_asian_common, na.rm = TRUE)*100,
-                pct_stu_black =  mean(stu_black_common, na.rm = TRUE)*100,
-                pct_stu_hispanic =  mean(stu_is_hisp_common, na.rm = TRUE)*100,
-                #pct_stu_amerindian =  mean(stu_amerindian, na.rm = TRUE)*100,
-                #pct_stu_nativehawaii =  mean(stu_nativehawaii, na.rm = TRUE)*100,
-                pct_stu_native =  mean(stu_american_indian_common, na.rm = TRUE)*100,
-                pct_stu_tworaces =  mean(stu_multi_race_common, na.rm = TRUE)*100,
-            ) 
-    
+        # students purchased across all three types of segment orders 
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>% count()
+              
+          philly_studentlist <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>%    
+              count(stu_race_cb) %>% mutate(metro= "Philadelphia", pct = n / sum(n) * 100) #%>% print(n=50)
+                    
+          philly_studentlist <- philly_studentlist %>% mutate(
+                                                    stu_race_cb = as.character(stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+                                                    stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+          
+          philly_studentlist <- philly_studentlist[, c("metro", "stu_race_cb", "pct")]
+          philly_studentlist <- spread(philly_studentlist, key = c("stu_race_cb"), value = "pct")
+          philly_studentlist$population <- "Prospects Purchased"
+          philly_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>% count()
+          philly_studentlist <- philly_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
+          
         
         # racial composition of all students in public high schools in the CBSA
-        pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
+        philly_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
             summarize(
-                n_obs = sum(n()),
+                metro = "Philadelphia",
+                population = "Public HS Students",
+                #n_obs = sum(total_students, na.rm = TRUE),
                 tot_students = sum(total_students, na.rm = TRUE),
                 #tot_white = sum(total_white, na.rm = TRUE),
                 #tot_asian = sum(total_asian, na.rm = TRUE),
-                pct_white = sum(total_white, na.rm = TRUE)/tot_students*100,
-                pct_asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
-                pct_black = sum(total_black, na.rm = TRUE)/tot_students*100,
-                pct_hispanic = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
-                pct_native = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
-                pct_tworaces = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
-                pct_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+                White = sum(total_white, na.rm = TRUE)/tot_students*100,
+                Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+                Black = sum(total_black, na.rm = TRUE)/tot_students*100,
+                Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+                AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+                Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+                #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
                 #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
             )
         
-
         
+        # New York; 35620
+        # students purchased across all three types of segment orders 
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>% count()
+        
+        ny_studentlist <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>%    
+          count(stu_race_cb) %>% mutate(metro= "New York", pct = n / sum(n) * 100) #%>% print(n=50)
+        
+        ny_studentlist <- ny_studentlist %>% mutate(
+          stu_race_cb = as.character(stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+        
+        ny_studentlist <- ny_studentlist[, c("metro", "stu_race_cb", "pct")]
+        ny_studentlist <- spread(ny_studentlist, key = c("stu_race_cb"), value = "pct")
+        ny_studentlist$population <- "Prospects Purchased"
+        ny_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>% count()
+        ny_studentlist <- ny_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
+        
+        
+        # racial composition of all students in public high schools in the CBSA
+        ny_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '35620') %>%
+          summarize(
+            metro = "New York",
+            population = "Public HS Students",
+            #n_obs = sum(total_students, na.rm = TRUE),
+            tot_students = sum(total_students, na.rm = TRUE),
+            #tot_white = sum(total_white, na.rm = TRUE),
+            #tot_asian = sum(total_asian, na.rm = TRUE),
+            White = sum(total_white, na.rm = TRUE)/tot_students*100,
+            Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+            Black = sum(total_black, na.rm = TRUE)/tot_students*100,
+            Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+            Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+            #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+            #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+          )
+        
+        
+        # Los Angeles; 31080
+        # students purchased across all three types of segment orders 
+        lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>% count()
+        
+        la_studentlist <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>%    
+          count(stu_race_cb) %>% mutate(metro= "Los Angeles", pct = n / sum(n) * 100) #%>% print(n=50)
+        
+        la_studentlist <- la_studentlist %>% mutate(
+          stu_race_cb = as.character(stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+          stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+        
+        la_studentlist <- la_studentlist[, c("metro", "stu_race_cb", "pct")]
+        la_studentlist <- spread(la_studentlist, key = c("stu_race_cb"), value = "pct")
+        la_studentlist$population <- "Prospects Purchased"
+        la_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>% count()
+        la_studentlist <- la_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
+        
+        
+        # racial composition of all students in public high schools in the CBSA
+        la_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '31080') %>%
+          summarize(
+            metro = "Los Angeles",
+            population = "Public HS Students",
+            #n_obs = sum(total_students, na.rm = TRUE),
+            tot_students = sum(total_students, na.rm = TRUE),
+            #tot_white = sum(total_white, na.rm = TRUE),
+            #tot_asian = sum(total_asian, na.rm = TRUE),
+            White = sum(total_white, na.rm = TRUE)/tot_students*100,
+            Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+            Black = sum(total_black, na.rm = TRUE)/tot_students*100,
+            Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+            Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+            #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+            #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+          )  
+        
+    fig_rq3_segment_race <- rbind(philly_studentlist, philly_metro, ny_studentlist, ny_metro, la_studentlist, la_metro)
+        
+        
+        
+    # income of prospects across all three metros [don't know how to incorporate income for the metro area]
+    philly_studentlist_inc <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>%
+      summarise(stu_mean_inc = mean(zip_median_household_income, na.rm=T)) 
+      
+    ny_studentlist_inc <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>%
+      summarise(stu_mean_inc = mean(zip_median_household_income, na.rm=T))
+    
+    
+    la_studentlist_inc <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>%
+      summarise(stu_mean_inc = mean(zip_median_household_income, na.rm=T))
+    
+    
+    # 2019 ACS
+        # Philadelphia = 74,533
+        # New York = 83,160
+        # LA metro =77,774
+
+    
+        
+        
+        
+
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
 # FOR CRYSTAL

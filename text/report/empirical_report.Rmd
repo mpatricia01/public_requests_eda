@@ -802,6 +802,11 @@ Other common combinations of filters were used by research universities in the s
 
 The University of Illinois at Urbana-Champaign made eight orders using graduation class, state, CBSA, segment, SAT or PSAT, and GPA. These orders targeted 2019-2023 high school graduating classes with minimum PSAT/SAT scores ranging from 1220-1240 and maximum PSAT/SAT scores of 1450. The university also filtered for prospects with GPAs ranging from a low of B- to a high of A+. Prospects were also geographically filtered across State/CBSAs and segments. For States/CBSA, the university filtered across some of the largest, most populated metropolitan areas of the country (including but not limited to Atlanta, New York, Philadelphia, Boston, Washington D.C., Detroit, Phoenix, Miami, Orlando, Baltimore, Denver, Raleigh). As described above, segment filters across orders used both neighborhood and high school clusters. These eight orders filtered for neighborhood clusters 51 (with sll high school clusters), 53 (with high school cluster 70), 58 (all high schools), 60 (with high school clusters 65,70,79),  61 (with high school cluster 65), 63 (with high school clusters 68, 70), 69 (with high school clusters 65, 79), 70 (with high school clusters 65, 68, 70, 75), 73 (with all high schools), 78 (with high school cluster 66). Orders also included all high school categorized under high school cluster 79. 
 
+We analyze University of Illinois at Urbana-Champaign using these filters across several metropolitan areas by comparing the average racial and economic characteristics of the resulting purchased prospects to the metropolitan areas' overall population' of public high school students. We select the population of public high school students within the metropolitan area as a comparison group for several reasons. First, similar to our analysis of zip code filters above, the university included entire metropolitan areas as filters that should hypothetically provide an equitable opportunity for all prospects living in the area to be included in student lists purchased by the university. However, the combination of segment and additional academic filters may result in disparities across which prospects are included and not included. 
+
+
+
+
 
 # References
 
