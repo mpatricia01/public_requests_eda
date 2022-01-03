@@ -1027,8 +1027,41 @@ library(eatATA)
             filter(filter_combo=="HS Grad, State, Race, PSAT, GPA") %>%
             count(ord_state_name, univ_name) %>% print(n=400)
        
-     ## PROSPECT CHARS ACROSS COMBOS of FILTERS--
+     
           
+      ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Out of State/Segment Illinois Example
+          
+          # check filters across orders that use segment; these filter by segment at the state level but not cbsa
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_states_fil==1 &  filter_cbsa!=1 &  filter_psat==1) %>% count(ord_num)
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_states_fil==1 &  filter_cbsa!=1 & filter_psat==1) %>% count(ord_state_name)
+          
+          # check filters across orders that use segment; these filter by segment at the state & CBSA level
+          ui_uc <-lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1)
+          lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_num)
+          x1 <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% select(ord_num|ord_cbsa_name|starts_with("filter_"))
+          x1 <- distinct(x1, ord_num, .keep_all = TRUE)
+              
+              # see full list of cbsa across three groupings
+              c(x1[1,2])
+              c(x1[5,2])
+              c(x1[6,2])
+              
+              # descriptives on filters
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_hs_grad_class)
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_psat_score_max)
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_psat_score_min)
+              
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_sat_score_max)
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_sat_score_min)
+              
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_gpa_low)
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_gpa_high)  
+          
+              ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_segment)
+              x <- ui_uc %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_segment)  
+              
+                    # see full list of cbsa across three groupings
+                    c(x[1,1])
         
         # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD; 37980
         # students purchased
