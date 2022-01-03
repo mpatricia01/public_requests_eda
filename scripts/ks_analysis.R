@@ -737,7 +737,7 @@ library(eatATA)
         df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
         
 
-  # PROSPECT CHARS ACROSS COMBOS of FILTERS
+  ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- IN-STATE/ZIP TEXAS A&M Texerkana Example
       
         
         # create categorical variable that use different combos of filters
@@ -1008,9 +1008,27 @@ library(eatATA)
        # 
        
        
+    ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- IN-STATE/STATE FILTER EXAMPLE 
+          
+          lists_orders_zip_hs_df %>% 
+            group_by(filter_combo) %>%
+            summarise(n=n_distinct(ord_num)) 
+          
+          lists_orders_zip_hs_df %>% 
+            filter(filter_combo=="HS Grad, State, Race, PSAT, GPA") %>%
+            count(univ_name) %>% print(n=400)
+          
+          lists_orders_zip_hs_df %>% 
+            filter(filter_combo=="HS Grad, State, Race, PSAT, GPA") %>%
+            count(ord_state_name, univ_name) %>% print(n=400)
+          
+          # Texas A & M University-College Station OR UC San Diego?
+          lists_orders_zip_hs_df %>% 
+            filter(filter_combo=="HS Grad, State, Race, PSAT, GPA") %>%
+            count(ord_state_name, univ_name) %>% print(n=400)
        
-########## RESEARCH QUESTION 3: CHARACTERISTICS OF STUDENT LISTS IN COMPARISON TO OTHER MSA STUDENTS
-        
+     ## PROSPECT CHARS ACROSS COMBOS of FILTERS--
+          
         
         # Philadelphia-Camden-Wilmington, PA-NJ-DE-MD; 37980
         # students purchased
