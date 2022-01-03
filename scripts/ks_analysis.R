@@ -845,14 +845,14 @@ library(eatATA)
        
       stu_zips_race <- texasam %>% filter(zip_3digit!="060" & zip_3digit!="201" & zip_3digit!="274" & zip_3digit!="301" & zip_3digit!="303" & zip_3digit!="778" & zip_3digit!="780" & zip_3digit!="781" & zip_3digit!="786" & zip_3digit!="800" & zip_3digit!="804" & zip_3digit!="917" & zip_3digit!="953") %>%
         group_by(zip_3digit) %>%
-         count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=50)
+         count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) #%>% print(n=50)
       
       
       stu_zips_race <- as.data.frame(stu_zips_race)
       
       
                           # NEED TO EXPLORE THESE IN JANUARY-- but % is MINIMAL
-                          stu_zips_race <- stu_zips_race %>% mutate(stu_race_cb= as.character(stu_race_cb))
+                          stu_zips_race <- stu_zips_race %>% mutate(stu_race_cb= as.character(unclass(stu_race_cb)))
                           #stu_zips <- stu_zips %>% filter(stu_race_cb>=0) # IDK where the NA came from
                           
                           
@@ -930,7 +930,7 @@ library(eatATA)
           stu_zip_inc <-texasam %>% group_by(zip_3digit) %>% 
             summarise (stu_mean_inc = mean(zip_median_household_income, na.rm=T))
           
-          table_texasam_zip_inc <- merge(stu_zip_inc, pop_zips_inc, by="zip_3digit")
+          table_texasam_zip_inc <- merge(stu_zip_inc, pop_zip_inc, by="zip_3digit")
           
       # EXPLORATORY ANALYSIS BY AVERAGING ACROSS ORDER GROUPINGS
        #  # racial & economic characteristics by filter order for texas a&m 
@@ -1054,5 +1054,5 @@ save(lists_orders_zip_hs_df, file = file.path("/Users/karinasalazar/Dropbox", 'l
 save(orders_df, file = file.path("/Users/karinasalazar/Dropbox", 'orders_df.RData'))
 save(acs_race_zipcodev3, file = file.path("/Users/karinasalazar/Dropbox", 'acs_race_zipcodev3.RData'))
 
-save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, file = file.path(data_dir, 'tbl_fig_data.RData'))
+save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
             

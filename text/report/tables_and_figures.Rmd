@@ -7,6 +7,7 @@ output:
 ```{r setup, include = F}
 options(knitr.kable.NA = '')
 knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
 
 library(tidyverse)
 library(gridExtra)
@@ -257,6 +258,46 @@ appendix_df %>%
   kable_styling(latex_options = 'scale_down')
 ```
 
+```{r, eval = F}
+# 486 total order summaries
+# 271 has list
+# 215 missing list
+orders_df %>% left_join(lists_df_summary, by = c('order_num' = 'ord_num')) %>% count(is.na(n))
+
+# 1967325 total prospects
+# 1803599 has order
+# 163726 missing order
+lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order) %>% summarise(n = sum(n))
+
+lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order, univ_state) %>% summarise(n = sum(n))
+lists_df_summary %>% mutate(has_order = !is.na(ord_num)) %>% group_by(has_order, univ_c15basic) %>% summarise(n = sum(n))
+
+lists_df_summary %>% 
+  mutate(has_order = !is.na(ord_num)) %>% 
+  group_by(has_order, univ_state, univ_c15basic) %>% 
+  summarise(count = sum(n)) %>% 
+  mutate(
+    univ_state = as.character(univ_state),
+    univ_c15basic = as_factor(univ_c15basic)
+  ) %>% 
+  filter(has_order == T) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = univ_c15basic, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  xlab('') + ylab('') +
+  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.text.x = element_blank(),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
 ## Figure
 
 ```{r, fig.height = 3}
@@ -475,3 +516,48 @@ leaflet() %>%
   addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
 ```
 
+## Figure
+
+```{r, fig.height = 4}
+table_texasam_zip$stu_race_cb <- factor(table_texasam_zip$stu_race_cb, levels = rev(c('AIAN', 'Asian', 'Black', 'Latinx', 'Multiracial', 'White')))
+
+table_texasam_zip %>% 
+  ggplot(aes(x = ppt_diff_stu_pop, y = zip_3digit, fill = stu_race_cb)) + 
+  geom_bar(position = 'dodge', stat = 'identity') +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Race/ethnicity') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), breaks = seq(-50, 40, 10), limits = c(-50, 45)) +
+  scale_y_discrete(limits = rev) +
+  xlab('Percentage point difference') + ylab('3-digit zip code') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title = element_text(face = 'bold'),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
+## Figure
+
+```{r, fig.height = 4}
+table_texasam_zip_inc %>% 
+  mutate(inc_diff_stu_pop = stu_mean_inc - pop_med_inc) %>% 
+  ggplot(aes(x = inc_diff_stu_pop, y = zip_3digit, width = 0.3)) + 
+  geom_bar(position = 'dodge', stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(-10001, 40001), labels = label_number(suffix = 'K', scale = 1e-3)) +
+  scale_y_discrete(limits = rev) +
+  xlab('Income difference ($)') + ylab('3-digit zip code') +
+  theme(
+      text = element_text(size = 7),
+      plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      axis.title = element_text(face = 'bold'),
+      legend.title = element_text(face = 'bold'),
+      legend.key.size = unit(0.3, 'cm')
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
