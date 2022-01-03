@@ -1211,7 +1211,6 @@ library(eatATA)
     ny_studentlist_inc <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>%
       summarise(stu_mean_inc = mean(zip_median_household_income, na.rm=T))
     
-    
     la_studentlist_inc <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>%
       summarise(stu_mean_inc = mean(zip_median_household_income, na.rm=T))
     
