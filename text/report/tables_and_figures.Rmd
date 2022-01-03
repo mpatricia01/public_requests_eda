@@ -545,3 +545,14 @@ table_texasam_zip_inc %>%
   xlab('Income difference ($)') + ylab('3-digit zip code') +
   guides(fill = guide_legend(reverse = T))
 ```
+
+## Table
+
+```{r}
+df_rq3 %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  mutate_each(funs(prettyNum(., big.mark = ','))) %>% 
+  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'Race', 'Gender', 'Zip code', 'State', 'Segment', 'CBSA'), align = c('l', rep('c', 11))) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = 'scale_down')
+```
