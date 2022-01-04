@@ -51,6 +51,8 @@ theme_set(
     legend.key.size = unit(0.3, 'cm')
   )
 )
+
+color_palette <- c('#ba9a88', '#bbcfd7')
 ```
 
 
@@ -106,7 +108,7 @@ create_cb_figure <- function(categories, values, plot_title) {
     ggtitle(plot_title) +
     xlab('') + ylab('') + 
     scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 80)) +
-    scale_fill_manual(values = c('#ba9a88', '#bbcfd7')) +
+    scale_fill_manual(values = color_palette) +
     theme(
         plot.margin = margin(t = 0.6, unit = 'cm'),
         panel.grid.major.y = element_line(size = 0.1, color = 'gray'),
@@ -814,28 +816,29 @@ The University of Illinois at Urbana-Champaign made eight orders using graduatio
 We analyze University of Illinois at Urbana-Champaign using these filters across several metropolitan areas by comparing the average racial and economic characteristics of the resulting purchased prospects to the metropolitan areas' overall population' of public high school students. We select the population of public high school students within the metropolitan area as a comparison group for several reasons. First, similar to our analysis of zip code filters above, the university included entire metropolitan areas as filters that should hypothetically provide an equitable opportunity for all prospects living in the area to be included in student lists purchased by the university. However, the combination of segment and additional academic filters may result in disparities across which prospects are included and not included. 
 
 
-```{r metro-race, fig.height = 4, fig.cap = 'Metro area purchases by race'}
+```{r metro-race, fig.height = 5, fig.cap = 'Metro area purchases by race'}
 fig_rq3_segment_race_inc %>% 
   select(-income, -tot_students) %>% 
   pivot_longer(c(-metro, -population), names_to = 'race', values_to = 'pct') %>% 
-  ggplot(aes(x = pct, y = metro, fill = population, width = 0.6)) + 
-  geom_bar(position = 'dodge', stat = 'identity', alpha = 0.6) +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Population') +
-  xlab('Percentage') + ylab('Metro area') +
+  ggplot(aes(x = race, y = pct, fill = population, width = 0.6)) + 
+  geom_bar(position = position_dodge2(width = 0.7, reverse = T), stat = 'identity') +
+  scale_fill_manual(values = color_palette, name = 'Population') +
+  scale_y_continuous(labels = function(x) paste0(x, '%')) +
+  xlab('') + ylab('') +
   theme(
     strip.background = element_blank(),
     strip.text = element_text(face = 'bold')
   ) +
   guides(fill = guide_legend(reverse = T)) +
-  facet_wrap(~ race)
+  facet_wrap(~ metro, ncol = 1)
 ```
 
 ```{r metro-income, fig.height = 2.5, fig.cap = 'Metro area purchases by income'}
 fig_rq3_segment_race_inc %>% 
   select(metro, population, income) %>% 
   ggplot(aes(x = income, y = metro, fill = population, width = 0.6)) + 
-  geom_bar(position = position_dodge(width = 0.7), stat = 'identity', alpha = 0.6) +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Population') +
+  geom_bar(position = position_dodge(width = 0.7), stat = 'identity') +
+  scale_fill_manual(values = color_palette, name = 'Population') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 131000), labels = label_number(suffix = 'K', scale = 1e-3)) +
   xlab('Income ($)') + ylab('Metro area') +
   guides(fill = guide_legend(reverse = T))
