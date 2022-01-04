@@ -1,7 +1,10 @@
 ---
-title: ""
+title: "Geodemographics of Student List Purchases by Public Universities: A First Look "
 subtitle: ""
-author: ""
+author: 
+  - Karina Salazar
+  - Ozan Jaquette
+  - Crystal Han
 bibliography: ../bib/student_list_empirics.bib
 citeproc: no
 output: 
@@ -145,7 +148,7 @@ grid.arrange(
 )
 ```
 
-\pagebreak\begingroup\fontsize{8}{12}\selectfont
+\begingroup\fontsize{6}{12}\selectfont
 _Note: AI/AN = American Indian or Alaska Native. HI/PI = Hawaiian or Pacific Islander. The sample for enrollment outcomes includes all SAT takers in the 2015–2018 high school graduation cohorts. The sample for completion outcomes is restricted to students in the 2015–2016 cohorts. Completion results are not reported for HI/PI students due to very small sample size (N=2,749), which returns imprecise estimates. Results are estimated from regressions that include student-level controls for: sex, race/ethnicity, SAT score, parental education level, last Student Search Service opt-in status, and graduation cohort and high school fixed effects. All differences between students whose names were licensed and those whose names were not licensed are statistically significant at the 1% level._
 \endgroup
 
@@ -183,7 +186,7 @@ __Data collection sample__.  In 2019 we received funding from the Joyce Foundati
 IL and MN are focus states for the Joyce Foundation, while CA and TX are focus states for Kresge. The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In MN, there are 5 universities in the University of Minnesota system and 7 in the Minnesota State University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. We also collected data from Arizona State University and Northern Arizona University.
 
 Table \@ref(tab:univ-characteristics) and Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. 
-\newpage
+
 <!--
 - FIGURE
   - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND CARNEGIE CLASSIFICATION
@@ -546,7 +549,7 @@ leaflet() %>%
   addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
 ```
 
-Figure \@ref(tab:orders-state) shows states that were selected across the 170 orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
+Table \@ref(tab:orders-state) shows states that were selected across the 170 orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
 
 ```{r orders-state}
 orders_df %>%
@@ -666,7 +669,7 @@ create_rq2a_figure <- function(categories, legend_title) {
 
 Figure \@ref(fig:prospects-race) presents the racial characteristics of all domestic prospects resulting from the 388 purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
 
-Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of 43% White students, 22% Asian students, 19% Latinx students, 6% Black, 6% multiracial, and 4% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of 34% White students, 11% Asian, 25% Latinx, 5% Black, 4% multiracial, and 19% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of Native American students (N=7,885 DOUBLE CHECK THIS) that can be glossed over when only looking at overall proportions.
+Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of 43% White students, 22% Asian students, 19% Latinx students, 6% Black, 6% multiracial, and 4% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of 34% White students, 11% Asian, 25% Latinx, 5% Black, 4% multiracial, and 19% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of nearly 8,000 Native American students that can be glossed over when only looking at overall proportions.
 
 The differences in the racial characteristics of in-state versus out-of-state prospects are likely also a function of purchases made by research versus master's universities. While research universities made more out-of-state than in-state prospect purchases, the differences in the racial characteristics of both groups were relatively small in comparison to purchases by master's universities. For example, White students made up 43% and 40% of out-of-state and in-state prospect lists purchased by research universities, respectively. In comparison, White students made up 45% of out-of-state prospect lists and only 30% of in-state prospect lists purchased by master's universities. However, purchases by master's universities also included a much larger proportion of students that did not report their race/ethnicity. 
 
