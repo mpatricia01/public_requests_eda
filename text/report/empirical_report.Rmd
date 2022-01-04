@@ -789,7 +789,7 @@ Overall, Figure \@ref(fig:texasam-race) suggests prospect lists from orders that
 
 Black prospects were underrepresented relative to zip code populations across all zip codes used and in the greatest magnitude across all racial/ethnic groups. The underrepresentation of Black prospects purchased across the 23 zip codes ranged from 2 to 47 percentage points. Latinx students were also underrepresented across 12 of the 23 zip codes, although the magnitude was not as large as (ranging from 1 to 10 percentage points). Three of the zip codes filtered by had proportional representation of Latinx students (0 percentage point difference), whereas the remaining zip codes had an overrepresentation ranging from 1 to 4 percentage points. 
 
-Economic disparities are also evident when we compare the average median income of prospects relative to the average median household of the zip code population. Figure X presents the difference in average median household income between prospects (measured at the 5-digit zip code level) and the average median household income across all nested 5-digit zip codes within the 3-digit filters used. Because both prospects' and population income is measured at the zip code level across 5- versus 3-digits, a disparity indicates more prospects living in affluent 5-digit zip codes were purchased than the average median household income across all 5-digit codes within the 3-digit filter. 
+Economic disparities are also evident when we compare the average median income of prospects relative to the average median household of the zip code population. Figure \@ref(fig:texasam-income)  presents the difference in average median household income between prospects (measured at the 5-digit zip code level) and the average median household income across all nested 5-digit zip codes within the 3-digit filters used. Because both prospects' and population income is measured at the zip code level across 5- versus 3-digits, a disparity indicates more prospects living in affluent 5-digit zip codes were purchased than the average median household income across all 5-digit codes within the 3-digit filter. 
 
 Figure \@ref(fig:texasam-income) shows student lists resulting from 22 of the 23 zip code filters included more affluent prospects than the average population of those zip codes. This disparity was largest for prospects purchased from 774 zip codes (communities within Richmond, Texas), which had an average median income nearly $40,000 greater than the average median income of the population across all nested 774 zip codes. Prospects purchased from 758 zip codes (communities within Palestine, Texas) were the only across all filters to have an average median income less than the population across all nested zip codes (\$43,000 versus \$50,000). 
 
@@ -813,8 +813,9 @@ Other common combinations of filters were used by research universities in the s
 
 The University of Illinois at Urbana-Champaign made eight orders using graduation class, state, CBSA, segment, SAT or PSAT, and GPA. These orders targeted 2019-2023 high school graduating classes with minimum PSAT/SAT scores ranging from 1220-1240 and maximum PSAT/SAT scores of 1450. The university also filtered for prospects with GPAs ranging from a low of B- to a high of A+. Prospects were also geographically filtered across State/CBSAs and segments. For States/CBSA, the university filtered across some of the largest, most populated metropolitan areas of the country (including but not limited to Atlanta, New York, Philadelphia, Boston, Washington D.C., Detroit, Phoenix, Miami, Orlando, Baltimore, Denver, Raleigh). As described above, segment filters across orders used both neighborhood and high school clusters. These eight orders filtered for neighborhood clusters 51 (with sll high school clusters), 53 (with high school cluster 70), 58 (all high schools), 60 (with high school clusters 65,70,79),  61 (with high school cluster 65), 63 (with high school clusters 68, 70), 69 (with high school clusters 65, 79), 70 (with high school clusters 65, 68, 70, 75), 73 (with all high schools), 78 (with high school cluster 66). Orders also included all high school categorized under high school cluster 79. 
 
-We analyze University of Illinois at Urbana-Champaign using these filters across several metropolitan areas by comparing the average racial and economic characteristics of the resulting purchased prospects to the metropolitan areas' overall population' of public high school students. We select the population of public high school students within the metropolitan area as a comparison group for several reasons. First, similar to our analysis of zip code filters above, the university included entire metropolitan areas as filters that should hypothetically provide an equitable opportunity for all prospects living in the area to be included in student lists purchased by the university. However, the combination of segment and additional academic filters may result in disparities across which prospects are included and not included. 
+We analyze orders by the University of Illinois at Urbana-Champaign that use these filters across several metropolitan areas by comparing the average racial and economic characteristics of the resulting purchased prospects to the metropolitan areas' overall population' of public high school students. We select the population of public high school students within the metropolitan area as a comparison group for several reasons. First, similar to our analysis of zip code filters above, the university included entire metropolitan areas as filters that should hypothetically provide an equitable opportunity for all prospects living in the area to be included in student lists purchased by the university. However, the combination of segment and additional academic filters may result in disparities across which prospects are included in comparison to the average population of the metropolitan area. 
 
+Figure \@ref(fig:metro-race) shows the racial/ethnic characteristics of purchased prospects versus the population of students attending public high schools in three metropolitan areas that were included across all eight orders by the University of Illinois at Urbana-Champaign using graduating lass, state, CBSA, segment, SAT or PSAT, and GPA filters. For example, the top panel shows the resulting student lists for University of Illinois at Urbana-Champaign that targeted prospects within the Los Angeles metropolitan area using these filters. The brown bars indicate the students lists for these orders resulted in 18,420 purchased prospects living in the metropolitan area. About 30% of purchased prospects identified as White, 49% as Asian, 1% as Black, 9% as Latinx, and 7% as multiracial. In comparison, the blue bars in the figure indicate the population of public high school students in the Los Angeles metropolitan area are 18% White, 13% Asian, 6% Black, 60% Latinx, and 3% Multiracial.
 
 ```{r metro-race, fig.height = 5, fig.cap = 'Metro area purchases by race'}
 fig_rq3_segment_race_inc %>% 
@@ -833,8 +834,15 @@ fig_rq3_segment_race_inc %>%
   facet_wrap(~ metro, ncol = 1)
 ```
 
+Across orders using graduation class, segment, SAT or PSAT, and GPA filters within the Los Angeles, Philadelphia, and New York Metropolitan areas, prospect lists resulted in higher percentages of White and Asian students relative to the population of public high school students within each metropolitan area. The overrepresentation of White prospects in student lists relative to the population of public high school students ranged from 12 to 17 percentage points across the three metropolitan areas. Purchased prospects within the Los Angeles metropolitan areas exemplified the largest disparity for Asian students, with 49% of purchased prospects identifying as Asian relative to the 13% of public high school students identifying as Asian within the metropolitan area (a 36 percentage point difference). 
+
+Figure \@ref(fig:metro-race) shows Black and Latinx prospects were underrepresented relative to public school students across all three metropolitan areas. Orders made within the Philadelphia metropolitan area exemplify the largest magnitude in this disparity for Black students, with Black students making up less than 2% of purchased prospects while making up more than 25% of all public high school students in the metropolitan area. The underrepresentation of Black prospects in comparison to public high school students was 16 percentage points for the New York and 3 percentage points for the Los Angeles metropolitan areas. On the other hand, the Los Angeles metropolitan area exemplified the largest disparity for Latinx students (9% Latinx purchased prospects versus 60% Latinx public high school students).  The underrepresentation of Latinx prospects in comparison to public high school students was 8 percentage points for the Philadelphia and 24 percentage points for the New York metropolitan areas.
+
+
 ```{r metro-income, fig.height = 2.5, fig.cap = 'Metro area purchases by income'}
 fig_rq3_segment_race_inc %>% 
+  mutate(
+    population = recode_factor(population, 'Prospects Purchased' = 'Prospects purchased', 'Public HS Students' = 'All Metro Households')) %>%
   select(metro, population, income) %>% 
   ggplot(aes(x = income, y = metro, fill = population, width = 0.6)) + 
   geom_bar(position = position_dodge(width = 0.7), stat = 'identity') +
@@ -843,6 +851,17 @@ fig_rq3_segment_race_inc %>%
   xlab('Income ($)') + ylab('Metro area') +
   guides(fill = guide_legend(reverse = T))
 ```
+
+
+Figure \@ref(fig:metro-income) presents the average median household income of purchased prospects (taken at the 5-digit zip code level) in comparison to the median household income of the entire metropolitan area. For example, the median income across all households in the Philadelphia metropolitan area is \$75,000, whereas prospects living within the metropolitan area purchased by the University of Illinois at Urbana-Champaign had an average median household income of \$114,000. Prospects purchased tended to have higher median average household incomes than the average across all households within the Los Angeles and New York metropolitan areas also. The difference was nearly \$50,000 for New York and \$30,000 for Los Angeles. 
+
+
+
+
+
+
+
+
 
 
 
