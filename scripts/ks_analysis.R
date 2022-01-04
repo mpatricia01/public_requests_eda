@@ -48,6 +48,24 @@ library(eatATA)
     # remove ASU from orders_df too
     orders_df <- orders_df %>% filter(univ_id!="104151") 
     
+    orders_df %>% 
+      summarise(n=n_distinct(univ_id)) 
+    
+    orders_df %>% 
+      summarise(n=n_distinct(order_num)) 
+    
+    lists_orders_zip_hs_df %>% 
+      summarise(n=n_distinct(univ_id)) 
+    
+    lists_orders_zip_hs_df %>% 
+      summarise(n=n_distinct(ord_num)) 
+    
+    lists_df %>% 
+      summarise(n=n_distinct(univ_id)) 
+    
+    orders_df %>% count(univ_id)
+    lists_df %>% count(univ_id)
+    
 ################### CREATING AND CLEANING OUT_OF_STATE & GENDER VARS NEEDED FOR FUNCTION
     
     # KS CHECKS
