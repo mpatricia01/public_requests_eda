@@ -1220,7 +1220,14 @@ library(eatATA)
         # New York = 83,160
         # LA metro =77,774
 
-    
+    fig_rq3_segment_race_inc <- fig_rq3_segment_race %>% 
+      mutate(
+        income = c(
+          philly_studentlist_inc$stu_mean_inc, 74533,
+          ny_studentlist_inc$stu_mean_inc, 83160,
+          la_studentlist_inc$stu_mean_inc, 77774
+        )
+      )
         
         
         
@@ -1232,5 +1239,5 @@ save(lists_orders_zip_hs_df, file = file.path("/Users/karinasalazar/Dropbox", 'l
 save(orders_df, file = file.path("/Users/karinasalazar/Dropbox", 'orders_df.RData'))
 save(acs_race_zipcodev3, file = file.path("/Users/karinasalazar/Dropbox", 'acs_race_zipcodev3.RData'))
 
-save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
+save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, fig_rq3_segment_race_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
             

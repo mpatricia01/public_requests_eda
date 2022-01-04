@@ -734,15 +734,24 @@ We analyze the relationship between filter criteria and the characteristics of p
 
 ### Prospect Characteristics Across Individual Filters
 
-Table X presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of 1,967,352 prospects]. 
+Table \@ref(tab:prospects-filters) presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of 1,967,352 prospects]. 
 
 Focusing on the racial characteristics of prospects, student lists with the largest percentages of White and Asian prospects result when orders use PSAT, gender, segment, or CBSA filters. For example, orders that specify a gender filter result in prospect lists that are less than 10% Black, Latinx, and/or Native American. This pattern is consistent in prospect lists that use segment or CBSA filters, although the disparity is not as large for orders using a PSAT filter (30% Black, Latinx, Native America).  On the other hand, orders that filter by specifying particular race/ethnicity groups result in lists that have fewer White and Asian prospects and greater proportions of Black, Latinx, Native American, and multiracial prospects. This coincides with descriptive findings above that suggest more than half of all orders using a race/ethnicity filter specified Black, Native American, and/or Latinx prospects.
+
+```{r prospects-filters}
+df_rq3 %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  mutate_each(funs(prettyNum(., big.mark = ','))) %>% 
+  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'Race', 'Gender', 'Zip code', 'State', 'Segment', 'CBSA'), align = c('l', rep('c', 11)), caption = 'Characteristics of prospects by filters') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = 'scale_down')
+```
 
 Similar disparities are evident across the economic characteristics of prospect lists by filters used. Orders using PSAT, gender, segment, or CBSA filters result in prospect lists with the largest average median household incomes. Orders using a CBSA filter showcase the upper extreme of this pattern, resulting in lists where the average prospect lived in a zipcode where the median household income \$113,000. Similarly, orders using race/ethnicity filters showcased the lower extreme. When universities purchased orders that filtered for specific race/ethnicity groups, the resulting lists included prospects that lived in zip codes where the average median household income was less than $85,000. 
 
 Not surprisingly, orders using geographic filters result in specific patterns of in-state versus out-of-state prospects. However, analyzing the residency status of prospect lists across filters can help us develop insights into how specific filters are used to target prospects geographically. For example, orders using segment and CBSA filters are likely used for targeting out-of-state students, as the use of these filters result in prospect lists made up of 85% and 96% out-of-state prospects, respectively. However, orders filtering for prospects within specific state(s) result in list that are nearly equal proportions of out-of-state and in-state students. Coinciding with descriptive statistics detailed above and data limitations (i.e., we only received zip codes used to filter order lists by two master's universities in our sample), nearly 98% of prospects resulting from orders using a zip code filter were in-state students. Similar to disparities in racial and economic characteristics of prospects, orders using a gender filter also resulted in geographical disparities (94% out-of-state versus 6% in-state).  
 
-Lastly, table X shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average 14% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use race/ethnicity or state filters result in students lists with the minimum proportion of prospects attending private schools (7%).
+Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average 14% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use race/ethnicity or state filters result in students lists with the minimum proportion of prospects attending private schools (7%).
 
 
 ### Prospect Characteristics Across Combinations of Filters
@@ -805,6 +814,32 @@ The University of Illinois at Urbana-Champaign made eight orders using graduatio
 We analyze University of Illinois at Urbana-Champaign using these filters across several metropolitan areas by comparing the average racial and economic characteristics of the resulting purchased prospects to the metropolitan areas' overall population' of public high school students. We select the population of public high school students within the metropolitan area as a comparison group for several reasons. First, similar to our analysis of zip code filters above, the university included entire metropolitan areas as filters that should hypothetically provide an equitable opportunity for all prospects living in the area to be included in student lists purchased by the university. However, the combination of segment and additional academic filters may result in disparities across which prospects are included and not included. 
 
 
+```{r metro-race, fig.height = 4, fig.cap = 'Metro area purchases by race'}
+fig_rq3_segment_race_inc %>% 
+  select(-income, -tot_students) %>% 
+  pivot_longer(c(-metro, -population), names_to = 'race', values_to = 'pct') %>% 
+  ggplot(aes(x = pct, y = metro, fill = population, width = 0.6)) + 
+  geom_bar(position = 'dodge', stat = 'identity', alpha = 0.6) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Population') +
+  xlab('Percentage') + ylab('Metro area') +
+  theme(
+    strip.background = element_blank(),
+    strip.text = element_text(face = 'bold')
+  ) +
+  guides(fill = guide_legend(reverse = T)) +
+  facet_wrap(~ race)
+```
+
+```{r metro-income, fig.height = 2.5, fig.cap = 'Metro area purchases by income'}
+fig_rq3_segment_race_inc %>% 
+  select(metro, population, income) %>% 
+  ggplot(aes(x = income, y = metro, fill = population, width = 0.6)) + 
+  geom_bar(position = position_dodge(width = 0.7), stat = 'identity', alpha = 0.6) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Population') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 131000), labels = label_number(suffix = 'K', scale = 1e-3)) +
+  xlab('Income ($)') + ylab('Metro area') +
+  guides(fill = guide_legend(reverse = T))
+```
 
 
 
