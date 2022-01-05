@@ -59,9 +59,9 @@ color_palette <- c('#ba9a88', '#bbcfd7')
 ```
 
 
-# Executive Summary
+<!-- # Executive Summary -->
 
-TEXT
+<!-- TEXT -->
 
 # Introduction
 
@@ -352,7 +352,7 @@ __Analysis sample__. Given that prior research has not analyzed student list pur
 
 <!-- NEED TO FLESH THIS OUT. ANALYSIS SAMPLE IS NOT THIS SIMPLE. SOME UNIVS GAVE US BOTH ORDER SUMMARIES AND LISTS BUT THEY DON"T MATCH. Our analysis sample consists of 12 universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data. -->
 
-To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [Gordon, 2021](https://edsource.org/2021/sat-and-act-slip-in-priority-among-california-high-school-students/663354#:~:text=According%20to%20a%20College%20Board,whom%20took%20it%20before%20shutdowns.). Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [Rado, 2016](https://www.chicagotribune.com/news/ct-illinois-chooses-sat-met-20160211-story.html). In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
+To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [@RN0008]. Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [@RN0009]. In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
 
 Our inability to obtain data from all universities creates external validity concerns. Ideally, our analysis dataset includes all College Board student lists for the entire population of public universities in our data collection sample, or at least a random sample of these universities. Unfortunately, our analysis sample cannot be considered a random sample. Moreover, we suspect that non-response was systematically related to factors of substantive interest. For example, we were less successful obtaining records from universities that outsourced student list purchases to consulting firms. In turn, response bias affects external validity. Based on our results, we cannot make inferences about the population of universities in the four data collection states. Nor can we make inferences about the broader population of US public universities.
 
@@ -571,7 +571,10 @@ orders_df %>%
   kable_styling(position = 'center')
 ```
 
-The twenty two orders using segment filters were made by two public research universities in the sample. Figure \@ref(fig:orders-cluster) shows which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY?
+The twenty two orders using segment filters were made by two public research universities in the sample. Figure \@ref(fig:orders-cluster) shows which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79.
+
+<!-- Paragraph above: ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY? -->
+
 
 ```{r orders-cluster, out.width = '100%', fig.cap = 'Filter by neighborhood and high school segments', fig.show = 'hold', fig.align = 'center'}
 knitr::include_graphics(c(file.path(data_dir, 'cluster_EN.png'), file.path(data_dir, 'cluster_HS.png')))
