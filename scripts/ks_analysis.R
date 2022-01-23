@@ -66,6 +66,56 @@ library(eatATA)
     orders_df %>% count(univ_id)
     lists_df %>% count(univ_id)
     
+################### CHECKING URBANA CHAMPAIGN
+  
+  #BELOW USES RAW DATA TO UNDERSTAND HOW OZAN CREATED RACE/ETHNICITY COMMON VAR
+    # checking raw data; does not include Ozan's maniputlations 
+    #load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combined_data.RData'))
+    
+    # create list_df of just urbana
+    urbana <- lists_df %>% filter(univ_id==145637)
+    
+    # Urbana says that 74% of respondents did not fill out the race/ethnicity question; true NAs
+    # Ozan's race var creation (line 587 in create_combined. R) assumes if is_hispanic_orgin is NA then is_hispanic_orgin==0
+    urbana %>%
+      group_by(is_hispanic_origin) %>%
+      summarise(n = n()) %>%
+      mutate(freq = n / sum(n))
+    
+    # how many missing race & ethnicity?
+    urbana %>%
+      group_by(is_hispanic_origin, race) %>%
+      summarise(n = n()) %>%
+      mutate(freq = n / sum(n)) %>% print(n=200)
+    
+    
+  # compare to other research univs; UC Davis (47% Hispanic)
+    lists_df %>% filter(univ_id==110644 | univ_id==145637) %>%
+      group_by(univ_name, race_cb) %>%
+      summarise(n = n()) %>%
+      mutate(pct = (n / sum(n))*100) %>% print(n=200)
+    
+  # compare to other research univs; UC San Diego (26% Hispanic)
+    lists_df %>% filter(univ_id==110680 | univ_id==145637) %>%
+      group_by(univ_name, race_cb) %>%
+      summarise(n = n()) %>%
+      mutate(pct = (n / sum(n))*100) %>% print(n=200)
+    
+    # compare to other research univs; UI Chicago (17% Hispanic)
+    lists_df %>% filter(univ_id==145600 | univ_id==145637) %>%
+      group_by(univ_name, race_cb) %>%
+      summarise(n = n()) %>%
+      mutate(pct = (n / sum(n))*100) %>% print(n=200)
+    
+    # compare to other research univs; Texas A&M CS (29% Hispanic)
+    lists_df %>% filter(univ_id==228723 | univ_id==145637) %>%
+      group_by(univ_name, race_cb) %>%
+      summarise(n = n()) %>%
+      mutate(pct = (n / sum(n))*100) %>% print(n=200)
+    
+    
+    #looks across two similar orders in one metro
+    
 ################### CREATING AND CLEANING OUT_OF_STATE & GENDER VARS NEEDED FOR FUNCTION
     
     # KS CHECKS
