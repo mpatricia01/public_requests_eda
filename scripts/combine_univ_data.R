@@ -184,13 +184,12 @@ n_distinct(orders_df_110644$order_num)  # 5 order summaries
 n_distinct(lists_df_110644$order_no)  # 5 lists
 
 # Only have 5 College Board order summaries from Oct 2020 so far
-# No HS code in student list - need to request
 
 # potentially missing variables (not all important) [ozan 10/18/2021]
   #order_names %>% anti_join(y=(names(orders_df_110644) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
     # orders df: # num_runs, date_end, created_by, date_updated, source_file
    #list_names %>% anti_join(y=(names(lists_df_110644) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
-    # lists df: gender, hs_code, geomarket, city, state, low_ses, post_del, post_corr, other (race category), name_source, update_date, low_ses
+    # lists df: gender, geomarket, city, state, low_ses, post_del, post_corr, other (race category), name_source, update_date, low_ses
     # 
 
 
@@ -227,13 +226,20 @@ n_distinct(lists_df_147776$order_no)  # 1 list
 orders_df_147776$order_num
 
 
+# Illinois State University (145813)
+load(file = file.path(data_dir, '145813_data.RData'))
+
+n_distinct(orders_df_145813$order_num)  # 17 order summaries
+n_distinct(lists_df_145813$order_no)  # 17 lists
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776, orders_df_145813
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654, lists_df_147776
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654, lists_df_147776, lists_df_145813
 )
 
 names(orders_df)
