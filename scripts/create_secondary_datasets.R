@@ -294,6 +294,15 @@ privhs_data_1718 <- readRDS(file.path(data_dir, 'pss_1718.RDS'))
     
   
 ## APPEND PUBLIC AND PRIVATE HIGH SCHOOL DATA
+    
+  # Unclass haven_labelled columns
+    pubhs_data <- pubhs_data %>% mutate(
+      pub_sch_type = unclass(pub_sch_type)
+    )
+    
+    privhs_data <- privhs_data %>% mutate(
+      priv_sch_type = unclass(priv_sch_type)
+    )
 
   # Combine data
     pubhs_privhs_data <- dplyr::bind_rows(
@@ -485,11 +494,11 @@ univ_data <- readRDS('./data/ipeds_1718.RDS') %>%
 ## CALIFORNIA DEPARTMENT OF EDUCATION DATA
 ## -----------------------------------------------------------------------------
 
-cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
+# cds_nces <- readr::with_edition(1, read_csv(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/CDS_NCES_crosswalk.csv'))) %>% mutate(ncessch = str_c(NCESDist, NCESSchool))
   # note: because using readr version 2.0, must use readr::with_edition() to overcome this error: The size of the connection buffer (131072) was not large enough to fit a complete line: * Increase it by setting `Sys.setenv("VROOM_CONNECTION_SIZE")`
 
   # This seems to be data about California public schools
-  cds_nces %>% glimpse()
-  cds_nces %>% group_by(CDSCode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
-  cds_nces %>% count(SOCType)
-  cds_nces %>% count(State) # california or missing
+  # cds_nces %>% glimpse()
+  # cds_nces %>% group_by(CDSCode) %>% summarise(n_per_key=n()) %>% ungroup() %>% count(n_per_key) # uniquely identifies obs
+  # cds_nces %>% count(SOCType)
+  # cds_nces %>% count(State) # california or missing

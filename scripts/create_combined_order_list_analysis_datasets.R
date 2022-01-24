@@ -1147,8 +1147,8 @@ lists_orders_zip_df <- lists_orders_df %>%
     #lists_orders_zip_hs_df %>% filter(stu_in_us==1,!is.na(stu_ceeb)) %>% count(na_hs) %>% mutate(freq = (n / sum(n)) * 100) # 94.2% of students merge
     
   # anti-merge
-    lists_orders_zip_hs_anti <- lists_orders_zip_df %>% anti_join(ceeb_hs, by = c('stu_ceeb' = 'ceeb')) #80K obs
-    lists_orders_zip_hs_anti <- lists_orders_zip_hs_anti %>% filter(!is.na(stu_ceeb)) # 70K obs that have a 6 digit ceeb code
+    # lists_orders_zip_hs_anti <- lists_orders_zip_df %>% anti_join(ceeb_hs, by = c('stu_ceeb' = 'ceeb')) #80K obs
+    # lists_orders_zip_hs_anti <- lists_orders_zip_hs_anti %>% filter(!is.na(stu_ceeb)) # 70K obs that have a 6 digit ceeb code
     
     #lists_orders_zip_hs_anti %>% glimpse() 
     #lists_orders_zip_hs_anti %>% count(stu_in_us) %>% mutate(freq = (n / sum(n)) * 100) # 72.9% in US
@@ -1204,5 +1204,5 @@ lists_orders_zip_df <- lists_orders_df %>%
       #)
       # prospects w/ missing hs data live in zip-codes with lower pct white, and somewhat higher pct black, higher pct asian, higher pct hispanic
     
-    rm(lists_orders_zip_hs_anti)
+    # rm(lists_orders_zip_hs_anti)
 
