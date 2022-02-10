@@ -116,6 +116,19 @@ library(eatATA)
     
     #looks across two similar orders in one metro
     
+    
+################### CHECKING UNIV ILLINOIS SPRINGFIELD
+    
+    orders_df %>% filter(univ_id==148654) %>% count(order_num, num_students) %>% print(n=220)
+    
+    orders_df %>% filter(univ_id==148654) %>%  summarise(across(num_students, sum)) #229,541 total students we cant link to order_num
+    
+    load("~/public_requests_eda/data/148654_data.RData")
+    
+    lists_df_148654 %>% count(source) %>% View() 
+    
+    
+    
 ################### CREATING AND CLEANING OUT_OF_STATE & GENDER VARS NEEDED FOR FUNCTION
     
     # KS CHECKS
@@ -157,8 +170,14 @@ library(eatATA)
     
     lists_orders_zip_hs_df %>% count(stu_gender)
     
+    lists_orders_zip_hs_df <-  lists_orders_zip_hs_df %>% mutate(
+      stu_women_dummy = ifelse(stu_gender=="F"| stu_gender=="Female", 1, NA_integer_),
+      stu_women_dummy = ifelse(stu_gender=="M"| stu_gender=="Male", 0, stu_women_dummy)
+      
+    )
     
-
+    lists_orders_zip_hs_df %>% count(stu_gender, stu_women_dummy)
+    
 ################### ANALYSIS VISUALS FOR RQ1: CHARACTERISTICS OF ORDERS
     
     # unique IDs for order nums
@@ -652,6 +671,10 @@ library(eatATA)
         
         df_int2 <- lists_orders_zip_hs_df %>% count(stu_internat)
         
+        
+    # checking for missingness
+        
+        lists_orders_zip_hs_df %>% count(hs_school_control)
         
         
 ################### ANALYSIS & VISUALS FOR RQ3
@@ -1298,8 +1321,198 @@ library(eatATA)
       )
         
         
-        
+    ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Women in STEM Example for UC San Diego
+    
+    #check orders that used female
+    orders_df %>% filter(gender=="Female") %>% count(univ_name,univ_id)
+    
+      # Focus on UC San Diego Orders
+      orders_gender <- orders_df %>% filter(gender=="Female" & univ_id==110680)
+      
+        # order titles
+          orders_gender %>% count(order_title) #6 order for in-state, 6 for out-of-state
+          orders_gender <- orders_gender %>% mutate(
+            instate = ifelse(str_detect(order_title, "CA"), 1, 0)
+          )
+          
+          orders_gender %>% count(instate) #5 order for in-state, 6 for out-of-state
+          
+        # filters used
+          
+              # GPA-- all orders used high A+ and low of B
+              orders_gender %>% group_by(instate) %>% count(gpa_high, gpa_low)
+          
+              #SAT
+              orders_gender %>% group_by(instate) %>% count(sat_score_min, sat_score_max)
+              
+              #For Field they used EITHER major OR AP scores
+              orders_gender %>% group_by(instate) %>% count(major, ap_scores)
+              orders_gender %>% count(ap_scores)
+              
+              # two different types of order filters by AP Scores
+              #exact same fields, except one set scores are filtered 4-5 another are 3-5
+               # 1 type --- 2 type 
+              "Biology~4~5 --- Biology~3~5
+              Chemistry~4~5 --- Chemistry~3~5
+              Computer Science A~4~5 --- Computer Science A~3~5
+              CompSciP~4~5 --- CompSciP~3~5
+              Environmental Science~4~5 --- Environmental Science~3~5
+              Calculus AB~4~5 --- Calculus AB~3~5
+              Calculus BC~4~5 --- Calculus BC~3~5
+              Physics 1 ~4~5 --- Physics 1~3~5
+              Physics 2 ~4~5 --- Physics 2~3~5
+              Physics B ~4~5 --- Physics B~3~5
+              Physics C: Electricity and Magnetism~4~5 --- Physics C: Electricity and Magnetism~3~5
+              Physics C: Mechanics~4~5 --- Physics C: Mechanics~3~5
+              Statistics~4~5 ---  Statistics~3~5" 
+              
+              #create score range var for AP filters
+              
+              orders_gender <- orders_gender %>% mutate(
+                ap_score_range = ifelse(str_detect(ap_scores, "3~5"), "3~5", "4-5")
+              )
+              
+              orders_gender %>% count(ap_scores, ap_score_range)
+              orders_gender %>% group_by(instate) %>% count(ap_score_range) #in-state orders used only 3-5, both orders for 4-5 are out of state
+              
+              # how many students purchased
+              orders_gender %>%  summarise(total_orders = n(),
+                                           total_students = sum(num_students, na.rm = T))
+              
+        # resulting student lists 
+         list_gender  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_gender$order_num)
+    
+           # how many students purchased
+            list_gender %>%  summarise(total_students = n())
+            # unique IDs for order nums
+            lists_orders <- list_gender %>%
+              count(ord_num)  #ONLY have data for 8 orders???
+            
+            #which orders do I have lists for?
+            orderswlists_gender  <-   subset(orders_gender, order_num %in% lists_orders$ord_num)
+            orderswlists_gender %>% group_by(instate) %>% count(major, ap_scores)
+                  # 5-outofstate: 3 use Major and 2 use AP scores 4-5
+                  # 3 in-state: 1 uses Major and 2 use AP scores 3-5
+            
+            #create order vars in lists df
+            list_gender <- merge(x = list_gender, y = orderswlists_gender[ , c("instate", "major", "ap_score_range", "order_num")], by.x  = "ord_num", by.y  = "order_num", all.x=TRUE)
 
+            
+       #income characteristics
+            list_gender %>% group_by(instate) %>% count() #10.6k out of state versus 2.3k in-state
+            
+            list_gender %>% group_by(instate) %>% select(zip_median_household_income) %>%
+              summarise(across(
+                .cols = where(is.numeric), 
+                .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
+                .names = "{col}_{fn}"
+              ))
+            
+          #race characteristics
+            list_gender %>% group_by(instate) %>%
+              count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+            
+              #instate= 56% White; 30% Asian; 2% Black, 5% Latinx, 4%multiracial, 0% Native
+              #outofstate= 32% White; 41% Asian; 1% Black, 14% Latinx, 6%multiracial, 0% Native
+       
+          
+            
+            
+    ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Targeting Students of Color
+            
+            #check orders that used race/ethnicity explicitly
+            orders_df %>%  count(race_ethnicity)
+            orders_df$race_ethnicity[orders_df$race_ethnicity==''] <- NA
+            
+            race_orders <- orders_df %>% filter(!is.na(race_ethnicity))
+            race_orders %>%  count(race_ethnicity)
+            race_orders %>%  pull(race_ethnicity) #printing really long string
+            
+            
+        # create new categorical race filters var
+            race_orders <- race_orders %>% mutate(
+              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native", "Native American", NA_character_),
+              race_filter = ifelse(race_ethnicity=="Black or African American", "Black", race_filter),
+              race_filter = ifelse(race_ethnicity=="Cuban|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx", race_filter),
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian", race_filter),
+              
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian, White", race_filter),
+              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|Native Hawaiian or Other Pacific Islander", "Native American, Native Hawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx, Native American", race_filter),
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)|Native Hawaiian or Other Pacific Islander", "Asian, NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx, Black", race_filter),
+              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban", "Latinx, Black, Native American", race_filter), 
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|White (including Middle Eastern origin)|Other", "Asian, White", race_filter), 
+              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Native Hawaiian or Other Pacific Islander|Cuban", "Latinx, Black, Native American, NativeHawaii/PI ", race_filter),
+              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|\rAsian (including Indian subcontinent and Philippines origin)|Cuban|\rBlack or African American|\rHispanic or Latino (including Spanish origin)|\rMexican|\rPuerto Rican|\rOther Hispanic or Latino|\rNative Hawaiian or Other Pacific Islander", "Latinx, Black, Asian, Native American", race_filter)            )
+            
+            
+            race_orders %>%  count(race_filter, race_ethnicity)
+            race_orders %>%  count(race_filter)
+            
+        
+          #universities using race/ethnicity filter
+            race_orders %>% count(univ_name)
+            
+            
+              # Texas A&M CS- 10 orders for Latinx, Black students (4 instate, 6 out of state)
+                race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(race_filter)
+                race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(race_filter, state_name)
+                race_orders %>%  filter(univ_name=="Texas A & M University-College Station") %>% summarise(total_orders = n(),
+                                            total_students = sum(num_students, na.rm = T))                
+                
+                orders_num <- race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(order_num)
+                orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
+                orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists
+                
+                    #other filters used with race/ethnicity
+                    race_orders_univ <- race_orders %>% filter(univ_name=="Texas A & M University-College Station")
+                    race_orders_univ %>% count(order_title, race_filter)
+                    
+                    
+              # University of Illinois at Urbana-Champaign - Across all race/ethnicity but All are for in-state students
+                race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter)
+                race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter, state_name)
+                race_orders %>%  filter(univ_name=="University of Illinois at Urbana-Champaign") %>% summarise(total_orders = n(),
+                                                                                                           total_students = sum(num_students, na.rm = T))                
+                
+                orders_num <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(order_num)
+                orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
+                orderswlists_race %>% count(ord_num) # we have 51/53 orders' resulting student lists
+                
+                        #other filters used with race/ethnicity
+                        race_orders_univ <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign")
+                        race_orders_univ %>% count(order_title, race_filter) %>% print(n=60)
+                        
+                
+                
+              # University of California-San Diego- 7 orders for Latinx, Native American (2 instate, 5 out of state)
+                race_orders %>% filter(univ_name=="University of California-San Diego") %>%  count(race_filter)
+                race_orders %>% filter(univ_name=="University of California-San Diego") %>%  count(race_filter, state_name)
+                race_orders %>%  filter(univ_name=="University of California-San Diego") %>% summarise(total_orders = n(),
+                                                                                                           total_students = sum(num_students, na.rm = T))                
+                
+                orders_num <- race_orders %>% filter(univ_name=="University of California-San Diego") %>%  count(order_num)
+                orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
+                orderswlists_race %>% count(ord_num) # we have 7/7 orders' resulting student lists
+                
+                      #other filters used with race/ethnicity
+                      race_orders_univ <- race_orders %>% filter(univ_name=="University of California-San Diego")
+                      race_orders_univ %>% count(order_title, race_filter) %>% print(n=60)
+                      
+           
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                      
+                           
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
 # FOR CRYSTAL
