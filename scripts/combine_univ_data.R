@@ -233,13 +233,22 @@ n_distinct(orders_df_145813$order_num)  # 17 order summaries
 n_distinct(lists_df_145813$order_no)  # 17 lists
 
 
+# University of California-Berkeley (110635)
+load(file = file.path(data_dir, '110635_data.RData'))
+
+n_distinct(lists_df_110635$order_no)  # 1 list
+
+# Pending corresponding order summary for that list above
+# Pending order summary + list for 23 additional College Board orders (known from invoices they've provided)
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
   orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776, orders_df_145813
 )
 
 lists_df <- dplyr::bind_rows(
-  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654, lists_df_147776, lists_df_145813
+  lists_df_145637, lists_df_224545, lists_df_228431, lists_df_174358, lists_df_174075, lists_df_110680, lists_df_228529, lists_df_104151, lists_df_228723, lists_df_110644, lists_df_145600, lists_df_148654, lists_df_147776, lists_df_145813, lists_df_110635
 )
 
 names(orders_df)
