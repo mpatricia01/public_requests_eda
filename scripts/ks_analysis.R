@@ -1463,11 +1463,11 @@ library(eatATA)
                 
                 orders_num <- race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(order_num)
                 orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
-                orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists
-                
+                orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists; we don't have orders for Latinx+Black
+
                     #other filters used with race/ethnicity
                     race_orders_univ <- race_orders %>% filter(univ_name=="Texas A & M University-College Station")
-                    race_orders_univ %>% count(order_title, race_filter)
+                    race_orders_univ %>% count(order_num, order_title, race_filter) #only have latinx orders
                     
                     
               # University of Illinois at Urbana-Champaign - Across all race/ethnicity but All are for in-state students
@@ -1553,6 +1553,25 @@ library(eatATA)
                          houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
                          houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
                          
+                            
+                            #KS analyses
+                              houston_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>% 
+                                group_by(ncessch, private) %>% 
+                                summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
+                                          total_prosp_black = sum(stu_race_black, na.rm = T),
+                                          total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
+                         
+                              houston_pubprivhs %>% group_by(private) %>% summarise(total_stu_latinx =  sum(total_hispanic, na.rm = T),
+                                                                                    total_prosp_black =  sum(stu_race_black, na.rm = T),
+                                                                                    total_prosp_latinx =  sum(stu_race_latinx, na.rm = T),)         
+                                
+                              orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") %>% count(ord_num)
+                              orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX" & stu_race_cb==3) %>% count(ord_num)
+                              race_orders %>% filter(order_num==449030) %>% count(race_filter)
+                              race_orders %>% filter(order_num==549428) %>% count(race_filter)
+                              race_orders %>% filter(order_num==449339) %>% count(race_filter)
+                              
+                              
                   #los angeles df
                     orderswlists_race_la <- orderswlists_race %>% filter(hs_cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA") 
                          
@@ -1596,7 +1615,16 @@ library(eatATA)
                          la_pubprivhs <- mutate(la_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
                          
                 
-                           
+                         #KS analyses
+                         la_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>% 
+                           group_by(ncessch, private) %>% 
+                           summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
+                                     total_prosp_black = sum(stu_race_black, na.rm = T),
+                                     total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
+                         
+                         
+                         
+                         
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
 # FOR CRYSTAL
