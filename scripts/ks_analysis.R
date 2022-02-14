@@ -1546,10 +1546,14 @@ library(eatATA)
                      houston_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX")
                   
                   # merge in purchased prospects
-                     houston_pubprivhs<- merge(x = houston_pubhs, y = school_lists, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
-                     
+                     houston_pubprivhs<- merge(x = houston_pubprivhs, y = school_lists, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
+                  
+                  # replace NAs to zeros
+                     houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
+                     houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
                      
 
+                
                            
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
