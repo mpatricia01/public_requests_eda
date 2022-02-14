@@ -1502,7 +1502,7 @@ library(eatATA)
                 #       
            
                       
-           # Use Texas A&M -- Look at Dallas, Houston, San Antonio; School-Level Aggregates           
+           # Use Texas A&M -- Look Houston (in-state) and Los Angeles (out of state); School-Level Aggregates           
                 
                     #check for missing school id
                     orderswlists_race %>% count(is.na(stu_hs_code)) #only 79 missing school IDs
@@ -1511,48 +1511,90 @@ library(eatATA)
                     #how many from each metro in-state versus out-of-state 
                     orderswlists_race %>% count(hs_cbsatitle_1) %>% arrange(-n) #houston, dallas, austin/san antonio
                     
-                    orderswlists_race <- orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") 
+                    #houston df
+                    orderswlists_race_tx <- orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") 
                     
-                    #create dummies of race/ethnicity & order filters to aggregate
-                    orderswlists_race <- orderswlists_race %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
-                                            stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
-                                            stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
-                                            stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
-                                            stu_race_black = ifelse(stu_race_cb==3, 1, 0),
-                                            stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
-                                            stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
-                                            stu_race_white = ifelse(stu_race_cb==9, 1, 0),
-                                            stu_race_other = ifelse(stu_race_cb==10, 1, 0),
-                                            stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
-                                            stu_ordertype1 = ifelse(ord_title=="2020 PSAT NH 1270-1420 NM,OK,AR (H)", 1, 0),
-                                            stu_ordertype2 = ifelse(ord_title=="2020 PSAT NH 1270-1470 TX (H_include all)", 1, 0),
-                                            stu_ordertype3 = ifelse(ord_title=="2020 PSAT NH 1280-1470 CO,CA (H)", 1, 0),
-                                            stu_ordertype4 = ifelse(ord_title=="2020 PSAT NH 1370-1420 MS,AL,SC (H)", 1, 0),
-                                            stu_ordertype5 = ifelse(ord_title=="2020 PSAT NH 1370-1450 LA,KY,TN,FL (H)", 1, 0),
-                                            stu_ordertype6 = ifelse(ord_title=="2020 PSAT NH 1370-1470 GA,VA (H)", 1, 0),
-                                            stu_ordertype7 = ifelse(ord_title=="2021 PSAT NH 1290-1520 TX (H)", 1, 0),
-                                            stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))                                                                    
-                    
-                    
-                    #aggregate student list data to school-level with total num students + race/ethnicity       
-                     school_lists <- orderswlists_race %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
-                                                       stu_race_aian, stu_race_asian, stu_race_black,
-                                                       stu_race_latinx, stu_race_nhpi, stu_race_white,
-                                                       stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
-                                                       stu_ordertype4, stu_ordertype5, stu_ordertype6, stu_ordertype8) %>% group_by(hs_ncessch) %>% summarize_all(sum)
-                    
-
-                   # now create school df with total students versus student prosp purchased for Houston
-                     houston_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX")
-                  
-                  # merge in purchased prospects
-                     houston_pubprivhs<- merge(x = houston_pubprivhs, y = school_lists, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
-                  
-                  # replace NAs to zeros
-                     houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
-                     houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
-                     
-
+                        #create dummies of race/ethnicity & order filters to aggregate
+                        orderswlists_race_tx <- orderswlists_race_tx %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
+                                                stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
+                                                stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
+                                                stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
+                                                stu_race_black = ifelse(stu_race_cb==3, 1, 0),
+                                                stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
+                                                stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
+                                                stu_race_white = ifelse(stu_race_cb==9, 1, 0),
+                                                stu_race_other = ifelse(stu_race_cb==10, 1, 0),
+                                                stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
+                                                stu_ordertype1 = ifelse(ord_title=="2020 PSAT NH 1270-1420 NM,OK,AR (H)", 1, 0),
+                                                stu_ordertype2 = ifelse(ord_title=="2020 PSAT NH 1270-1470 TX (H_include all)", 1, 0),
+                                                stu_ordertype3 = ifelse(ord_title=="2020 PSAT NH 1280-1470 CO,CA (H)", 1, 0),
+                                                stu_ordertype4 = ifelse(ord_title=="2020 PSAT NH 1370-1420 MS,AL,SC (H)", 1, 0),
+                                                stu_ordertype5 = ifelse(ord_title=="2020 PSAT NH 1370-1450 LA,KY,TN,FL (H)", 1, 0),
+                                                stu_ordertype6 = ifelse(ord_title=="2020 PSAT NH 1370-1470 GA,VA (H)", 1, 0),
+                                                stu_ordertype7 = ifelse(ord_title=="2021 PSAT NH 1290-1520 TX (H)", 1, 0),
+                                                stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))                                                                    
+                        
+                        
+                        #aggregate student list data to school-level with total num students + race/ethnicity       
+                         school_lists_tx <- orderswlists_race_tx %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
+                                                           stu_race_aian, stu_race_asian, stu_race_black,
+                                                           stu_race_latinx, stu_race_nhpi, stu_race_white,
+                                                           stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
+                                                           stu_ordertype4, stu_ordertype5, stu_ordertype6, stu_ordertype8) %>% group_by(hs_ncessch) %>% summarize_all(sum)
+                        
+    
+                       # now create school df with total students versus student prosp purchased for Houston
+                         houston_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX")
+                      
+                      # merge in purchased prospects
+                         houston_pubprivhs<- merge(x = houston_pubprivhs, y = school_lists_tx, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
+                      
+                      # replace NAs to zeros
+                         houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
+                         houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+                         
+                  #los angeles df
+                    orderswlists_race_la <- orderswlists_race %>% filter(hs_cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA") 
+                         
+                         #create dummies of race/ethnicity & order filters to aggregate
+                         orderswlists_race_la <- orderswlists_race_la %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
+                                                                                 stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
+                                                                                 stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
+                                                                                 stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
+                                                                                 stu_race_black = ifelse(stu_race_cb==3, 1, 0),
+                                                                                 stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
+                                                                                 stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
+                                                                                 stu_race_white = ifelse(stu_race_cb==9, 1, 0),
+                                                                                 stu_race_other = ifelse(stu_race_cb==10, 1, 0),
+                                                                                 stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
+                                                                                 stu_ordertype1 = ifelse(ord_title=="2020 PSAT NH 1270-1420 NM,OK,AR (H)", 1, 0),
+                                                                                 stu_ordertype2 = ifelse(ord_title=="2020 PSAT NH 1270-1470 TX (H_include all)", 1, 0),
+                                                                                 stu_ordertype3 = ifelse(ord_title=="2020 PSAT NH 1280-1470 CO,CA (H)", 1, 0),
+                                                                                 stu_ordertype4 = ifelse(ord_title=="2020 PSAT NH 1370-1420 MS,AL,SC (H)", 1, 0),
+                                                                                 stu_ordertype5 = ifelse(ord_title=="2020 PSAT NH 1370-1450 LA,KY,TN,FL (H)", 1, 0),
+                                                                                 stu_ordertype6 = ifelse(ord_title=="2020 PSAT NH 1370-1470 GA,VA (H)", 1, 0),
+                                                                                 stu_ordertype7 = ifelse(ord_title=="2021 PSAT NH 1290-1520 TX (H)", 1, 0),
+                                                                                 stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))                                                                    
+                         
+                         
+                         #aggregate student list data to school-level with total num students + race/ethnicity       
+                         school_lists_la <- orderswlists_race_la %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
+                                                                            stu_race_aian, stu_race_asian, stu_race_black,
+                                                                            stu_race_latinx, stu_race_nhpi, stu_race_white,
+                                                                            stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
+                                                                            stu_ordertype4, stu_ordertype5, stu_ordertype6, stu_ordertype8) %>% group_by(hs_ncessch) %>% summarize_all(sum)
+                         
+                         
+                         # now create school df with total students versus student prosp purchased for Houston
+                         la_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA")
+                         
+                         # merge in purchased prospects
+                         la_pubprivhs<- merge(x = la_pubprivhs, y = school_lists_la, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
+                         
+                         # replace NAs to zeros
+                         la_pubprivhs <- mutate(la_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
+                         la_pubprivhs <- mutate(la_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+                         
                 
                            
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
