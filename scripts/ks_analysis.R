@@ -10,6 +10,7 @@ library(labelled)
 library(tidyr)
 library(stringr)
 library(eatATA)
+library(readxl)
 
 ################### OPEN DATA BY OJ
 
@@ -1394,6 +1395,9 @@ library(eatATA)
                   # 5-outofstate: 3 use Major and 2 use AP scores 4-5
                   # 3 in-state: 1 uses Major and 2 use AP scores 3-5
             
+            #orders in MA
+            list_gender %>% count(stu_state)
+            
             #create order vars in lists df
             list_gender <- merge(x = list_gender, y = orderswlists_gender[ , c("instate", "major", "ap_score_range", "order_num")], by.x  = "ord_num", by.y  = "order_num", all.x=TRUE)
 
@@ -1459,33 +1463,40 @@ library(eatATA)
                 race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(race_filter)
                 race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(race_filter, state_name)
                 race_orders %>%  filter(univ_name=="Texas A & M University-College Station") %>% summarise(total_orders = n(),
-                                            total_students = sum(num_students, na.rm = T))                
-                
+                                            total_students = sum(num_students, na.rm = T))
+
                 orders_num <- race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(order_num)
                 orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
                 orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists; we don't have orders for Latinx+Black
 
                     #other filters used with race/ethnicity
                     race_orders_univ <- race_orders %>% filter(univ_name=="Texas A & M University-College Station")
-                    race_orders_univ %>% count(order_num, order_title, race_filter) #only have latinx orders
+                    race_orders_univ %>% count(order_num, hs_grad_class, order_title, race_filter) #only have latinx orders
+
                     
-                    
-              # University of Illinois at Urbana-Champaign - Across all race/ethnicity but All are for in-state students
-                # race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter)
-                # race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter, state_name)
-                # race_orders %>%  filter(univ_name=="University of Illinois at Urbana-Champaign") %>% summarise(total_orders = n(),
-                #                                                                                            total_students = sum(num_students, na.rm = T))                
-                # 
-                # orders_num <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(order_num)
-                # orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
-                # orderswlists_race %>% count(ord_num) # we have 51/53 orders' resulting student lists
-                # 
-                #         #other filters used with race/ethnicity
-                #         race_orders_univ <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign")
-                #         race_orders_univ %>% count(order_title, race_filter) %>% print(n=60)
-                        
-                
-                
+             # # University of Illinois at Urbana-Champaign - Across all race/ethnicity but All are for in-state students
+             #  race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter)
+             #  race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(race_filter, state_name)
+             #  race_orders %>%  filter(univ_name=="University of Illinois at Urbana-Champaign") %>% summarise(total_orders = n(),
+             #                                                                                             total_students = sum(num_students, na.rm = T))
+             # 
+             #  orders_num <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign") %>%  count(order_num)
+             #  orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
+             #  orderswlists_race %>% count(ord_num) # we have 51/53 orders' resulting student lists
+             # 
+             #          #other filters used with race/ethnicity
+             #          race_orders_univ <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign")
+             #          race_orders_univ %>% count(hs_grad_class,order_num, order_title, race_filter) %>% print(n=60)
+             #          
+             #          
+             #        #focus on pre-pandemic orders made in August 2017-then make inferences post pandemic "catch ups"  
+             #          orders_num <- race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>%  count(order_num)
+             #          orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
+             #          orderswlists_race %>% count(ord_num) # we have 5/5 orders for 2018/2019/2020 HS classes
+             #          race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(hs_grad_class,order_num, order_title, race_filter) %>% print(n=60)
+             #          race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% summarise(total_prosp_purchased = sum(num_students, na.rm = T)) #22,311
+             #          orderswlists_race %>% count() #we have 22,310 total students
+             #          
               # University of California-San Diego- 7 orders for Latinx, Native American (2 instate, 5 out of state)
                 # race_orders %>% filter(univ_name=="University of California-San Diego") %>%  count(race_filter)
                 # race_orders %>% filter(univ_name=="University of California-San Diego") %>%  count(race_filter, state_name)
@@ -1501,19 +1512,109 @@ library(eatATA)
                 #       race_orders_univ %>% count(order_title, race_filter) %>% print(n=60)
                 #       
            
-                      
-           # Use Texas A&M -- Look Houston (in-state) and Los Angeles (out of state); School-Level Aggregates           
-                
+           
+          # # Use UI Urbana-Champaign as in-state example-- IL
+          #             
+          #             #check for missing school id
+          #              orderswlists_race %>% count(is.na(stu_hs_code)) #only 52 missing school IDs
+          #              orderswlists_race %>% count(ord_title) 
+          #              orderswlists_race %>% count() 
+          #              
+          #              #how many from each metro 
+          #              orderswlists_race %>% count(hs_cbsatitle_1) %>% arrange(-n) #77% from Chicago; look at Zoomed Map of Chicago-- then explore rural schools?
+          #              orderswlists_race %>% filter(hs_cbsatitle_1=="Chicago-Naperville-Elgin, IL-IN-WI") %>% count() 
+          #              orderswlists_race %>% filter(hs_cbsatitle_1=="Chicago-Naperville-Elgin, IL-IN-WI") %>% count(stu_race_cb) #77% from Chicago; look at Zoomed Map of Chicago-- then explore rural schools?
+          #              
+          #             
+          #              #Chicago DF
+          #              orderswlists_race_chi <- orderswlists_race %>% filter(hs_cbsatitle_1=="Chicago-Naperville-Elgin, IL-IN-WI") 
+          #              
+          #              
+          #              #create dummies of race/ethnicity & order filters to aggregate
+          #              orderswlists_race_chi <- orderswlists_race_chi %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
+          #                                                   stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
+          #                                                   stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
+          #                                                   stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
+          #                                                   stu_race_black = ifelse(stu_race_cb==3, 1, 0),
+          #                                                   stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
+          #                                                   stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
+          #                                                   stu_race_white = ifelse(stu_race_cb==9, 1, 0),
+          #                                                   stu_race_other = ifelse(stu_race_cb==10, 1, 0),
+          #                                                   stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
+          #                                                   stu_ordertype1 = ifelse(ord_title=="IL 1450+ August 2017", 1, 0),
+          #                                                   stu_ordertype2 = ifelse(ord_title=="IL Lower Range August 2017", 1, 0),
+          #                                                   stu_ordertype3 = ifelse(ord_title=="IL Middle 50% August 2017 ", 1, 0),
+          #                                                   stu_ordertype4 = ifelse(ord_title=="PAP Honors August 2017", 1, 0),
+          #                                                   stu_ordertype5 = ifelse(ord_title=="PAP Traditional August 2017", 1, 0),
+          #                                                   stu_ordertype6 = ifelse(ord_title=="URM Lower Range August 2017", 1, 0))
+          # 
+          # 
+          #                           #aggregate student list data to school-level with total num students + race/ethnicity
+          #                         school_lists_chi <- orderswlists_race_chi %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
+          #                                                              stu_race_aian, stu_race_asian, stu_race_black,
+          #                                                              stu_race_latinx, stu_race_nhpi, stu_race_white,
+          #                                                              stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
+          #                                                              stu_ordertype4, stu_ordertype5, stu_ordertype6) %>% group_by(hs_ncessch) %>% summarize_all(sum)
+          # 
+          # 
+          #                          # now create school df with total students versus student prosp purchased for Houston
+          #                            chi_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Chicago-Naperville-Elgin, IL-IN-WI")
+          # 
+          #                         # merge in purchased prospects
+          #                            chi_pubprivhs<- merge(x = chi_pubprivhs, y = school_lists_chi, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
+          # 
+          #                         # replace NAs to zeros on student propects purchased from schools
+          #                            chi_pubprivhs <- mutate(chi_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
+          #                            chi_pubprivhs <- mutate(chi_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+          # 
+          # 
+          #                               #KS analyses
+          #                               
+          #                               # #academic filters used
+          #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(gpa_high, gpa_low)
+          #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, sat_score_min, sat_score_max)
+          #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, psat_score_min, psat_score_max)
+          #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, rank_high, rank_low)
+          #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, ap_scores)
+          #                                   
+          #                                   #all six orders use GPA=A+ to B-; RANK= highest tenth to second fifth; No AP score filters
+          #                                   
+          #                                   #total students purchased across different orders
+          #                                   orderswlists_race_chi %>%  group_by(ord_title, ord_race_ethnicity) %>% count(stu_race_cb) %>% print(n=40)
+          #                                               
+          #                                   #prospects from order "IL Middle 50% August 2017  FOR Asian, NativeHawaii/PI" (P)SAT=1280-1440
+          #                                   chi_pubprivhs %>% filter(stu_ordertype1==1) %>% summarise(total_prosp_asian = sum(stu_race_asian, na.rm = T))
+          #                                   
+          #                                   chi_pubprivhs %>% filter(stu_ordertype1==1) %>%
+          #                                       group_by(ncessch, private) %>%
+          #                                       summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
+          #                                                 total_prosp_asian = sum(stu_race_asian, na.rm = T),
+          #                                                 total_prosp_black = sum(stu_race_black, na.rm = T),
+          #                                                 total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
+          # 
+          #                                     houston_pubprivhs %>% group_by(private) %>% summarise(total_stu_latinx =  sum(total_hispanic, na.rm = T),
+          #                                                                                           total_prosp_black =  sum(stu_race_black, na.rm = T),
+          #                                                                                           total_prosp_latinx =  sum(stu_race_latinx, na.rm = T),)
+          # 
+          #                                     orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") %>% count(ord_num)
+          #                                     orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX" & stu_race_cb==3) %>% count(ord_num)
+          #                                     race_orders %>% filter(order_num==449030) %>% count(race_filter)
+          #                                     race_orders %>% filter(order_num==549428) %>% count(race_filter)
+          #                                     race_orders %>% filter(order_num==449339) %>% count(race_filter)
+
+                                
+              # Use Texas A&M -- Look Houston (in-state) and Los Angeles (out of state); School-Level Aggregates           
+
                     #check for missing school id
                     orderswlists_race %>% count(is.na(stu_hs_code)) #only 79 missing school IDs
                     orderswlists_race %>% count(ord_title) #
-                    
-                    #how many from each metro in-state versus out-of-state 
+
+                    #how many from each metro in-state versus out-of-state
                     orderswlists_race %>% count(hs_cbsatitle_1) %>% arrange(-n) #houston, dallas, austin/san antonio
-                    
+
                     #houston df
-                    orderswlists_race_tx <- orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") 
-                    
+                    orderswlists_race_tx <- orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX")
+
                         #create dummies of race/ethnicity & order filters to aggregate
                         orderswlists_race_tx <- orderswlists_race_tx %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
                                                 stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
@@ -1532,39 +1633,119 @@ library(eatATA)
                                                 stu_ordertype5 = ifelse(ord_title=="2020 PSAT NH 1370-1450 LA,KY,TN,FL (H)", 1, 0),
                                                 stu_ordertype6 = ifelse(ord_title=="2020 PSAT NH 1370-1470 GA,VA (H)", 1, 0),
                                                 stu_ordertype7 = ifelse(ord_title=="2021 PSAT NH 1290-1520 TX (H)", 1, 0),
-                                                stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))                                                                    
-                        
-                        
-                        #aggregate student list data to school-level with total num students + race/ethnicity       
+                                                stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))
+
+                      
+                        #aggregate student list data to school-level with total num prospects + prospect race/ethnicity       
                          school_lists_tx <- orderswlists_race_tx %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
                                                            stu_race_aian, stu_race_asian, stu_race_black,
                                                            stu_race_latinx, stu_race_nhpi, stu_race_white,
                                                            stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
                                                            stu_ordertype4, stu_ordertype5, stu_ordertype6, stu_ordertype8) %>% group_by(hs_ncessch) %>% summarize_all(sum)
-                        
-    
+
+
                        # now create school df with total students versus student prosp purchased for Houston
                          houston_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX")
-                      
+
                       # merge in purchased prospects
                          houston_pubprivhs<- merge(x = houston_pubprivhs, y = school_lists_tx, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
-                      
+
                       # replace NAs to zeros
                          houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
                          houston_pubprivhs <- mutate(houston_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+
+                      # merge in pub HS data on SAT scores
+                         houston_pubhs <- houston_pubprivhs %>% filter(private==0 & pub_sch_type==1) #only regular schools
+                         txhs<-read_xlsx("data/achievement data/satact-campus-data-class-2020.xlsx", sheet = "satact-campus-data-class-2020")
                          
-                            
+                         txhs$CampName <- toupper(txhs$CampName)
+                              #fix 5 obs not merging correctly
+                                txhs <- txhs %>% mutate(
+                                  CampName= ifelse(CampName=="DEER PARK H S", "DEER PARK HS", CampName),
+                                  CampName= ifelse(CampName=="CARVER H S FOR APPLIED TECH/ENGINE", "CARVER H S FOR APPLIED TECH/ENGINEERING/ARTS", CampName),
+                                  CampName= ifelse(CampName=="ENERGIZED FOR STEM ACADEMY SOUTHEA", "ENERGIZED FOR STEM ACADEMY SOUTHEAST H S", CampName),
+                                  CampName= ifelse(CampName=="ENERGIZED FOR STEM ACADEMY SOUTHWE", "ENERGIZED FOR STEM ACADEMY SOUTHWEST H S", CampName),
+                                  CampName= ifelse(CampName=="HARMONY SCHOOL OF ADVANCEMENT-HOUS", "HARMONY SCHOOL OF ADVANCEMENT-HOUSTON", CampName),
+                                  CampName= ifelse(CampName=="HARMONY SCHOOL OF DISCOVERY - HOUS", "HARMONY SCHOOL OF DISCOVERY - HOUSTON", CampName),
+                                  CampName= ifelse(CampName=="HARMONY SCHOOL OF INGENUITY - HOUS", "HARMONY SCHOOL OF INGENUITY - HOUSTON", CampName),
+                                  CampName= ifelse(CampName=="HARMONY SCHOOL OF INNOVATION - HOUS", "HARMONY SCHOOL OF INNOVATION - HOUSTON", CampName),
+                                  CampName= ifelse(CampName=="HOUSTON ACADEMY FOR INTERNATIONAL", "HOUSTON ACADEMY FOR INTERNATIONAL STUDIES", CampName),
+                                  CampName= ifelse(CampName=="HOUSTON GATEWAY ACADEMY - CORAL CA", "HOUSTON GATEWAY ACADEMY - CORAL CAMPUS", CampName),
+                                  CampName= ifelse(CampName=="HOUSTON MATH SCIENCE AND TECHNOLOG", "HOUSTON MATH SCIENCE AND TECHNOLOGY CENTER", CampName),
+                                  CampName= ifelse(CampName=="ILTEXAS KATY WESTPARK H S", "ILTEXAS - KATY/WESTPARK H S", CampName),
+                                  CampName= ifelse(CampName=="MICKEY LELAND COLLEGE PREP ACAD FO", "MICKEY LELAND COLLEGE PREP ACAD FOR YOUNG MEN", CampName),
+                                  CampName= ifelse(CampName=="KINDER H S FOR PERFORMING AND VISU", "PERFOR & VIS ARTS H S", CampName),
+                                  CampName= ifelse(CampName=="HOUSTON T-STEM AND EARLY COLLEGE H", "RAUL YZAGUIRRE SCHOOL FOR SUCCESS", CampName),
+                                  CampName= ifelse(CampName=="ROBERT TURNER COLLEGE AND CAREER H", "ROBERT TURNER COLLEGE AND CAREER H S", CampName),
+                                  CampName= ifelse(CampName=="TEXAS CONNECTIONS ACADEMY AT HOUST", "TEXAS CONNECTIONS ACADEMY AT HOUSTON", CampName),
+                                  CampName= ifelse(CampName=="WESTCHESTER ACADEMY FOR INTERNATIO", "WESTCHESTER ACADEMY FOR INTERNATIONAL STUDIES", CampName),
+                                  CampName= ifelse(CampName== "HARMONY SCHOOL OF INGENUITY-HOUSTO","HARMONY SCHOOL OF INGENUITY-HOUSTON", CampName),
+                                  CampName= ifelse(CampName== "HARMONY SCHOOL OF INNOVATION - KAT","HARMONY SCHOOL OF INNOVATION - KATY", CampName),
+                                  CampName= ifelse(CampName=="CARVER H S FOR APPLIED TECH/ENGINE", "CARVER H S FOR APPLIED TECH/ENGINEERING/ARTS", CampName))
+                         txhs$name2<-as.factor(txhs$CampName)
+                         txhs %>% count(RegnName) 
+                         txhs %>% count(CntyName) %>% print(n=300)
+                         
+                         txhs<- txhs %>% filter(
+                           CntyName=="Austin County"|CntyName=="Brazoria County"|CntyName=="Fort Bend County" |
+                             CntyName=="Galveston County" | CntyName=="Harris County" | CntyName=="Liberty County" | CntyName=="Chambers County" |
+                             CntyName=="Montgomery County" | CntyName=="Waller County" | CntyName=="Fayette County" | CntyName=="Taylor County" | CntyName=="Grimes County" | RegnName=="Houston")
+
+                         
+                         txhs %>% 
+                           summarise(n=n_distinct(Campus)) #248 schools
+                         
+                         
+                        #reshape wide to long
+                         txhs <- txhs %>% filter(Group=="All Students"| Group=="African American" | Group=="American Indian"| Group=="Asian" | 
+                                                   Group=="Hispanic" |  Group=="White"| Group=="Pacific Islander" |  Group=="Multiracial"|  Group=="Missing Ethnicity")
+                         
+                         txhs <- txhs %>% mutate(
+                           race=ifelse(Group=="All Students", "all", NA_character_),
+                           race= ifelse(Group=="African American", "black", race),
+                           race= ifelse(Group=="American Indian", "native", race),
+                           race= ifelse(Group=="Asian", "asian", race),
+                           race= ifelse(Group=="Hispanic", "latinx", race),
+                           race= ifelse(Group=="White", "white", race),
+                           race= ifelse(Group=="Pacific Islander", "pacisland", race),
+                           race= ifelse(Group=="Multiracial", "multirace", race),
+                           race= ifelse(Group=="Missing Ethnicity", "missingrace", race))
+                         
+                         txhs %>% count(race,Group)
+                         
+                         txhs <- txhs %>% select(race, Campus, CampName, name2, Grads_Mskd,Exnees_Mskd, Part_Rate, Crit_Mskd, Above_Crit_Rate, TSI_Both_Mskd, Above_TSI_Both_Rate)
+                         
+                         
+                         txhs_wide <- txhs %>%
+                           gather(key, value, -Campus, -race, -name2, -CampName) %>%
+                           unite(col, key, race) %>%
+                           spread(col, value)
+                         
+                         #merge to CCD to get ncessch
+                         txhs<-merge(x=houston_pubhs[, c("name", "ncessch")], y=txhs_wide, by.x="name",by.y="name2", all.x=TRUE)
+                         
+                         txhs %>% 
+                           summarise(n=n_distinct(ncessch)) #only 230 schools
+                         
+                         txhs %>% 
+                           count(is.na(Campus)) #11 missing TEA ID
+                         
+                         txhs %>% select(ncessch, name, Campus) %>%
+                           filter(is.na(Campus))
+                         
+                        #check_merge <- txhs %>% select(name, CampName) 
+                         
                             #KS analyses
-                              houston_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>% 
-                                group_by(ncessch, private) %>% 
+                              houston_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>%
+                                group_by(ncessch, private) %>%
                                 summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
                                           total_prosp_black = sum(stu_race_black, na.rm = T),
                                           total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
-                         
+
                               houston_pubprivhs %>% group_by(private) %>% summarise(total_stu_latinx =  sum(total_hispanic, na.rm = T),
                                                                                     total_prosp_black =  sum(stu_race_black, na.rm = T),
-                                                                                    total_prosp_latinx =  sum(stu_race_latinx, na.rm = T),)         
-                                
+                                                                                    total_prosp_latinx =  sum(stu_race_latinx, na.rm = T),)
+
                               orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX") %>% count(ord_num)
                               orderswlists_race %>% filter(hs_cbsatitle_1=="Houston-The Woodlands-Sugar Land, TX" & stu_race_cb==3) %>% count(ord_num)
                               race_orders %>% filter(order_num==449030) %>% count(race_filter)
@@ -1573,8 +1754,8 @@ library(eatATA)
                               
                               
                   #los angeles df
-                    orderswlists_race_la <- orderswlists_race %>% filter(hs_cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA") 
-                         
+                    orderswlists_race_la <- orderswlists_race %>% filter(hs_cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA")
+
                          #create dummies of race/ethnicity & order filters to aggregate
                          orderswlists_race_la <- orderswlists_race_la %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
                                                                                  stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
@@ -1593,37 +1774,60 @@ library(eatATA)
                                                                                  stu_ordertype5 = ifelse(ord_title=="2020 PSAT NH 1370-1450 LA,KY,TN,FL (H)", 1, 0),
                                                                                  stu_ordertype6 = ifelse(ord_title=="2020 PSAT NH 1370-1470 GA,VA (H)", 1, 0),
                                                                                  stu_ordertype7 = ifelse(ord_title=="2021 PSAT NH 1290-1520 TX (H)", 1, 0),
-                                                                                 stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))                                                                    
-                         
-                         
-                         #aggregate student list data to school-level with total num students + race/ethnicity       
+                                                                                 stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))
+
+
+                         #aggregate student list data to school-level with total num students + race/ethnicity
                          school_lists_la <- orderswlists_race_la %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
                                                                             stu_race_aian, stu_race_asian, stu_race_black,
                                                                             stu_race_latinx, stu_race_nhpi, stu_race_white,
                                                                             stu_race_other, stu_race_multi, stu_ordertype1, stu_ordertype2, stu_ordertype3,
                                                                             stu_ordertype4, stu_ordertype5, stu_ordertype6, stu_ordertype8) %>% group_by(hs_ncessch) %>% summarize_all(sum)
-                         
-                         
+
+
                          # now create school df with total students versus student prosp purchased for Houston
                          la_pubprivhs <- pubhs_privhs_data %>% filter(cbsatitle_1=="Los Angeles-Long Beach-Anaheim, CA")
-                         
+
                          # merge in purchased prospects
                          la_pubprivhs<- merge(x = la_pubprivhs, y = school_lists_la, by.x  = "ncessch",  by.y  = "hs_ncessch", all.x=TRUE)
-                         
+
                          # replace NAs to zeros
                          la_pubprivhs <- mutate(la_pubprivhs, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
                          la_pubprivhs <- mutate(la_pubprivhs, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+
                          
-                
-                         #KS analyses
-                         la_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>% 
-                           group_by(ncessch, private) %>% 
-                           summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
-                                     total_prosp_black = sum(stu_race_black, na.rm = T),
-                                     total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
+                         # merge in pub HS data on SAT scores [can't find newer data; CA DATA DOESNT HAVE BREAKDOWNS BY RACE]
+                         la_pubhs <- la_pubprivhs %>% filter(private==0 & pub_sch_type==1) #only regular schools
+                         cahs<-read.csv("data/achievement data/sat16-17.csv", na.strings=c("","NA"), colClasses=c("cds"="factor", "Ccode"="factor", "Scode"="factor"), encoding="UTF-8")
+                         
+                         cahs2<-read.csv("data/achievement data/CDS_NCES_crosswalk.csv", na.strings=c("","NA"), colClasses=c("CDSCode"="factor", "NCESSchool"="factor"), encoding="UTF-8")
+                         cahs2$nces<-paste0(as.character(cahs2$NCESDist), as.character(cahs2$NCESSchool))
+                         cahs2$nces<-as.factor(cahs2$nces)
+                         
+                         lahs<-merge(x = cahs, y = cahs2[ , c("CDSCode", "nces")], by.x="cds", by.y="CDSCode", all.x=TRUE)
+                         
+                         la_pubhs<-merge(x = la_pubhs, y = lahs, by.x="ncessch", by.y="nces", all.x=TRUE)
                          
                          
                          
+
+                  #        #KS analyses
+                  #        la_pubprivhs %>% filter(stu_race_black>1 |stu_race_latinx>1) %>% 
+                  #          group_by(ncessch, private) %>% 
+                  #          summarise(total_stu_pctwhite = sum(pct_white, na.rm = T),
+                  #                    total_prosp_black = sum(stu_race_black, na.rm = T),
+                  #                    total_prosp_latinx = sum(stu_race_latinx, na.rm = T)) %>% arrange(-total_stu_pctwhite) %>% print(n=150)
+                  #        
+                  #        
+                         
+                  
+                    
+                    
+                    
+                    
+                    
+                    
+                    
                          
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
         
