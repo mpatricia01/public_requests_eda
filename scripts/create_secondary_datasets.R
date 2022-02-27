@@ -253,7 +253,7 @@ rm(acs_race_zipcodev2,cbsa_name)
 
   # PATRICIA: ULTIMATELY THIS DATA FRAME WILL APPEND MULTIPLE YEARS OF CCD DATA AND VARIABLE 'YEAR' WILL NOT ALWAYS BE '1718'
   pubhs_data <- pubhs_data_1718 %>% filter(!(is.na(total_students)),total_students>0) %>%
-    select(ncessch,sch_name,state_code,lzip,contains('total'),contains('pct'),starts_with('g09'),starts_with('g10'),starts_with('g11'),starts_with('g12'),sch_type,titlei_status_text,magnet_text,charter_text,school_year) %>% 
+    select(ncessch,sch_name,state_code,lea_name,state_agency_no,union,st_leaid,leaid,st_schid,lzip,contains('total'),contains('pct'),starts_with('g09'),starts_with('g10'),starts_with('g11'),starts_with('g12'),sch_type,titlei_status_text,magnet_text,charter_text,school_year) %>% 
     mutate(school_control = 'public',
       # to be consistent w/ how this variable formatted in private school data
       school_year = str_replace_all(school_year,'20|-','')
