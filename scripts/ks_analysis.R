@@ -1177,7 +1177,7 @@ library(readxl)
           philly_studentlist <- philly_studentlist[, c("metro", "stu_race_cb", "pct")]
           philly_studentlist <- spread(philly_studentlist, key = c("stu_race_cb"), value = "pct")
           philly_studentlist$population <- "Prospects Purchased"
-          philly_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>% count()
+          philly_studentlist$tot_students <- (lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '37980') %>% count())$n
           philly_studentlist <- philly_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
           
         
@@ -1223,7 +1223,7 @@ library(readxl)
         ny_studentlist <- ny_studentlist[, c("metro", "stu_race_cb", "pct")]
         ny_studentlist <- spread(ny_studentlist, key = c("stu_race_cb"), value = "pct")
         ny_studentlist$population <- "Prospects Purchased"
-        ny_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>% count()
+        ny_studentlist$tot_students <- (lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '35620') %>% count())$n
         ny_studentlist <- ny_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
         
         
@@ -1269,7 +1269,7 @@ library(readxl)
         la_studentlist <- la_studentlist[, c("metro", "stu_race_cb", "pct")]
         la_studentlist <- spread(la_studentlist, key = c("stu_race_cb"), value = "pct")
         la_studentlist$population <- "Prospects Purchased"
-        la_studentlist$tot_students <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>% count()
+        la_studentlist$tot_students <- (lists_orders_zip_hs_df %>% filter(univ_id == '145637' & zip_cbsa_1 == '31080') %>% count())$n
         la_studentlist <- la_studentlist[, c("metro", "population", "tot_students", "White", "Asian", "Black", "Latinx", "AIAN", "Multiracial")]
         
         
@@ -1837,4 +1837,5 @@ save(orders_df, file = file.path("/Users/karinasalazar/Dropbox", 'orders_df.RDat
 save(acs_race_zipcodev3, file = file.path("/Users/karinasalazar/Dropbox", 'acs_race_zipcodev3.RData'))
 
 save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, fig_rq3_segment_race_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
+save(houston_pubprivhs, houston_pubhs, txhs, la_pubprivhs, la_pubhs, lahs, acs_race_zipcodev3, file = file.path(data_dir, 'map_data.RData'))
             
