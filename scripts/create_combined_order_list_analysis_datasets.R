@@ -589,8 +589,8 @@ lists_df <- lists_df %>% mutate(
     univ_id == '145637' & is_hispanic_origin == 'Yes' ~ 1,
     univ_id == '145637' & (is_hispanic_origin %in% c('No')| is.na(is_hispanic_origin)==1) ~ 0,
     # Texarkana and Stephen F. Austin, rules:
-    univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
-    univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0,   # == 0 if non_hispanic == 1 and all four categories == NA
+    univ_id %in% c('145637','174358','228723')==0 & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
+    univ_id %in% c('145637','174358','228723')==0 & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0,   # == 0 if non_hispanic == 1 and all four categories == NA
     # Note: variable is_hisp_common is NA for 12893 obs for following reasons:
       # all ethnicity variables [including ethnicity_no_respone] == NA ; 8391 obs
       # ethnicity_no_response== 'Y'; 4502 obs
@@ -599,6 +599,7 @@ lists_df <- lists_df %>% mutate(
     univ_id == '174358' & race_moorhead != 'hispanic or latino' & !is.na(race_moorhead) ~ 0
     # note: 10/19/2021: probably need to add code for texas A&M college station
   ))
+
 
 ###################### CREATE INPUT VARIABLE RACE (FOR URBANA) THAT REMOVES DUPLICATE RACE CATEGORIES (E.G., "ASIAN, ASIAN" BECOMES "ASIAN")
     
@@ -671,47 +672,47 @@ lists_df <- lists_df %>% mutate(
   lists_df <- lists_df %>% mutate(
     american_indian_common = case_when(
       univ_id == '145637'  ~ american_indian_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & american_indian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(american_indian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723')==0 & american_indian =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & is.na(american_indian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'american indian or alaska native' ~ 1,
       univ_id == '174358' & race_moorhead != 'american indian or alaska native' & !is.na(race_moorhead) ~ 0
     ),
     asian_common = case_when(
       univ_id == '145637'  ~ asian_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & asian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(asian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723')==0 & asian =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & is.na(asian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'asian' ~ 1,
       univ_id == '174358' & race_moorhead != 'asian' & !is.na(race_moorhead) ~ 0      
     ),
     black_common = case_when(
       univ_id == '145637'  ~ black_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & black =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(black) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723')==0 & black =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & is.na(black) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'black or african american' ~ 1,
       univ_id == '174358' & race_moorhead != 'black or african american' & !is.na(race_moorhead) ~ 0      
     ),
     native_hawaiian_common = case_when(
       univ_id == '145637'  ~ native_hawaiian_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & native_hawaiian =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723')==0 & native_hawaiian =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'native hawaiian/other pacific islander' ~ 1,
       univ_id == '174358' & race_moorhead != 'native hawaiian/other pacific islander' & !is.na(race_moorhead) ~ 0      
     ),
     white_common = case_when(
       univ_id == '145637'  ~ white_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & white =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(white) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723')==0 & white =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & is.na(white) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
       univ_id == '174358' & race_moorhead == 'white' ~ 1,
       univ_id == '174358' & race_moorhead != 'white' & !is.na(race_moorhead) ~ 0      
     ),
     race_no_response_common = case_when(
       univ_id == '145637'  ~ race_no_response_urbana,
-      univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & race_no_response =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723')==0 & race_no_response =='Y' ~ 1,
       univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(race_no_response) ~ 0,
     ),
     other_common = case_when( # confused about this variable; not sure which boxes respondent could have checked to get this; 
@@ -720,8 +721,8 @@ lists_df <- lists_df %>% mutate(
           # "Note, "other" will be maintained until all students have responded to the new question."
           # note [10/19/2021]: UC-davis (110644) data does not have "other" variable
       univ_id %in% c('145637','110644')  ~ 0,
-      univ_id %in% c('228431','224545','110680','174075','145600','104151','228529') & other =='Y' ~ 1,
-      univ_id %in% c('228431','224545','110680','174075','145600','104151','228529') & is.na(other) & is.na(race_no_response) ~ 0,
+      univ_id %in% c('145637','174358','228723','110644')==0 & other =='Y' ~ 1,
+      univ_id %in% c('145637','174358','228723','110644')==0 & is.na(other) & is.na(race_no_response) ~ 0,
     ),
     # create measure that counts number of race groups
     ct_race_groups_common = rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common), na.rm = TRUE)),
