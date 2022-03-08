@@ -215,3 +215,55 @@ orders_df_145813 %>% filter(state_name=='IL') %>% select(univ_id,order_num,order
   # we assumed propsects from urbana w/ missing hispanic_origin are not hispanic, but some may be, so maybe our numbers of pct hispanic are too low
   # but in above table %hispanic is for urbana is higher than it is for Illinois State
   
+  
+#  
+  
+  
+  
+# ASU, 104151
+  # order number = 366935
+  # pdf order on page 1012 of this file:
+    # C:\Users\ozanj\Dropbox\records_request_data\104151_asu\Request No. 2 - Search Criteria (1).pdf
+  # order info
+    # order criteria
+      # order date = 1/17/2018
+      # HS class = 2019, 2021, 2020
+      # state = CA
+      # psat score: min = 1110, max = 1210
+      # include only new students not included in my other orders
+    # order numbers
+      # projected volume = 51,849
+        # projected volume defined as: number of students who meet criteria when search conducted (as opposed to when purchase is executed)?; number of prospects that satisfy criteria before excluding prospects who are not "new"?
+      # max volume = 89,296
+      # volume to date = 89,296 (note: 44688 + 44608 = 89,296)
+      # runs
+        # runs = doing the search at a particular date; so how many prospects satisfy criteria at date 1/1/2018 and how many satisfy criteria at 2/1/2018 (run 2)
+      # runs to date = 2 runs 
+        # run 1, 1/17/18 , volume = 44,688, cost = $19,215.84 (note: 19215.84/44688 = 0.43)
+        # run 2, 1/17/18, volume = 44,608, cost = missing
+  
+  
+load(file.path(data_dir, '104151_data.RData'))
+
+orders_df_104151 %>% filter(order_num == '366935') %>% View()
+
+lists_df_104151 %>% filter(order_no == '366935') %>% count()
+
+
+  
+##############################
+############################## UC SAN DIEGO
+
+orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==0) %>% count(order_num)
+
+orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==0) %>% View()
+orders_df_110680 %>% filter(order_num %in% c('560003','560079','560099','560102','560103','560107')) %>% View()
+
+
+orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==1) %>% View()
+
+#26 states
+#Hawaii|Texas|Florida|Nevada|Washington|New York|South Carolina|Wisconsin|Massachusetts|Ohio|Georgia|Michigan|Missouri|Illinois|Oregon|Indiana|Kansas|Virginia|Colorado|Connecticut|Pennsylvania|North Carolina|Arizona|Tennessee|New Jersey|District of Columbia
+#Hawaii|Texas|Florida|Nevada|Washington|New York|South Carolina|Wisconsin|Massachusetts|Ohio|Georgia|Michigan|Missouri|Illinois|Oregon|Indiana|Kansas|Virginia|Colorado|Connecticut|Pennsylvania|North Carolina|Arizona|Tennessee|New Jersey|District of Columbia
+
+
