@@ -27,6 +27,7 @@ header-includes:
 
 ```{r setup, include=FALSE}
 options(knitr.kable.NA = '')
+options(scipen=999)
 knitr::opts_chunk$set(echo = F, message = F, warning = F)
 # webshot::install_phantomjs()
 
@@ -38,6 +39,7 @@ library(kableExtra)
 library(scales)
 library(leaflet)
 library(rgdal)
+library(english)
 
 data_dir <- file.path('..', '..', 'data')
 
@@ -57,6 +59,58 @@ theme_set(
 )
 
 color_palette <- c('#ba9a88', '#bbcfd7')
+
+# https://stackoverflow.com/a/65844319/6373540
+linesep <- function(x, y = character()){
+  if(!length(x))
+    return(y)
+  linesep(x[-length(x)], c(rep('', x[length(x)] - 1), '\\addlinespace', y))  
+}
+
+num_univs <- nrow(orders_fig_totals)
+num_orders <- sum(orders_fig_totals$total_orders)
+num_lists <- length(na.omit(lists_df_summary$ord_num))
+num_prospects <- sum(lists_df_summary$n)
+
+psat_min <- orders_df %>% filter(!is.na(psat_minbrks)) %>% count(psat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+psat_max <- orders_df %>% filter(!is.na(psat_maxbrks)) %>% count(psat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_min <- orders_df %>% filter(!is.na(sat_minbrks)) %>% count(sat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_max <- orders_df %>% filter(!is.na(sat_maxbrks)) %>% count(sat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+gender <- orders_df %>% filter(!is.na(gender)) %>% count(gender) %>% mutate(pct = round(n / sum(n) * 100))
+race <- orders_df %>%
+  filter(!is.na(race_ethnicity)) %>% 
+  mutate(
+    is_black = str_detect(race_ethnicity, 'Black'),
+    is_latinx = str_detect(race_ethnicity, 'Hispanic or Latino'),
+    is_native = str_detect(race_ethnicity, 'American Indian or Alaska Native'),
+    is_hawaiian = str_detect(race_ethnicity, 'Native Hawaiian or Other Pacific Islander'),
+    is_asian = str_detect(race_ethnicity, 'Asian'),
+    is_white = str_detect(race_ethnicity, 'White'),
+    num_race_filters = str_count(race_ethnicity, '\\|') + 1
+  )
+
+df_0 <- df_0 %>% 
+  mutate(pct = round(n / sum(n) * 100))
+
+df_rq2a_totals <- df_rq2a %>% filter(row_subj == 'Total N')
+df_rq2a_domestic <- df_rq2a %>% select(row_subj, all_domestic) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_instate <- df_rq2a %>% select(row_subj, in_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_outofstate <- df_rq2a %>% select(row_subj, out_of_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_instate <- df_rq2a %>% select(row_subj, research_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_outofstate <- df_rq2a %>% select(row_subj, research_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_instate <- df_rq2a %>% select(row_subj, regional_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_outofstate <- df_rq2a %>% select(row_subj, regional_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+
+df_rq3_gpa <- df_rq3 %>% select(row_subj, GPA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_psat <- df_rq3 %>% select(row_subj, PSAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_sat <- df_rq3 %>% select(row_subj, SAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_hsrank <- df_rq3 %>% select(row_subj, `HS RANK`) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_race <- df_rq3 %>% select(row_subj, RACE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_gender <- df_rq3 %>% select(row_subj, GENDER) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_zip <- df_rq3 %>% select(row_subj, ZIP) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_state <- df_rq3 %>% select(row_subj, STATE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_segment <- df_rq3 %>% select(row_subj, SEGMENT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_cbsa <- df_rq3 %>% select(row_subj, CBSA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
 ```
 
 
@@ -367,7 +421,7 @@ For student list purchases, an additional complication is that universities may 
 Many public universities outsourced student list purchases to an enrollment management consulting firm, which created several challenges. Employees at these universities often lacked knowledge about student list purchases and were unfamiliar with the records we requested. Employee turnover often exacerbated this lack of institutional knowledge. 
 Enrollment management consulting firms posed another barrier. When lists were purchased by a consulting firm, the university often did not have the requested order summaries and/or student lists in their possession. Furthermore, the summary information firms regularly sent to universities was too aggregate for our analyses, but firms were unwilling to help provide the original records we sought. 
 
-In response to early data collection challenges, we created a "vendor portal document" [LINK]. This document provided detailed instructions -- separately for College Board, ACT, and NRCCUA -- for how to log-in to the online portal, obtain the order summary for each student list purchase, obtain student list data for each purchase, and how to de-identify these data. Unfortunately, this document was less effective for ACT and NRCCUA than it was for College Board. ACT released the Encoura platform in [2021](https://encoura.org/about-encoura/press-room/), following its 2018 acquisition of NRCCUA. The online portals that provided access to students lists purchased from the legacy ACT and NRCCUA student list products were continued. Furthermore, whereas the College Board portal gave customers access to student lists purchased in the last X years, the Encoura portal provided access to purchases within the previous 12 months.
+In response to early data collection challenges, we created a "[vendor portal document](https://docs.google.com/document/d/1pcxS4RwGV0YlnPw_A0XLF_quzKnoEvHdbfEyO_1nkpA/edit)." This document provided detailed instructions -- separately for College Board, ACT, and NRCCUA -- for how to log-in to the online portal, obtain the order summary for each student list purchase, obtain student list data for each purchase, and how to de-identify these data. Unfortunately, this document was less effective for ACT and NRCCUA than it was for College Board. ACT released the Encoura platform in [2021](https://encoura.org/about-encoura/press-room/), following its 2018 acquisition of NRCCUA. The online portals that provided access to students lists purchased from the legacy ACT and NRCCUA student list products were continued. Furthermore, whereas the College Board portal gave customers access to student lists purchased in the last X years, the Encoura portal provided access to purchases within the previous 12 months.
 
 The most common data collection challenges were universities not replying to the request or denying the request. The legal grounds for these denials were often questionable. We learned that obtaining these data depends on treating each university as a protracted negotiation -- often several negotiations -- that requires sustained effort and some degree of leverage. Even with time from a LCCR staff attorney, we lacked sufficient capacity for sustained negotiations with each university and we lacked a stick that commanded university attention.
 
@@ -379,7 +433,7 @@ __Data processing__. Records received from universities were visually inspected 
 
 ## Research Design
 
-__Analysis sample__. We decided to restrict this report to student lists purchased from College Board in order to avoid overwhelmeing the reader (and ourselves!). Future analyses will incorporate lists purchased from ACT and other vendors. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. Preliminary results below are based on an analysis sample that consists of 12 universities that provided some order summary and some student list data. Across these 12 universities, we received 486 order summaries that make up the analysis sample for our first research question. Of those 486 order summaries, we received 388 accompanying student lists that make up the analysis sample for research questions one and two. 
+__Analysis sample__. We decided to restrict this report to student lists purchased from College Board in order to avoid overwhelming the reader (and ourselves!). Future analyses will incorporate lists purchased from ACT and other vendors. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. Preliminary results below are based on an analysis sample that consists of `r num_univs` universities that provided some order summary and some student list data. Across these `r num_univs` universities, we received `r num_orders` order summaries that make up the analysis sample for our first research question. Of those `r num_orders` order summaries, we received `r num_lists` accompanying student lists that make up the analysis sample for research questions one and two. 
 
 
 <!-- NEED TO FLESH THIS OUT. ANALYSIS SAMPLE IS NOT THIS SIMPLE. SOME UNIVS GAVE US BOTH ORDER SUMMARIES AND LISTS BUT THEY DON"T MATCH. Our analysis sample consists of 12 universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data. -->
@@ -461,7 +515,8 @@ lists_df_summary %>%
     univ_c15basic = as_factor(univ_c15basic),
     carnegie = recode_factor(
       univ_c15basic,
-      "Doctoral Universities: Highest Research Activity" = "Research Extensive",
+      "Doctoral Universities: Highest Research Activity" = "Research",
+      "Doctoral Universities: Higher Research Activity" = "Research",
       "Master's Colleges & Universities: Larger Programs" = "Master's",
       "Master's Colleges & Universities: Medium Programs" = "Master's",
       "Baccalaureate Colleges: Diverse Fields" = "Baccalaureate"
@@ -485,7 +540,7 @@ orders_df %>%
   mutate(
     has_list = factor(has_list, levels = c(T, F)),
     univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
-    carnegie = factor(carnegie, levels = c("Research Extensive", "Master's", "Baccalaureate"))
+    carnegie = factor(carnegie, levels = c("Research", "Master's", "Baccalaureate"))
   ) %>% 
   ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
   geom_bar(position = 'stack', stat = 'identity') +
@@ -524,9 +579,9 @@ __Secondary data__. Analyses incorporate several secondary data sources. Integra
 
 ### Total Orders and Number of Prospects
 
-Figure \@ref(fig:orders-purchased) presents the 486 total orders analyzed in this report by university type and total students purchased. The 486 orders were purchased across 12 universities. The six master's universities in the study made the majority of order purchases (N=307), while research universities made 178 orders and the only baccalaureate university in the study made one order. 
+Figure \@ref(fig:orders-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
 
-The number of total prospects purchased within each order varied widely. Across all 486 orders, the median number of prospects purchased per order was 3,067, whereas the mean was 950 (sd=5,619). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (4,269 versus 2,382). The only baccalaureate college in the study purchased 5,539 prospects in their one College Board order.
+The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`). The only baccalaureate college in the study purchased `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Baccalaureate"))$num_students, na.rm = T)), ',')` prospects in their one College Board order.
 
 ```{r orders-purchased, fig.height = 3, fig.cap = 'Orders purchased by carnegie classification'}
 orders_fig_totals %>% 
@@ -546,7 +601,7 @@ orders_fig_totals %>%
 
 Filters used to select prospect lists varied across academic criteria (e.g., GPA, PSAT, SAT, academic rank, AP Score), geographic location (e.g., zip code, state, segment, core based statistical area, geomarket, international), and demographic characteristics (e.g., high school graduation class, race/ethnicity, gender). Some geographic filters are metrics created by the College Board. For example, segment filters come from the College Board’s “Segment Analysis Service” which merges demographic, geographic, and academic data on SAT test takers to create "geodemographic profiles" for college-bound students (The College Board, 2011, p. 3). These profiles are created at the neighborhood-level and at the school-level. Geomarket filters are also created by the College Board within Enrollment Management Services, which uses information about SAT score senders from the past five admissions cycles within a specific geographic locality (e.g., counties, metropolitan areas, cities) to make projections about high high school graduates in the area [CITE]. 
 
-Figure \@ref(fig:orders-filters) shows how often filters were used across all orders. All 486 orders filtered by high school graduation class. The most frequently used filters include GPA (94%), PSAT scores (60%), zip code (57%), and SAT scores (56%). About two in every five orders also filtered by state. Only a subset of orders filtered by race/ethnicity (15%), academic rank (10%), gender (5%), segment (5%), AP score (5%), core based statistical area (3%), geomarket (3%), and international (3%).
+Figure \@ref(fig:orders-filters) shows how often filters were used across all orders. All `r num_orders` orders filtered by high school graduation class. The most frequently used filters include GPA (`r (orders_filters1 %>% filter(filters == 'gpa'))$percent`), PSAT scores (`r (orders_filters1 %>% filter(filters == 'psat'))$percent`), SAT scores (`r (orders_filters1 %>% filter(filters == 'sat'))$percent`), and zip code (`r (orders_filters1 %>% filter(filters == 'zip'))$percent`). About two in every five orders also filtered by state. Only a subset of orders filtered by race/ethnicity (`r (orders_filters1 %>% filter(filters == 'race'))$percent`), academic rank (`r (orders_filters1 %>% filter(filters == 'rank'))$percent`), gender (`r (orders_filters1 %>% filter(filters == 'gender'))$percent`), segment (`r (orders_filters1 %>% filter(filters == 'segment'))$percent`), AP score (`r (orders_filters1 %>% filter(filters == 'ap_score'))$percent`), core based statistical area (`r (orders_filters1 %>% filter(filters == 'cbsa'))$percent`), geomarket (`r (orders_filters1 %>% filter(filters == 'geomarket'))$percent`), and international (`r (orders_filters1 %>% filter(filters == 'intl'))$percent`).
 
 ```{r orders-filters, fig.height = 3, fig.cap = 'Filters used in order purchases'}
 orders_filters1 %>% 
@@ -558,23 +613,23 @@ orders_filters1 %>%
   coord_flip()
 ```
 
-[REFER TO TABLE FOR GPA; DON'T UNDERSTAND THE GPA TABLE; THERE SHOULD BE A FIGURE FOR SAT; THE TEXT ON SAT IN THIS PARAGRAPH IS TEDIUS TO FOLLOW] The three most commonly used academic filters (GPA, PSAT, SAT) were used by specifying a low and/or high threshold. Across the 464 orders using GPA, low thresholds ranged from A to C+, with the majority of orders using a low of B- (50%) or B (15%). All orders using GPA orders indicated a high threshold of A+. For orders using PSAT lowest score thresholds, 30% indicated less than 1000, 18% indicated 1000-1100, 19% indicated 1110-1200, 17% indicated 1210-1300, 7% indicated 1310-1400, and 9% indicated 1410-1500. For orders using PSAT highest score thresholds, 13% indicated less than 1000, 12% indicated 1000-1100, 26% indicated 1110-1200, 19% indicated 1210-1300, 11% indicated 1310-1400, and 19% indicated 1410-1500. ^[Old PSAT scores were converted to equivalent thresholds for new format: STILL NEED TO DO THIS]. Similar thresholds and percentages were evident for orders that used SAT as a filter. Low SAT thresholds across orders were 17% for less than 1000, 30% for 1000-1100, 21% for 1110-1200, 28% for 1210-1300, 10% for indicated 1310-1400, and 6% for 1410-1500. High SAT thresholds across orders were 9% for 1000-1100, 12% for 1110-1200, 18% for 1210-1300, 5% for indicated 1310-1400, 21% for 1410-1500, and 35% indicated scores greater than 1500+.
+[REFER TO TABLE FOR GPA; DON'T UNDERSTAND THE GPA TABLE; THERE SHOULD BE A FIGURE FOR SAT; THE TEXT ON SAT IN THIS PARAGRAPH IS TEDIUS TO FOLLOW] The three most commonly used academic filters (GPA, PSAT, SAT) were used by specifying a low and/or high threshold. Across the `r (orders_filters1 %>% filter(filters == 'gpa'))$V1` orders using GPA, low thresholds ranged from `r table_gpa$gpa[1]` to `r table_gpa$gpa[nrow(table_gpa)]`, with the majority of orders using a low of B- (`r round((table_gpa %>% filter(gpa == 'B-'))$pct_low)`%) or C+ (`r round((table_gpa %>% filter(gpa == 'C+'))$pct_low)`%). All orders using GPA orders indicated a high threshold of A+. For orders using PSAT lowest score thresholds, `r (psat_min %>% filter(psat_minbrks == '<1000'))$pct`% indicated less than 1000, `r (psat_min %>% filter(psat_minbrks == '1000-1100'))$pct`% indicated 1000-1100, `r (psat_min %>% filter(psat_minbrks == '1110-1200'))$pct`% indicated 1110-1200, `r (psat_min %>% filter(psat_minbrks == '1210-1300'))$pct`% indicated 1210-1300, `r (psat_min %>% filter(psat_minbrks == '1310-1400'))$pct`% indicated 1310-1400, and `r (psat_min %>% filter(psat_minbrks == '1410-1500'))$pct`% indicated 1410-1500. For orders using PSAT highest score thresholds, `r (psat_max %>% filter(psat_maxbrks == '<1000'))$pct`% indicated less than 1000, `r (psat_max %>% filter(psat_maxbrks == '1000-1100'))$pct`% indicated 1000-1100, `r (psat_max %>% filter(psat_maxbrks == '1110-1200'))$pct`% indicated 1110-1200, `r (psat_max %>% filter(psat_maxbrks == '1210-1300'))$pct`% indicated 1210-1300, `r (psat_max %>% filter(psat_maxbrks == '1310-1400'))$pct`% indicated 1310-1400, and `r (psat_max %>% filter(psat_maxbrks == '1410-1500'))$pct`% indicated 1410-1500. ^[Old PSAT scores were converted to equivalent thresholds for new format: STILL NEED TO DO THIS] Similar thresholds and percentages were evident for orders that used SAT as a filter. Low SAT thresholds across orders were `r (sat_min %>% filter(sat_minbrks == '<1000'))$pct`% for less than 1000, `r (sat_min %>% filter(sat_minbrks == '1000-1100'))$pct`% for 1000-1100, `r (sat_min %>% filter(sat_minbrks == '1110-1200'))$pct`% for 1110-1200, `r (sat_min %>% filter(sat_minbrks == '1210-1300'))$pct`% for 1210-1300, `r (sat_min %>% filter(sat_minbrks == '1310-1400'))$pct`% for indicated 1310-1400, and `r (sat_min %>% filter(sat_minbrks == '1410-1500'))$pct`% for 1410-1500. High SAT thresholds across orders were `r (sat_max %>% filter(sat_maxbrks == '1000-1100'))$pct`% for 1000-1100, `r (sat_max %>% filter(sat_maxbrks == '1110-1200'))$pct`% for 1110-1200, `r (sat_max %>% filter(sat_maxbrks == '1210-1300'))$pct`% for 1210-1300, `r (sat_max %>% filter(sat_maxbrks == '1310-1400'))$pct`% for indicated 1310-1400, `r (sat_max %>% filter(sat_maxbrks == '1410-1500'))$pct`% for 1410-1500, and `r (sat_max %>% filter(sat_maxbrks == '1500+'))$pct`% indicated scores greater than 1500+.
 
 ```{r orders-gpa}
 table_gpa %>% 
   mutate(
-    pct_low = str_c(pct_low, '%'),
-    pct_high = str_c(pct_high, '%')
+    pct_low = str_c(sprintf('%.1f', pct_low), '%'),
+    pct_high = if_else(is.na(pct_high), '', str_c(sprintf('%.1f', pct_high), '%'))
   ) %>% 
   kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high'), align = c('l', rep('c', 4)), caption = 'Filter by GPA') %>% 
   row_spec(0, bold = T) %>%
   kable_styling(position = 'center')
 ```
 
-PSAT and SAT score thresholds were consistently higher for orders by research universities in comparison to master's universities. The average low PSAT threshold score for research university orders was 1275 (about 90th percentile) versus 1034 for master's universities (about 50th percentile). Similar patterns were evident for SAT score thresholds. The average low SAT score threshold for research university orders was 1247 versus 1110 for orders by master's universities. 
+PSAT and SAT score thresholds were consistently higher for orders by research universities in comparison to master's universities. The average low PSAT threshold score for research university orders was `r round(mean((orders_df %>% filter(carnegie == "Research"))$psat_score_min, na.rm = T))` (about 90th percentile) versus `r round(mean((orders_df %>% filter(carnegie == "Master's"))$psat_score_min, na.rm = T))` for master's universities (about 50th percentile). Similar patterns were evident for SAT score thresholds. The average low SAT score threshold for research university orders was `r round(mean((orders_df %>% filter(carnegie == "Research"))$sat_score_min, na.rm = T))` versus `r round(mean((orders_df %>% filter(carnegie == "Master's"))$sat_score_min, na.rm = T))` for orders by master's universities. 
 
 
-Zip code, state, and segment were the most commonly used geographical filters used across all orders. While we can account for the number of orders that filtered by zipcodes (N=278), we can only analyze patterns for the 208 orders from universities that provided the list of 3-digit zipcodes filtered by. ^[The other 70  orders indicated a zip code filter; however, the actual zipcodes used to filter order lists were not provided to us after multiple requests]  These orders were made by two master's universities, primarily for in-state orders. Figure \@ref(fig:orders-zip) shows the three-digit zip code filters used across these orders.  The majority of orders (113 of 118) using zip code filters by the first master's university were to zip codes exclusively in the state where the university resides. The remaining 5 orders included in-state and neighboring state zip codes. Orders using zip code filters by the second master's university reveal similar patterns, except the majority of orders included a mix of in-state and neighboring state zip codes  (70 of 108). 
+Zip code, state, and segment were the most commonly used geographical filters used across all orders. While we can account for the number of orders that filtered by zipcodes (N=`r (orders_filters1 %>% filter(filters == 'zip'))$V1`), we can only analyze patterns for the `r length(na.omit(orders_df$zip_code))` orders from universities that provided the list of zipcodes filtered by. ^[The other `r length(na.omit(orders_df$zip_code_file))` orders indicated a zip code filter; however, the actual zipcodes used to filter order lists were not provided to us after multiple requests]  These orders were made by two master's universities, primarily for in-state orders. Figure \@ref(fig:orders-zip) shows the three-digit zip code filters used across these orders.  The majority of orders (113 of 118) using zip code filters by the first master's university were to zip codes exclusively in the state where the university resides. The remaining 5 orders included in-state and neighboring state zip codes. Orders using zip code filters by the second master's university reveal similar patterns, except the majority of orders included a mix of in-state and neighboring state zip codes  (70 of 108). 
 
 ```{r orders-zip, fig.height = 4, fig.cap = 'Filter by 3-digit zip code'}
 zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
@@ -584,7 +639,7 @@ leaflet() %>%
   addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
 ```
 
-Table \@ref(tab:orders-state) [TABLE 5 DIFFICULT TO INTERPRET] shows states that were selected across the 170 orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
+Table \@ref(tab:orders-state) [TABLE 5 DIFFICULT TO INTERPRET] shows states that were selected across the `r (orders_filters1 %>% filter(filters == 'states_fil'))$V1` orders using the filter. Generally, multiple-state filters were used across out-of-state prospect orders, whereas orders that filtered by only a single state were used for purchasing in-state prospects. 
 
 ```{r orders-state}
 orders_df %>%
@@ -606,43 +661,105 @@ orders_df %>%
   kable_styling(position = 'center')
 ```
 
-[THE TEXT A FEW PARAGRAPHS ABOVE EXPLAINING HOW SEGEMENT WORKS SHOULD BE MOVED HERE]  The twenty two orders using segment filters were made by two public research universities in the sample. Figure \@ref(fig:orders-cluster) shows which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79.
+[THE TEXT A FEW PARAGRAPHS ABOVE EXPLAINING HOW SEGEMENT WORKS SHOULD BE MOVED HERE]  The `r (orders_filters1 %>% filter(filters == 'segment'))$V1` orders using segment filters were made by two public research universities in the sample. Figures \@ref(tab:orders-cluster-en) and \@ref(tab:orders-cluster-hs) show which neighborhood and high school segments were used across these orders and the characteristics of these segments. One university made 21 of the 22 orders using segment filters, and all 21 orders followed the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78). Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79.
 
 <!-- Paragraph above: ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY? -->
 
 
-```{r orders-cluster, out.width = '100%', fig.cap = 'Filter by neighborhood and high school segments', fig.show = 'hold', fig.align = 'center'}
-knitr::include_graphics(c(file.path(data_dir, 'cluster_EN.png'), file.path(data_dir, 'cluster_HS.png')))
+```{r orders-cluster-en}
+en_df <- data.frame(
+  cluster = c(51:83, 'Total'),
+  sat_math = c(546, 480, 561, 458, 566, 420, 541, 533, 561, 589, 585, 596, 548, 466, 440, 499, 519, 552, 534, 613, 405, 399, 528, 433, 459, 514, 502, 594, 550, 534, 491, 496, 500, 512),
+  sat_cr = c(533, 470, 544, 443, 565, 411, 519, 489, 562, 590, 567, 595, 541, 466, 433, 492, 501, 558, 521, 598, 408, 397, 514, 435, 457, 509, 492, 578, 551, 527, 483, 491, 490, 502),
+  pct_outofstate = c(0.32, 0.3, 0.32, 0.25, 0.52, 0.29, 0.52, 0.28, 0.52, 0.63, 0.51, 0.67, 0.39, 0.48, 0.23, 0.2, 0.27, 0.52, 0.37, 0.65, 0.39, 0.31, 0.29, 0.29, 0.28, 0.27, 0.26, 0.56, 0.57, 0.39, 0.27, 0.29, 0.19, 0.32),
+  pct_nonwhite = c(0.3, 0.58, 0.5, 0.83, 0.24, 0.93, 0.47, 0.87, 0.24, 0.37, 0.3, 0.24, 0.23, 0.34, 0.93, 0.12, 0.53, 0.35, 0.19, 0.29, 0.97, 0.87, 0.42, 0.84, 0.85, 0.38, 0.18, 0.26, 0.32, 0.39, 0.57, 0.21, 0.26, 0.43),
+  pct_aid = c(0.57, 0.71, 0.55, 0.76, 0.63, 0.66, 0.43, 0.69, 0.74, 0.36, 0.4, 0.72, 0.65, 0.29, 0.78, 0.76, 0.59, 0.65, 0.65, 0.61, 0.68, 0.47, 0.62, 0.79, 0.72, 0.64, 0.75, 0.39, 0.74, 0.65, 0.72, 0.75, 0.71, 0.65),
+  med_income = c(95432, 63578, 92581, 38977, 71576, 35308, 67394, 68213, 54750, 104174, 123858, 59824, 69347, 49829, 45081, 50453, 60960, 57902, 88100, 86381, 42661, 32708, 90849, 44065, 50421, 61332, 62372, 134400, 40909, 49877, 63030, 53465, 49335, 70231)
+)
+
+en_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(en_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6)),
+    caption = 'Filter by neighborhood segments'
+  ) %>% 
+  row_spec(c(0, nrow(en_df)), bold = T) %>%
+  row_spec(c(1, 3, 8, 10, 11, 13, 19, 20, 23, 28), background = '#bbcfd7') %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
 ```
 
-Figure \@ref(fig:orders-filters) [MAYBE A FIGURE FOR THIS?] also shows that 75 (15%) and 24 (5%) of the 486 orders used a filter for race/ethnicity and gender, respectively. Most of the 75 orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 28 orders that filtered by Black, Native American, or Latinx prospects; 19 orders that filtered for Asian or White prospects; 7 orders that filtered for Native American or Latinx prospects; and 7 orders that filtered for Asian, White, or other race. The remaining orders filtered for only one race/ethnicity group, include 2 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander), 1 order filter for Black prospects, and 11 orders filtering for Latinx prospects. For the 24 orders using gender filters, 75% indicated female prospects and 25% indicate Male prospects. 
+```{r orders-cluster-hs}
+hs_df <- data.frame(
+  cluster = c(51:79, 'Total'),
+  sat_math = c(462, 489, 471, 376, 489, 536, 434, 592, 499, 523, 485, 474, 440, 606, 515, 498, 526, 541, 390, 595, 400, 528, 451, 654, 514, 600, 595, 473, 594, 514),
+  sat_cr = c(457, 496, 484, 371, 481, 508, 435, 577, 489, 549, 370, 473, 427, 542, 503, 515, 546, 540, 395, 581, 412, 544, 438, 579, 502, 584, 508, 468, 585, 502),
+  pct_outofstate = c(0.14, 0.81, 0.28, 0.33, 0.39, 0.73, 0.29, 0.51, 0.19, 0.23, 0.33, 0.34, 0.28, 0.37, 0.28, 0.37, 0.48, 0.41, 0.36, 0.56, 0.57, 0.35, 0.24, 0.76, 0.31, 0.72, 0.64, 0.48, 0.61, 0.32),
+  pct_nonwhite = c(0.33, 0.99, 0.38, 0.96, 0.46, 0.43, 0.82, 0.27, 0.18, 0.3, 0.89, 0.92, 0.86, 0.89, 0.43, 0.37, 0.41, 0.26, 0.92, 0.33, 0.98, 0.25, 0.89, 0.8, 0.2, 0.5, 0.75, 0.43, 0.26, 0.44),
+  pct_aid = c(0.68, 0.77, 0.62, 0.38, 0.44, 0.49, 0.79, 0.32, 0.74, 0.33, 0.09, 0.67, 0.72, 0.57, 0.65, 0.73, 0.69, 0.62, 0.74, 0.48, 0.8, 0.64, 0.76, 0.46, 0.71, 0.28, 0.39, 0.22, 0.71, 0.65),
+  med_income = c(40918, 64730, 60833, 38146, 71845, 63967, 48301, 104509, 47685, 70175, 61385, 55515, 49238, 81911, 72692, 60272, 71279, 79260, 43391, 105721, 43137, 70018, 48406, 59089, 72850, 90265, 39490, 56703, 65180, 70223)
+)
+
+hs_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(hs_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6)),
+    caption = 'Filter by high school segments'
+  ) %>% 
+  row_spec(c(0, nrow(hs_df)), bold = T) %>%
+  row_spec(c(8, 13:16, 18:20, 23, 25, 29), background = '#bbcfd7') %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
+```
+
+<!-- TODO: May need to manually update text on race combo filters? -->
+
+Figure \@ref(fig:orders-filters) [MAYBE A FIGURE FOR THIS?] also shows that `r (orders_filters1 %>% filter(filters == 'race'))$V1` (`r (orders_filters1 %>% filter(filters == 'race'))$percent`) and `r (orders_filters1 %>% filter(filters == 'gender'))$V1` (`r (orders_filters1 %>% filter(filters == 'gender'))$percent`) of the `r num_orders` orders used a filter for race/ethnicity and gender, respectively. Most of the `r (orders_filters1 %>% filter(filters == 'race'))$V1` orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 28 orders that filtered by Black, Native American, or Latinx prospects; 19 orders that filtered for Asian or White prospects; 7 orders that filtered for Native American or Latinx prospects; and 7 orders that filtered for Asian, White, or other race. The remaining orders filtered for only one race/ethnicity group, include 2 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander), 1 order filter for Black prospects, and 11 orders filtering for Latinx prospects. For the `r (orders_filters1 %>% filter(filters == 'gender'))$V1` orders using gender filters, `r (gender %>% filter(gender == 'Female'))$pct`% indicated female prospects and `r (gender %>% filter(gender != 'Female'))$pct`% indicate Male prospects. 
 
 
 ### Combination of Filters
 
-[SHOULD SOME OF THIS BE MOVED TO RQ 3?] Universities in the study used 39 different combinations of filters to purchase prospects. The ten most commonly used combination of filters, which account for nearly 80% of all orders, are presented in Table \@ref(tab:orders-filter-combos). More than half of all orders analyzed used a combination of high school graduation class, zip code, GPA, and PSAT and/or SAT scores to filter prospect lists. This includes 143 orders (29%) that used PSAT scores, 107 orders that used SAT scores (22%), and 28 orders that used both PSAT and SAT (5%) in addition to graduation class, zip code, and GPA. Other orders used a similar pattern of filters except for using state geographic filters instead of zip code, including 18 orders using PSAT scores and another 18 orders using SAT scores. 
+[SHOULD SOME OF THIS BE MOVED TO RQ 3?] Universities in the study used `r df_0 %>% nrow()` different combinations of filters to purchase prospects. The ten most commonly used combination of filters, which account for over 80% of all orders, are presented in Table \@ref(tab:orders-filter-combos).<!-- Check: sum((df_0 %>% head(10))$n) / sum(df_0$n) --> More than half of all orders analyzed used a combination of high school graduation class, zip code, GPA, and PSAT and/or SAT scores to filter prospect lists. This includes `r (df_0 %>% filter(string == 'grad_class,zip,psat,gpa'))$n` orders (`r (df_0 %>% filter(string == 'grad_class,zip,psat,gpa'))$pct`%) that used PSAT scores, `r (df_0 %>% filter(string == 'grad_class,zip,sat,gpa'))$n` orders that used SAT scores (`r (df_0 %>% filter(string == 'grad_class,zip,sat,gpa'))$pct`%), and `r (df_0 %>% filter(string == 'grad_class,zip,sat,psat,gpa'))$n` orders that used both PSAT and SAT (`r (df_0 %>% filter(string == 'grad_class,zip,sat,psat,gpa'))$pct`%) in addition to graduation class, zip code, and GPA. Other orders used a similar pattern of filters except for using state geographic filters instead of zip code, including `r (df_0 %>% filter(string == 'grad_class,state,psat,gpa'))$n` orders using PSAT scores and another `r (df_0 %>% filter(string == 'grad_class,state,sat,gpa'))$n` orders using SAT scores. 
 
 ```{r orders-filter-combos}
 df_0 %>% 
-  kable(booktabs = T, col.names = c('Filters', 'Count'), align = c('l', 'c'), caption = 'Filter combos used in order purchases') %>% 
+  head(10) %>%
+  mutate(pct = str_c(pct, '%')) %>% 
+  kable(booktabs = T, col.names = c('Filters', 'Count', 'Percent'), align = c('l', 'c', 'c'), caption = 'Filter combos used in order purchases') %>% 
   row_spec(0, bold = T) %>%
   kable_styling(position = 'center')
 ```
 
-About 8% of orders (39 of 486) used high school graduation class, state, sat, psat, gpa, and class rank filters while specifying for the race/ethnicity of prospects. The second most commonly used filter combination that specified the race/ethnicity of prospects includes 16 orders that used it in combination with graduation class, state, PSAT, and GPA filters. 
+About `r (df_0 %>% filter(string == 'grad_class,state,race,sat,psat,gpa,rank'))$pct`% of orders (`r (df_0 %>% filter(string == 'grad_class,state,race,sat,psat,gpa,rank'))$n` of `r num_orders`) used high school graduation class, state, sat, psat, gpa, and class rank filters while specifying for the race/ethnicity of prospects. The second most commonly used filter combination that specified the race/ethnicity of prospects includes `r (df_0 %>% filter(string == 'grad_class,state,race,psat,gpa'))$n` orders that used it in combination with graduation class, state, PSAT, and GPA filters. 
 
-The remaining combinations followed similar general patterns in targeting both the academic and geographical characteristics of prospects as the top combinations described above; however, they used other types of filters (e.g., gender, AP scores, segment, geomarket). Thirteen orders used graduation class, state, SAT, PSAT, and GPA filters in combination with segment and gender. Orders that used the segment filter used both neighborhood and high school clusters. For example, one specific order included a filter for census tracts assigned to neighborhood cluster 51, but further filtered by only including prospects from schools assigned to high school clusters 65, 68, 70, and 79 were included. 
+The remaining combinations followed similar general patterns in targeting both the academic and geographical characteristics of prospects as the top combinations described above; however, they used other types of filters (e.g., gender, AP scores, segment, geomarket). `r Words((df_0 %>% filter(string == 'grad_class,state,segment,gender,sat,psat,gpa'))$n)` orders used graduation class, state, SAT, PSAT, and GPA filters in combination with segment and gender. Orders that used the segment filter used both neighborhood and high school clusters. For example, one specific order included a filter for census tracts assigned to neighborhood cluster 51, but further filtered by only including prospects from schools assigned to high school clusters 65, 68, 70, and 79 were included. 
 
-Eleven orders used graduation class, state, GPA in combination with APscores. AP score filters tended to be grouped into "fields" and varied across score thresholds. Most orders targeted prospects scoring from 3-5 on AP exams in either STEM fields (e.g., Physics, Calculus, Biology, Chemistry, Computer Science) or Humanities and Fine Arts (e.g., Spanish, French, Art History, Music Theory), although some STEM orders filtered for prospects scoring a 4 or 5 on their AP exans. 
+`r Words((df_0 %>% filter(string == 'grad_class,state,gpa,APscores'))$n)` orders used graduation class, state, GPA in combination with APscores. AP score filters tended to be grouped into "fields" and varied across score thresholds. Most orders targeted prospects scoring from 3-5 on AP exams in either STEM fields (e.g., Physics, Calculus, Biology, Chemistry, Computer Science) or Humanities and Fine Arts (e.g., Spanish, French, Art History, Music Theory), although some STEM orders filtered for prospects scoring a 4 or 5 on their AP exans. 
 
-Lastly, nine orders used graduation class, SAT, and geomarket. These orders filtered for geomarkets within Texas and Louisiana. Louisiana geomarket orders targeted prospects in the Baton Rouge and Shreveport areas. Texas geomarkets filtered for include but are not limited to the Dallas/Ft. Worth areas, Central Gulf Coast, Wharton County, Victoria County, City of San Antonio, Southwest Houston Metropolitan Area, Brazos and Trinity Valley, Austin and Central Texas, Galveston area, East Texas. 
+Lastly, `r words((df_0 %>% filter(string == 'grad_class,sat,geomarket'))$n)` orders used graduation class, SAT, and geomarket. These orders filtered for geomarkets within Texas and Louisiana. Louisiana geomarket orders targeted prospects in the Baton Rouge and Shreveport areas. Texas geomarkets filtered for include but are not limited to the Dallas/Ft. Worth areas, Central Gulf Coast, Wharton County, Victoria County, City of San Antonio, Southwest Houston Metropolitan Area, Brazos and Trinity Valley, Austin and Central Texas, Galveston area, East Texas. 
 
 
 ## Characteristics of Prospects 
 
-Our analysis on the characteristics of prospects purchased by universities includes 388 orders resulting in 1,967,352 prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by domestic versus international status. Of the nearly 2 Million prospects purchased, 95% of them were domestic students. 
+Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by domestic versus international status. Of the over 2 Million prospects purchased, `r round((num_prospects-df_int2$n[[2]])/num_prospects * 100)`% of them were domestic students. 
 
-Figure \@ref(fig:prospects-count) also shows the number of domestic prospects purchased by in-state versus out-of-state and by institutional type. Overall, the majority of prospects purchased across all orders by all institutions in the study were in-state students (58%). However, the percent of in-state versus out-of-state prospects varied across institutional type. Research universities purchased more students overall and a greater proportion of out-of-state students than master's universities. For example, research universities in the study purchased more than 1.2 Million prospects of which 62% were out-of-state. In comparison, master's universities purchased less than 650,000 prospects of which only 4% were out-of-state students. 
+Figure \@ref(fig:prospects-count) also shows the number of domestic prospects purchased by in-state versus out-of-state and by institutional type. Overall, the majority of prospects purchased across all orders by all institutions in the study were in-state students (`r round(df_rq2a_totals$in_state / df_rq2a_totals$all_domestic * 100)`%). However, the percent of in-state versus out-of-state prospects varied across institutional type. Research universities purchased more students overall and a greater proportion of out-of-state students than master's universities. For example, research universities in the study purchased around `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects of which `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. In comparison, master's universities purchased `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects of which only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% were out-of-state students. 
 
 Below we also describe the racial, economic, and schooling characteristics of domestic prospect lists across institutional type and in-state versus out-of-state. The last sub-section then describes the characteristics of international prospects purchased.
 
@@ -668,7 +785,7 @@ df_rq2a_counts %>%
   geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
   geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
   xlab('') + ylab('') +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 1968000)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 2500000)) +
   scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
   theme(
     axis.text.x = element_blank(),
@@ -705,11 +822,11 @@ create_rq2a_figure <- function(categories, legend_title) {
 
 ### Racial Characteristics
 
-Figure \@ref(fig:prospects-race) presents the racial characteristics of all domestic prospects resulting from the 388 purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About 38% of all domestic prospects self-identified as White, 23% as Latinx, 16% as Asian, 6% as Black, 5% as Multiracial, and 13% did not report their race/ethnicity. 
+Figure \@ref(fig:prospects-race) presents the racial characteristics of all domestic prospects resulting from the `r num_lists` purchased orders by in-state versus out-of-state for research and master's university purchases. Race/ethnicity of prospects is collected from the College Board's voluntary demographic questionnaire completed by students when taking the SAT; therefore, we report racial characteristics as self-identified and include the percentage of students that did not report their race/ethnicity. About `r round(df_rq2a_domestic[['Pct White']])`% of all domestic prospects self-identified as White, `r round(df_rq2a_domestic[['Pct Latinx']])`% as Latinx, `r round(df_rq2a_domestic[['Pct Asian']])`% as Asian, `r round(df_rq2a_domestic[['Pct Black']])`% as Black, `r round(df_rq2a_domestic[['Pct Multiracial']])`% as Multiracial, and `r round(df_rq2a_domestic[['Pct Race-No Response']])`% did not report their race/ethnicity. 
 
-Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of 43% White students, 22% Asian students, 19% Latinx students, 6% Black, 6% multiracial, and 4% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of 34% White students, 11% Asian, 25% Latinx, 5% Black, 4% multiracial, and 19% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of nearly 8,000 Native American students that can be glossed over when only looking at overall proportions.
+Out-of-state prospects purchased tended to be more White and Asian than in-state prospects purchased, although a larger percentage of in-state prospects did not report their race/ethnicity. For example, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospect lists made up of `r round(df_rq2a_outofstate[['Pct White']])`% White students, `r round(df_rq2a_outofstate[['Pct Asian']])`% Asian students, `r round(df_rq2a_outofstate[['Pct Latinx']])`% Latinx students, `r round(df_rq2a_outofstate[['Pct Black']])`% Black, `r round(df_rq2a_outofstate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_outofstate[['Pct Race-No Response']])`% no response. In comparison, purchases for prospects residing in the same state as the institution's campus results in lists made up of `r round(df_rq2a_instate[['Pct White']])`% White students, `r round(df_rq2a_instate[['Pct Asian']])`% Asian, `r round(df_rq2a_instate[['Pct Latinx']])`% Latinx, `r round(df_rq2a_instate[['Pct Black']])`% Black, `r round(df_rq2a_instate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_instate[['Pct Race-No Response']])`% of students that did not report their race/ethnicity. While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of nearly 8,000 Native American students that can be glossed over when only looking at overall proportions. <!-- Check above number -->
 
-The differences in the racial characteristics of in-state versus out-of-state prospects are likely also a function of purchases made by research versus master's universities. While research universities made more out-of-state than in-state prospect purchases, the differences in the racial characteristics of both groups were relatively small in comparison to purchases by master's universities. For example, White students made up 43% and 40% of out-of-state and in-state prospect lists purchased by research universities, respectively. In comparison, White students made up 45% of out-of-state prospect lists and only 30% of in-state prospect lists purchased by master's universities. However, purchases by master's universities also included a much larger proportion of students that did not report their race/ethnicity. 
+The differences in the racial characteristics of in-state versus out-of-state prospects are likely also a function of purchases made by research versus master's universities. While research universities made more out-of-state than in-state prospect purchases, the differences in the racial characteristics of both groups were relatively small in comparison to purchases by master's universities. For example, White students made up `r round(df_rq2a_research_outofstate[['Pct White']])`% and `r round(df_rq2a_research_instate[['Pct White']])`% of out-of-state and in-state prospect lists purchased by research universities, respectively. In comparison, White students made up `r round(df_rq2a_regional_outofstate[['Pct White']])`% of out-of-state prospect lists and only `r round(df_rq2a_regional_instate[['Pct White']])`% of in-state prospect lists purchased by master's universities. However, purchases by master's universities also included a much larger proportion of students that did not report their race/ethnicity. 
 
 ```{r prospects-race, fig.height = 2.3, fig.cap = 'Prospects purchased by race'}
 create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct Race-Missing'), 'Race/ethnicity')
@@ -718,11 +835,11 @@ create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct N
 
 ### Economic Characteristics
 
-Figure \@ref(fig:prospects-income) presents the average median income of the zip code where prospects live by in-state versus out-of-state status for research and master's university purchases. Purchased prospects, across all orders by the 12 universities in the study, live in areas with an average median household income of \$92,000. 
+Figure \@ref(fig:prospects-income) presents the average median income of the zip code where prospects live by in-state versus out-of-state status for research and master's university purchases. Purchased prospects, across all orders by the `r num_univs` universities in the study, live in areas with an average median household income of \$`r prettyNum(round(df_rq2a_domestic[['Median Household Income (mean)']] / 1000) * 1000, ',')`. 
 
-Overall, Figure \@ref(fig:prospects-income) shows out-of-state prospects tended to live in more affluent areas than in-state prospects. Across all institution types, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospects that live in areas where the average median household income is \$100,000. In comparison, purchases for prospects residing in the same state as the institution's campus resulted in prospects that live in areas where the average median household income is \$87,000.   
+Overall, Figure \@ref(fig:prospects-income) shows out-of-state prospects tended to live in more affluent areas than in-state prospects. Across all institution types, when universities in the study made order purchases for prospects residing in different states than where their campus is located, these lists resulted in prospects that live in areas where the average median household income is \$`r prettyNum(round(df_rq2a_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')`. In comparison, purchases for prospects residing in the same state as the institution's campus resulted in prospects that live in areas where the average median household income is \$`r prettyNum(round(df_rq2a_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')`.   
 
-This disparity is also likely driven by several differences across purchases by research versus master's universities. For example, out-of-state prospects purchased by research universities live in areas where the average median household income is \$101,000, whereas in-state prospects purchased live in areas with a \$91,000. However, the opposite pattern is evident for purchases by master's universities. Out-of-state prospects purchased by master's universities on average live in less affluent areas (\$69,000 median household income) than in-state prospects ($84,000 median household income). 
+This disparity is also likely driven by several differences across purchases by research versus master's universities. For example, out-of-state prospects purchased by research universities live in areas where the average median household income is \$`r prettyNum(round(df_rq2a_research_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')`, whereas in-state prospects purchased live in areas with a \$`r prettyNum(round(df_rq2a_research_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')`. However, the opposite pattern is evident for purchases by master's universities. Out-of-state prospects purchased by master's universities on average live in less affluent areas (\$`r prettyNum(round(df_rq2a_regional_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')` median household income) than in-state prospects ($`r prettyNum(round(df_rq2a_regional_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')` median household income). 
 
 ```{r prospects-income, fig.height = 2.5, fig.cap = 'Prospects purchased by income'}
 df_rq2a_income <- df_rq2a %>% 
@@ -753,7 +870,7 @@ df_rq2a_income %>%
 
 Given some of the College Board products link individual prospects to high schools for services like high school segment clusters, we are able to analyze some of the characteristics of high schools purchased prospects attend.
 
-Figure \@ref(fig:prospects-hs) presents school type for purchased prospects by in-state versus out-of-state status for research and master's university purchases. Overall, 82% of prospects purchased attend public high schools, 9% attend private schools, and 9% did not report their high school. While these overall proportions are comparable to national averages, there are several differences across in-state versus out-of-state purchases by research and master's universities. For research universities, students attending private high schools made up a greater share of out-of-state prospect lists (12%) than in-state lists purchases (7%). Student list purchases by master's universities also exhibited this patter, where private high school students made up 10% of out-of-state prospects versus 6% of in-state prospects purchased.
+Figure \@ref(fig:prospects-hs) presents school type for purchased prospects by in-state versus out-of-state status for research and master's university purchases. Overall, `r round(df_rq2a_domestic[['Pct Public']])`% of prospects purchased attend public high schools, `r round(df_rq2a_domestic[['Pct Private']])`% attend private schools, and `r round(df_rq2a_domestic[['Pct School Unknown']])`% did not report their high school. While these overall proportions are comparable to national averages, there are several differences across in-state versus out-of-state purchases by research and master's universities. For research universities, students attending private high schools made up a greater share of out-of-state prospect lists (`r round(df_rq2a_research_outofstate[['Pct Private']])`%) than in-state lists purchases (`r round(df_rq2a_research_instate[['Pct Private']])`%). Student list purchases by master's universities also exhibited this pattern, where private high school students made up `r round(df_rq2a_regional_outofstate[['Pct Private']])`% of out-of-state prospects versus `r round(df_rq2a_regional_instate[['Pct Private']])`% of in-state prospects purchased.
 
 ```{r prospects-hs, fig.height = 2.3, fig.cap = 'Prospects purchased by school type'}
 create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School type')
@@ -761,7 +878,7 @@ create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School
 
 ### International Prospects
 
-Nearly 100,000 of the 2 Million prospects purchased were international students. Table \@ref(tab:prospects-intl) presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the 388 orders, include India (18%), China (10%), Singapore (6%), South Korea (6%), Canada (5%), United Arab Emirates (5%), Pakistan (4%), Taiwan (3%), Saudi Arabia (3%), and Thailand (3%).
+Nearly 100,000 of the 2 Million prospects purchased were international students. Table \@ref(tab:prospects-intl) presents the countries from which these prospects were purchased, with XYZ representing the total number of prospects purchased by country. The top ten countries, which account for more than 60% of international prospects purchased across the `r num_lists` orders, include India (`r round((df_int %>% filter(stu_country == 'india'))$pct)`%), China (`r round((df_int %>% filter(stu_country == 'china'))$pct)`%), Singapore (`r round((df_int %>% filter(stu_country == 'singapore'))$pct)`%), South Korea (`r round((df_int %>% filter(stu_country == 'south korea'))$pct)`%), Canada (`r round((df_int %>% filter(stu_country == 'canada'))$pct)`%), United Arab Emirates (`r round((df_int %>% filter(stu_country == 'united arab emirates'))$pct)`%), Pakistan (`r round((df_int %>% filter(stu_country == 'pakistan'))$pct)`%), Taiwan (`r round((df_int %>% filter(stu_country == 'taiwan'))$pct)`%), Saudi Arabia (`r round((df_int %>% filter(stu_country == 'saudi arabia'))$pct)`%), and Thailand (`r round((df_int %>% filter(stu_country == 'thailand'))$pct)`%).
 
 ```{r prospects-intl}
 df_int %>% 
@@ -782,9 +899,9 @@ We analyze the relationship between filter criteria and the characteristics of p
 
 ### Prospect Characteristics Across Individual Filters
 
-Table \@ref(tab:prospects-filters) presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of 1,967,352 prospects]. 
+Table \@ref(tab:prospects-filters) presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of `r prettyNum(num_prospects, ',')` prospects]
 
-Focusing on the racial characteristics of prospects, student lists with the largest percentages of White and Asian prospects result when orders use PSAT, gender, segment, or CBSA filters. For example, orders that specify a gender filter result in prospect lists that are less than 10% Black, Latinx, and/or Native American. This pattern is consistent in prospect lists that use segment or CBSA filters, although the disparity is not as large for orders using a PSAT filter (30% Black, Latinx, Native America).  On the other hand, orders that filter by specifying particular race/ethnicity groups result in lists that have fewer White and Asian prospects and greater proportions of Black, Latinx, Native American, and multiracial prospects. This coincides with descriptive findings above that suggest more than half of all orders using a race/ethnicity filter specified Black, Native American, and/or Latinx prospects.
+Focusing on the racial characteristics of prospects, student lists with the largest percentages of White and Asian prospects result when orders use PSAT, gender, segment, or CBSA filters. For example, orders that specify a gender filter result in prospect lists that are less than 10% Black, Latinx, and/or Native American. <!-- Check: df_rq3_gender[['Pct Black']] + df_rq3_gender[['Pct Latinx']] + df_rq3_gender[['Pct AI/AN']] --> This pattern is consistent in prospect lists that use segment or CBSA filters, although the disparity is not as large for orders using a PSAT filter (`r round(df_rq3_psat[['Pct Black']] + df_rq3_psat[['Pct Latinx']] + df_rq3_psat[['Pct AI/AN']])`% Black, Latinx, Native America).  On the other hand, orders that filter by specifying particular race/ethnicity groups result in lists that have fewer White and Asian prospects and greater proportions of Black, Latinx, Native American, and multiracial prospects. <!-- Check: round(df_rq3_race[['Pct White']] + df_rq3_race[['Pct Asian']]) vs. round(df_rq3_race[['Pct Black']] + df_rq3_race[['Pct Latinx']] + df_rq3_race[['Pct AI/AN']] + df_rq3_race[['Pct Multiracial']]) --> This coincides with descriptive findings above that suggest more than half of all orders using a race/ethnicity filter specified Black, Native American, and/or Latinx prospects.
 
 ```{r prospects-filters}
 df_rq3 %>% 
@@ -795,11 +912,11 @@ df_rq3 %>%
   kable_styling(latex_options = 'scale_down')
 ```
 
-Similar disparities are evident across the economic characteristics of prospect lists by filters used. Orders using PSAT, gender, segment, or CBSA filters result in prospect lists with the largest average median household incomes. Orders using a CBSA filter showcase the upper extreme of this pattern, resulting in lists where the average prospect lived in a zipcode where the median household income \$113,000. Similarly, orders using race/ethnicity filters showcased the lower extreme. When universities purchased orders that filtered for specific race/ethnicity groups, the resulting lists included prospects that lived in zip codes where the average median household income was less than $85,000. 
+Similar disparities are evident across the economic characteristics of prospect lists by filters used. Orders using PSAT, gender, segment, or CBSA filters result in prospect lists with the largest average median household incomes. Orders using a CBSA filter showcase the upper extreme of this pattern, resulting in lists where the average prospect lived in a zipcode where the median household income \$`r prettyNum(round(df_rq3_cbsa[['Median Household Income (mean)']] / 1000) * 1000, ',')`. Similarly, orders using race/ethnicity filters showcased the lower extreme. When universities purchased orders that filtered for specific race/ethnicity groups, the resulting lists included prospects that lived in zip codes where the average median household income was less than $`r prettyNum(round(df_rq3_race[['Median Household Income (mean)']] / 1000) * 1000, ',')`. 
 
-Not surprisingly, orders using geographic filters result in specific patterns of in-state versus out-of-state prospects. However, analyzing the residency status of prospect lists across filters can help us develop insights into how specific filters are used to target prospects geographically. For example, orders using segment and CBSA filters are likely used for targeting out-of-state students, as the use of these filters result in prospect lists made up of 85% and 96% out-of-state prospects, respectively. However, orders filtering for prospects within specific state(s) result in list that are nearly equal proportions of out-of-state and in-state students. Coinciding with descriptive statistics detailed above and data limitations (i.e., we only received zip codes used to filter order lists by two master's universities in our sample), nearly 98% of prospects resulting from orders using a zip code filter were in-state students. Similar to disparities in racial and economic characteristics of prospects, orders using a gender filter also resulted in geographical disparities (94% out-of-state versus 6% in-state).  
+Not surprisingly, orders using geographic filters result in specific patterns of in-state versus out-of-state prospects. However, analyzing the residency status of prospect lists across filters can help us develop insights into how specific filters are used to target prospects geographically. For example, orders using segment and CBSA filters are likely used for targeting out-of-state students, as the use of these filters result in prospect lists made up of `r round(df_rq3_segment[['Pct Out-of-State']])`% and `r round(df_rq3_cbsa[['Pct Out-of-State']])`% out-of-state prospects, respectively. However, orders filtering for prospects within specific state(s) result in list that are nearly equal proportions of out-of-state and in-state students. Coinciding with descriptive statistics detailed above and data limitations (i.e., we only received zip codes used to filter order lists by two master's universities in our sample), nearly `r round(df_rq3_zip[['Pct In-State']])`% of prospects resulting from orders using a zip code filter were in-state students. Similar to disparities in racial and economic characteristics of prospects, orders using a gender filter also resulted in geographical disparities (`r round(df_rq3_gender[['Pct Out-of-State']])`% out-of-state versus `r round(df_rq3_gender[['Pct In-State']])`% in-state).  
 
-Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average 14% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use race/ethnicity or state filters result in students lists with the minimum proportion of prospects attending private schools (7%).
+Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average `r round(df_rq3_cbsa[['Pct Private']])`% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use zip code filter result in students lists with the minimum proportion of prospects attending private schools (`r round(df_rq3_zip[['Pct Private']])`%).
 
 
 ### Prospect Characteristics Across Combinations of Filters

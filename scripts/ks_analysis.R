@@ -193,8 +193,7 @@ library(readxl)
                       total_students = sum(num_students, na.rm = T))
         
         orders_fig_totals <-  orders_fig_totals %>% arrange(-total_students) %>%
-            mutate(university = as.factor(row_number()),
-                   total_orders = as.character(total_orders))
+            mutate(university = as.factor(row_number()))
         
         orders_fig_totals$total_orders_st <- str_c(orders_fig_totals$total_orders, ' orders')
         
@@ -203,9 +202,13 @@ library(readxl)
         
         orders_fig_totals<- orders_fig_totals %>%
             mutate(carnegie = recode(c15basic,
-                                     `15`= "Research Extensive",
+                                     `15`= "Research",
+                                     `16` = "Research",
+                                     `17` = "Research",
                                      `18`= "Master's",
                                      `19`= "Master's",
+                                     `20` = "Master's",
+                                     `21`= "Baccalaureate",
                                      `22`= "Baccalaureate"))
         
     
@@ -223,9 +226,13 @@ library(readxl)
         
         orders_df<- orders_df %>%
           mutate(carnegie = recode(univ_c15basic,
-                                   `15`= "Research Extensive",
+                                   `15`= "Research",
+                                   `16` = "Research",
+                                   `17` = "Research",
                                    `18`= "Master's",
                                    `19`= "Master's",
+                                   `20` = "Master's",
+                                   `21`= "Baccalaureate",
                                    `22`= "Baccalaureate"))
         
         orders_df %>% group_by(carnegie) %>% select(num_students) %>%
@@ -273,7 +280,7 @@ library(readxl)
 
         orders_filters1  <- orders_filters1 %>%
             mutate(
-                percent= round((V1/486)*100)
+                percent= round((V1/sum(orders_fig_totals$total_orders))*100)
             )
         
         orders_filters1$percent <- str_c(orders_filters1$percent, '%')
@@ -310,6 +317,8 @@ library(readxl)
         
         #remove orders that did not use GPA filter
         table_gpa <- table_gpa %>% filter(!is.na(gpa), nchar(gpa) > 0)
+        table_gpa$gpa <- factor(table_gpa$gpa, levels = c('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'))
+        table_gpa <- table_gpa %>% arrange(gpa)
         
         # descriptive stats on PSAT/SAT Filter
         orders_df %>% count(psat_score_max)
@@ -539,7 +548,7 @@ library(readxl)
                                                 sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0 <- df_0 %>% arrange(-n) %>% head(10)
+            df_0 <- df_0 %>% arrange(-n)  # %>% head(10)
             
             sum(df_0$n)
           
@@ -664,7 +673,14 @@ library(readxl)
  
       # international students
         
-        df_int <- lists_orders_zip_hs_df %>% filter(stu_country!="united states") %>% group_by(stu_country) %>%
+        df_int <- lists_orders_zip_hs_df %>% 
+          filter(stu_country!="united states") %>% 
+          mutate(stu_country = recode(
+            stu_country,
+            'korea, south (rok)' = 'south korea',
+            'korea south (rok)' = 'south korea'
+          )) %>% 
+          group_by(stu_country) %>%
           summarise(n= n()) %>%
           mutate(pct = round(n / sum(n)*100, digits=1))
         
