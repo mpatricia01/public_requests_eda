@@ -164,6 +164,10 @@ A similar study compared the college access outcomes of students who opted into 
 -->
 
 
+__Policy concerns__. Given that student lists profoundly affect student outcomes, the policy concerns are which students are being excluded from the underlying student list databases and which students are being excluded from student list purchases.  We argue that these policy concerns are primarily about student list products rather than how customers (universities) use these products.
+
+
+\newpage 
 
 ```{r cb-fig, fig.height = 5, out.width = '85%', fig.cap = 'Effects of College Board Student Search Service'}
 create_cb_figure <- function(categories, values, plot_title) {
@@ -234,8 +238,6 @@ _Note: AI/AN = American Indian or Alaska Native. HI/PI = Hawaiian or Pacific Isl
 \endgroup
 
 
-
-__Policy concerns__. Given that student lists profoundly affect student outcomes, the policy concerns are which students are being excluded from the underlying student list databases and which students are being excluded from student list purchases.  We argue that these policy concerns are primarily about student list products rather than how customers (universities) use these products.
 
 <!-- 
 CUT TEXT
@@ -921,7 +923,7 @@ Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions o
 
 ### Prospect Characteristics Across Combinations of Filters
 
-### In-State Order Combinations
+### Regional Zip Codes & Test Scores
 
 We begin analyzing the characteristics of prospects across some of the most common combination of filters. Many of the orders in our analysis filtered by high school graduation class, PSAT scores, GPA, and zip code. Figure \@ref(fig:orders-zip) and analyses above suggest orders using this combination of filters were made by master's universities to identify in-state and regional prospects. We "zoom" into orders by one of these master's universities, Texas A & M University- Texerkana, in order analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters. 
 
@@ -970,7 +972,7 @@ table_texasam_zip_inc %>%
 <!-- COMPLETE IN JANUARY Another common combination of filters used across orders include the same academic filters (i.e., PSAT scores and GPA) but geographically filtered by specific states and filtered for specific race/ethnicity groups. Some of these orders were made by research universities in the study -->
 
 
-### Out-of-State Order Combinations
+### Out-of-State Zip Codes & Test Scores
 
 Other common combinations of filters were used by research universities in the study to target out-of-state prospects. Some of these orders filtered by graduation class, state, CBSA, segment, SAT or PSAT, and GPA. We "zoom" into orders by The University of Illinois at Urbana-Champaign in order to analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters.
 
@@ -1020,10 +1022,33 @@ Figure \@ref(fig:metro-income) presents the average median household income of p
 
 
 
+### Women in STEM
+
+Two of the research universities in the study made orders targeting prospective students who are women interested in science, technology, engineering, and math (STEM). These orders targeted women interested in STEM primarily through two different filter patterns. The first pattern used SAT scores (ranging from 1300 to 1600), GPA (ranging from a low of B and high of A+), a state filter (in-state versus out-of-state), and students' self-reported intended major. The second pattern also used the same SAT, GPA, and state filters, but STEM interest was proxied via AP test scores. For in-state prospective students, orders filtered for prospects scoring from 3 to 5 on AP STEM tests. For out-of-state prospective students, orders filtered for prospects scoring 4 or 5 on AP STEM tests. ^[The second university also targeted women interested in engineering majors through the use of segment filters at the high school and neighborhood levels in combination with some achievement filter (e.g., PSAT, SAT, GPA).] 
+
+In order to analyze in-depth patterns in the racial and economic characteristics of prospects that result from the combination of achievement, geographic, and gender filters used to target women interested in STEM, we analyze prospect profiles purchased in Texas. The University of California, San Diego made a total of 11 orders targeting women in STEM, which resulted in 12,938 prospect profiles purchased. Of the 10,668 total out-of-state prospective student profiles purchased by the university, 1,134 of these prospects are from Texas. We selected to "zoom" into Texas to take advantage of data provided by the Texas Education Agency on AP test takers as a comparison group for purchased prospects. Thus, we focus analyses on the 559 of the 1,134 Texas prospects whose profiles were purchased via AP filters. However, given the well-document racial and economic disparities in access to AP coursework, we first compare prospects to the population of 15-19 year olds in their home zip codes and in zip codes where zero prospective students' profiles were purchased. Broad patterns in the comparisons of prospects to the population of 15-19 year olds across zip codes were similar for the other two top ranked states with the most prospect profiles purchased via AP filters (e.g., New York, Florida) [DOUBLE CHECK THIS KS-- TRUE FOR Metro areas but need to check entire states].
+
+[KS: just realized comparison group race/ethnicity are not just women; includes all gender; need to pull ACS data with race/ethnicity BY gender; but I don't think general patterns will change significaly by include only women]
+
+Our analysis first focuses on comparing the racial characteristics of Texas prospects whose profiles were purchased to the population of 15-19 year olds in their home zip codes. The university purchased at least one prospective students' profile from 203 of the 1,935 zip codes in Texas. Figure X presents the racial characteristics of prospects to the population of 15-19 year olds in these 203 zip codes. The figure shows two general trends consistent across orders targeting Women in STEM. First, White and Asian prospects are overrepresented relative to the population of 15-19 year olds in their home zip codes. For example, nearly 40% of all purchased prospects are White while 38% of the 15-19 year olds in their home zip codes are also White. This difference is much larger for Asian prospects, who make up nearly 30% of all purchased prospect profiles but only make up about 6% of the population of 15-19 year olds in their home zip codes. Second, Black and Latinx prospects are underrepresented to their zip code populations. Black and Latinx prospects make up 2% and 20% of all purchased prospects, respectively, while their home zip code's population of 15-19 year olds are on average 10% Black and 36% Latinx. It's important to note that only 3 of the 559 prospects purchased across Texas were Native American. While looking at proportions across the population of 15-19 year olds in zip codes invisibilizes the number of Native American students in relation to other racial/ethnic groups, the 3 prospects are relative to a total of 3,623 Native American 15-19 year olds living in these 203 zip codes.   
+
+```{r fig.align="left",  out.width = "100%", fig.cap="FIGURE COULD BE SOME VARIATION OF THESE DATA"}
+knitr::include_graphics("../resources/texas.png")
+```
 
 
+As a proxy for comparing prospects to prospective students in Texas whose profiles were not purchased by the university, we also compare the racial and economic characteristics of prospects to the population of 15-19 year olds in the 1,732 non purchased zips in Figure X. Comparing prospects to the average population of zip codes where zero prospective students' profiles were purchased, Asian prospects are again overrepresentated while White prospects shift to being slightly underrepresented. For example, on average, less than 2% of 15-19 year olds in non-purchased zips are Asian but nearly 30% of prospects are Asian. The population of Black and Latinx 15-19 year olds are relatively the same in non-purchased zips to prospects' home zip codes, which result in similar disparities between prospects and non-purchased zip code populations to comparisons with their home-zip codes above.  
+
+Figure X also shows the economic characteristics of prospects and prospective students in Texas whose profiles were not purchased by comparing the average median household income of prospects' home zip codes to the the average median household in the 1,732 non purchased zip codes. Prospects whose profiles were purchased by the university tended to be much more affluent than non-purchased prospetive students. For example, purchased prospects live in Texas zip codes where the average median household income is \$84,722. In comparison, populations living in the 1,732 non purchased zips have an average median income of \$56862. 
+
+Lastly, we use AP participation data from the Texas Education Agency to compare the racial characteristics of prospects whose profiles were purchased by the university to the population of AP science test takers in Texas. ^[These figures also include students who took the International Baccalaureate science exam] The racial and economic inequities in access to AP coursework and disparities in passing rates are well-documented (CITE). However, we compare prospects to test takers to illustrate how using AP score range filters, rather than just proxying STEM interest by students with have the ability to and take AP science coursework, further exacerbates inequities in whose profiles are purchased. 
+
+Figure X compares the racial characteristics of prospects to AP science test takers in Texas. Even though AP test takers is likely to inequitably underpredict the number of women interested in STEM due disparities in access to advanced coursework, we still see large disparities between prospects and test takers. For example, Black students make up 6% of AP science test takers but only 2% of purchased prospects. Similarly, Latinx students make up 40% of test takers but only 15% of AP test takers. 
 
 
+```{r fig.align="left",  out.width = "100%", fig.cap="FIGURE COULD BE SOME VARIATION OF THESE DATA"}
+knitr::include_graphics("../resources/testtakers.png")
+```
 
 
 
