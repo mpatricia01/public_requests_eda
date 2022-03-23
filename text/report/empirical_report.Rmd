@@ -130,7 +130,39 @@ orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==1) %>% View()
 
 The university purchases lists of prospective female STEM students in order to overcome the under-representation of women in STEM degree programs, which has been a nationwide policy concern for decades [CITE]. However, an analysis of the purchased prospects suggests that efforts to overcome one problem are creating other problems. Figure X shows recruiting female STEM prospects based on AP scores yields a set of prospects from almost exclusively affluent communities and they are recruiting prospects who identify as white or Asian but not prospects who identify as Black or Latinx. [ONE OR TWO SENTENCES GIVING RESULTS]. These results are consistent with socioeconomic and racial disparities in access to AP coursework.
 
-Similar to the visual metaphor of the "STEM pipeline," the "enrollment funnel" -- depicted in in Figure \@ref(fig:em-funnel) -- is a conceptual model used in the enrollment management industry to describes stages in the process of recruiting students. The funnel begins with a large pool of "prospects" that the university would like to "convert" into customers. The funnel narrows at each successive stage -- inquiries, applicants, admits --  in order to convey the assumption of "melt" (e.g., a subset of "inquiries" will apply), ending with the cohort of enrolled students. Practically, the enrollment funnel informs interventions that increase the probability of "conversion" from one stage to another [@RN0001]. For example, emails and brochures encourage prospects and inquiries to apply. Financial aid packages -- institutional grant aid and loan guidance -- convert admits to enrolled students.
+
+Although prior research suggests that student lists have a surprisingly large effect on college access [@RN4739; @RN4752; @RN4740], the women in STEM vignette highlights concern of who is being included. We argue that student list products exclude students in two ways. First, universities cannot purchase the contact information of prospects who are not included in the underlying database. In general, College Board and ACT student list products only include test-takers, but test-taking rates differ substantially across race and class [@RN0006].^[FOOTNOTE; ACT NRCCUA] Second, the "search filters" on student list products enable universities to choose the prospects included in a purchase. While universities choose filters based on their preferences, these choices are structured by what the product allows. Several search filters (e.g., zip-code, AP exam score, "geodemographic" segment) may systematically exclude protected classes and other populations that are underrepresented in higher education (e.g., rural students). 
+
+
+Prior research has not examined which filter criteria universities select when purchasing student lists, what are the characteristics of purchased prospects, or the relationship between filter criteria and student characteristics. We collected data about student list purchases by issuing public records requests to public universities in five states. This report focuses on student lists purchased from College Board and addresses three research questions: 
+
+1. Which filter criteria were selected in student lists purchased by universities in our sample?
+1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
+1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
+
+<!--  CUT TEXT
+Due to data collection challenges, our analysis sample cannot be considered a random sample. Nevertheless, this research is an important first step towards developing a body of empirical research that informs policy discourse about regulating the student list business.
+-->
+
+
+<!--  CUT TEXT FROM OG INTRODUCTION
+
+__Policy concerns__. Given that student lists profoundly affect student outcomes, the policy concerns are which students are being excluded from the underlying student list databases and which students are being excluded from student list purchases.  We argue that these policy concerns are primarily about student list products rather than how customers (universities) use these products.
+
+Student list products exclude students in two ways. First, universities cannot purchase the contact information of prospects who are not included in the underlying database. While students who opt out of College Board Student Search Service are making a conscious decision, students cannot opt in unless they take a College Board Assessment (PSAT, SAT, AP). College Board and ACT assessments have been criticized for racial and socioeconomic bias [@RN6012; @RN6009; @RN6010; @RN0004; @RN0005]. Test-taking rates differ substantially across race and class [@RN0006], leading to systematic racial and socioeconomic inequality in which prospective students are included in the underlying databases that College Board and ACT student list products pull from. About 1.5 million students from the high school class of 2021 took the SAT compared to about 2.2 million students from the high school class of 2020 [@RN0007] and about 1.3 million student from the high school class of 2021 took the ACT compared to about 1.7 million students from the high school class of 2020. These declines were driven by the Covid Pandemic and by the growth in test-optional and test-blind admissions policies. To the extent that student lists are an important mechanism for college access, the test-optional movement may have the unintended consequence of creating a college access crisis, in which the long-term decline in test-takers leads to fewer prospective students included in College Board/ACT student list databases which causes college access to decline.
+
+Second, student list products exclude students by creating filters that enable universities to purchase some names but not others. While universities choose filters based on their preferences, these choices are structured by what the product allows. We are concerned that several commonly used filters systematically exclude protected classes and other populations that are underrepresented in higher education (e.g., rural students). For example, College Board and ACT student list products enable universities to filter prospects by zip code, which is highly correlated with race. College Board allows universities to target prospects based on their score in some set of AP exams, but which students attend high schools with widespread access to AP classes? An emerging trend is the creation of "geodemographic" filters that enable universities to select prospects based on the past behavior of students from their high school or neighborhood (e.g., how many students from this school attended an out-of-state university?) [@RN2039; @RN0002]. Student list products enable universities to explicitly search for underrepresented groups (e.g., by race/ethnicity), but when used in conjunction with additional filters (e.g., test score range, high school characteristics) these searches tend to target more privileged members of the group.
+-->
+
+
+
+# Background
+
+This section provides relevant background information by situating student lists within the recruiting process, reviewing recent research on the relationship between student lists and student outcomes, and explaining how universities buy lists and what information they contain. We focus on lists sold by College Board, which are the focus of empirical analyses.
+
+## Situating Student Lists within Recruiting
+
+Similar to the visual metaphor of the "STEM pipeline," the "enrollment funnel" -- depicted in in Figure \@ref(fig:em-funnel) -- is a conceptual model used in the enrollment management industry to describes stages in the process of recruiting students. The funnel begins with a large pool of "prospects" that the university would like to convert into customers. "Leads" are prospects whose contact information has been purchased. "Inquiries" are prospects that contact your institution and consist of two types: first, inquiries who respond to an initial solicitation  (e.g., email) from the university; and second, "student as first contact" inquiries who reach out to the university on their own (e.g., by sending ACT scores). The funnel narrows at each successive stage -- inquiries, applicants, admits --  in order to convey the assumption of "melt" at each stage (e.g., a subset of "inquiries" will apply). Practically, the enrollment funnel informs interventions that increase the probability of "conversion" from one stage to another [@RN0001]. For example, financial aid packages convert admits to enrolled students.
 
 <!-- 
 - [HOW TO REVISE FIGURE: MAKE PROSPECTS THE UNKNOWN GROUP OF PEOPLE YOU WANT TO APPLY TO YOUR INSTITUTION; LEADS ARE NAMES YOU PURCHASE; INQUIRIES; SPLIT INQUIRIES INTO TWO COLUMNS; INSTITUTION-AS-FIRST-CONTACT AND STUDENT-AS FIRST CONTACT; SPLIT APPLICANTS INTO TWO COLUMNS; INQUIRIES WHO APPLY VS. APPLICATION AS FIRST CONTACT]
@@ -142,14 +174,15 @@ knitr::include_graphics('./../../outputs/figures/enrollment_funnel.png')
 #![The enrollment funnel](assets/images/enrollment_funnel.png)
 ```
 
-At the top of the enrollment funnel, universities identify leads by buying "student lists." Sometimes referred to as “names,” student lists are the fundamental input for recruiting interventions that target individual prospects via mail, email, text, and on social media. The two dominant student list vendors are the College Board and ACT, which create student list products based on their database of standardized test takers. In fall 2021, the College Board Search and ACT Encoura student list products both charged \$0.50 per name [@RN0002]. These products enable universities to control which prospects they purchase through the use of search filters (e.g., test score range, high school GPA range, zip code).
+At the top of the enrollment funnel, universities identify leads by buying "student lists." Sometimes referred to as “names,” student lists are the fundamental input for recruiting interventions that target individual prospects via mail, email, text, and on social media. The sum of purchased leads plus student-as-first-contact inquiries (e.g., filled out an online admissions inquiry form) constitutes the set of all prospects the university has contact information for, who are eligible to receive targeted recruiting interventions from the university. 
 
+## Student Lists and Student Outcomes
 
-__Student lists and student outcomes__. Research suggests that student lists substantially affect college access outcomes -- and in turn degree completion outcomes -- for millions of students each year. @RN4739 compared SAT test-takers who opted into the College Board Student Search Service -- allowing accredited institutions to "licence" their contact information -- and test-takers who opted out, after controlling for covariates. Figure \@ref(fig:cb-fig) reproduces the main results. For students with the same values of SAT score, parental education, race/ethnicity, sex, high school graduation year, and who attended the same high school, 41.1\% of students who participated in Search attended a 4-year college compared to 32.8\% of students who opted out, representing an 8.3 (`=41.1-32.8`) percentage point difference and a 25.3 (`=(41.1-32.8)/32.8`) percent change in the relative probability of attending a 4-year college (for a similar analysis of ACT's Educational Opportunity Service (EOS) see @RN4752). 
+Research suggests that student lists substantially affect college access outcomes -- and in turn degree completion outcomes -- for millions of students each year. @RN4739 compared SAT test-takers who opted into the College Board Student Search Service -- allowing accredited institutions to "licence" their contact information -- and test-takers who opted out, after controlling for covariates. Figure \@ref(fig:cb-fig) reproduces the main results. For students with the same values of SAT score, parental education, race/ethnicity, sex, high school graduation year, and who attended the same high school, 41.1\% of students who participated in Search attended a 4-year college compared to 32.8\% of students who opted out, representing an 8.3 (`=41.1-32.8`) percentage point difference and a 25.3 (`=(41.1-32.8)/32.8`) percent change in the relative probability of attending a 4-year college (for a similar analysis of ACT's Educational Opportunity Service (EOS) see @RN4752). 
 
 Figure \@ref(fig:cb-fig) shows that participating in Search was associated with a larger percent change in the probability of attending a 4-year institution for students who identified as Black (24.5\%`=(39.6-31.8)/31.8`), Latinx (34.4\%), American Indian or Alaska Native (23.8\%), and Native Hawaiian or Pacific Islander (26.1\%) than it was for students who identified as White (21.6\%) or Asian (15.2\%). Similarly, the percent change in the probability of attending a four-year college was higher for students whose parents did not attend college (40.6\%) than it was for students whose parents had a BA (18.9\%).
 
-Given that the probability of graduating is affected by which institution a student attends [e.g., @RN2261; @RN1494], student lists may also affect degree completion through their effect on initial postsecondary institution. @RN4739 analyzed the four-year BA degree completion rates of SAT test-takers from the 2015 and 2016 high school graduation cohorts. Figure \@ref(fig:cb-fig) shows that 20.6\% of students who participated in Search obtained a BA in four years compared to 15.7\% of students who opted out, representing a 31.2\% (`=(20.6-15.7)/15.7`) increase in the relative probability of graduation. Furthermore, the relative increase in the probability of obtaining a BA was higher for Black (40.3\%), Hispanic (43.3\%), and Native American/Alaska Native students (48.3\%) than it was for White (27.9\%) and Asian (28.2\%) students. The relative increase was also higher for students whose parents did not attend college (50.0\%) than it was for students whose parents had a BA (25.3\%).
+Student lists may also affect degree completion through their effect on initial postsecondary institution. @RN4739 analyzed the four-year BA degree completion rates of SAT test-takers from the 2015 and 2016 high school graduation cohorts. Figure \@ref(fig:cb-fig) shows that 20.6\% of students who participated in Search obtained a BA in four years compared to 15.7\% of students who opted out, representing a 31.2\% (`=(20.6-15.7)/15.7`) increase in the relative probability of graduation. Furthermore, the relative increase in the probability of obtaining a BA was higher for Black (40.3\%), Hispanic (43.3\%), and Native American/Alaska Native students (48.3\%) than it was for White (27.9\%) and Asian (28.2\%) students. The relative increase was also higher for students whose parents did not attend college (50.0\%) than it was for students whose parents had a BA (25.3\%).
 
 
 <!-- PREVIOUS VERSION OF TEXT
@@ -162,9 +195,6 @@ With respect to BA degree completion, the bottom panel of Figure \@ref(fig:cb-fi
 
 A similar study compared the college access outcomes of students who opted into versus opted out of ACT's Educational Opportunity Service (EOS) [@RN4752]. EOS enables accredited postsecondary institutions and scholarship organizations to license the contact information of students who opt in. After controlling for covariates -- including ACT score, number of colleges the student sent scores to, family income, parental education, degree aspirations, race/ethnicity, state -- @RN4752 found that students who opted into EOS had a 3.7 times higher likelihood (odds ratio = $3.7$) of attending college than students who opted out. A second model, which restricted the sample to students who attended college, found that students who opted into EOS had 8.7\% higher odds of attending a four-year college rather than a two-year college.
 -->
-
-
-__Policy concerns__. Given that student lists profoundly affect student outcomes, the policy concerns are which students are being excluded from the underlying student list databases and which students are being excluded from student list purchases.  We argue that these policy concerns are primarily about student list products rather than how customers (universities) use these products.
 
 
 \newpage 
@@ -237,30 +267,14 @@ grid.arrange(
 _Note: AI/AN = American Indian or Alaska Native. HI/PI = Hawaiian or Pacific Islander. The sample for enrollment outcomes includes all SAT takers in the 2015–2018 high school graduation cohorts. The sample for completion outcomes is restricted to students in the 2015–2016 cohorts. Completion results are not reported for HI/PI students due to very small sample size (N=2,749), which returns imprecise estimates. Results are estimated from regressions that include student-level controls for: sex, race/ethnicity, SAT score, parental education level, last Student Search Service opt-in status, and graduation cohort and high school fixed effects. All differences between students whose names were licensed and those whose names were not licensed are statistically significant at the 1% level._
 \endgroup
 
+## Buying Student Lists
 
+The largest student list vendors are College Board and ACT, which create student list products based on their database of test takers. College Board encourages test takers to opt into the "Student Search Service," which enables "accredited colleges, universities, nonprofit scholarship programs, and nonprofit educational organizations" [@cb_opt_in] to "license" their contact information. In fall 2021, the College Board Search product both charged \$0.50 per name [@RN0002]. 
 
-<!-- 
-CUT TEXT
-Considering these findings, which suggest that student lists profoundly affect college access and especially for groups who are underrepresented in higher education, the policy concern is which students are being excluded from student lists. 
+How do universities purchase student lists from College Board Student Search Service and ACT's Encoura platform? Each purchased list is a subset of prospects drawn from the population of test-takers by specifying multiple search filters. @schmidt_2019 states that commonly specified search filters for ACT include high school graduation year, high school GPA, test score range (ACT or PreACT), gender, ethnicity, intended major, and geography (e.g., state, county, zip code) [@schmidt_2019] [CHANGE THIS EXAMPLE TO ACT]. As a hypothetical example, a university could purchase a student list from ACT that consisted of all prospects who scored between 30 and 34 on the ACT, have a GPA higher than 3.5, live in one of the top 10 metropolitan areas, and are in the high school senior class of 2023. As we discuss below, College Board and ACT recently began offering filters that enable universities to target prospects based on statistical models of the past behavior of similar or nearby prospects. [ADD LINKS/APPENDIX FIGURES SHOWING AVAILABLE SEARCH FILTERS FOR CB/ACT?]
 
--->
-Student list products exclude students in two ways. First, universities cannot purchase the contact information of prospects who are not included in the underlying database. While students who opt out of College Board Student Search Service are making a conscious decision, students cannot opt in unless they take a College Board Assessment (PSAT, SAT, AP). College Board and ACT assessments have been criticized for racial and socioeconomic bias [@RN6012; @RN6009; @RN6010; @RN0004; @RN0005]. Test-taking rates differ substantially across race and class [@RN0006], leading to systematic racial and socioeconomic inequality in which prospective students are included in the underlying databases that College Board and ACT student list products pull from. About 1.5 million students from the high school class of 2021 took the SAT compared to about 2.2 million students from the high school class of 2020 [@RN0007] and about 1.3 million student from the high school class of 2021 took the ACT compared to about 1.7 million students from the high school class of 2020. These declines were driven by the Covid Pandemic and by the growth in test-optional and test-blind admissions policies. To the extent that student lists are an important mechanism for college access, the test-optional movement may have the unintended consequence of creating a college access crisis, in which the long-term decline in test-takers leads to fewer prospective students included in College Board/ACT student list databases which causes college access to decline.
+What data do purchased student lists contain? Each purchased student list is essentially a spreadsheet that contains one row for each prospect that meets all criteria specified in the purchase. The columns of the student list include detailed contact information (name, address, email, cell phone) and detailed student characteristics derived from the pre-test questionnaire (e.g., ethnicity, race, gender, high school GPA, graduation year, high school code, intended major, first-generation status). The data template for an ACT student list can be found [here](https://drive.google.com/file/d/1rsP45OyOsnPYhV8uWYKDAy_spGhjj6aj/view) and the template for a College Board student list can be found [here](https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZqUE/view). These fields represent a small subset of the information the testing agencies know about prospective students and contain little data about performance on assessments (e.g., SAT score). As we discuss below, College Board and ACT provide more detailed information to universities that pay for their enrollment management consulting services.
 
-<!-- 
-CUT TEXT
-
-Second, the filters on student list products enable universities to target prospects based on criteria that may systematically exclude populations that are underrepresnted in higher education. 
-
--->
-Second, student list products exclude students by creating filters that enable universities to purchase some names but not others. While universities choose filters based on their preferences, these choices are structured by what the product allows. We are concerned that several commonly used filters systematically exclude protected classes and other populations that are underrepresented in higher education (e.g., rural students). For example, College Board and ACT student list products enable universities to filter prospects by zip code, which is highly correlated with race. College Board allows universities to target prospects based on their score in some set of AP exams, but which students attend high schools with widespread access to AP classes? An emerging trend is the creation of "geodemographic" filters that enable universities to select prospects based on the past behavior of students from their high school or neighborhood (e.g., how many students from this school attended an out-of-state university?) [@RN2039; @RN0002]. Student list products enable universities to explicitly search for underrepresented groups (e.g., by race/ethnicity), but when used in conjunction with additional filters (e.g., test score range, high school characteristics) these searches tend to target more privileged members of the group.
-
-While research sanctioned by College Board and ACT highlights the positive relationship between opting into student list products and college access [@RN4739; @RN4752; @RN4740], prior research has not examined which filter criteria universities select when purchasing student lists, what are the characteristics of purchased prospects, or the relationship between filter criteria and student characteristics. we collected data about student list purchases by issuing public records requests to public universities in five states. This report focuses on student lists purchased from College Board and addresses three research questions: 
-
-1. Which filter criteria were selected in student lists purchased by universities in our sample?
-1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
-1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
-
-Due to data collection challenges, our analysis sample cannot be considered a random sample. Nevertheless, this research is an important first step towards developing a body of empirical research that informs policy discourse about regulating the student list business.
 
 # Data Collection and Research Design
 
@@ -278,9 +292,7 @@ __Data collection sample__. The data collection sample consists of all public un
 
 Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. 
 
-
-
-
+The Appendix discusses data collection challenges, successes, and lessons learned for future data collection efforts. Appendix Figure X-X reports the status of data collection for each university in the data collection sample.
 
 <!--
 - FIGURE
@@ -418,37 +430,20 @@ __Secondary data__. Analyses incorporate several secondary data sources. Integra
 
 ## Research Design
 
-__Analysis sample__. We decided to restrict this report to student lists purchased from College Board in order to avoid overwhelming the reader (and ourselves!). Future analyses will incorporate lists purchased from ACT and other vendors. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. Preliminary results below are based on an analysis sample that consists of `r num_univs` universities that provided some order summary and some student list data. Across these `r num_univs` universities, we received `r num_orders` order summaries that make up the analysis sample for our first research question. Of those `r num_orders` order summaries, we received `r num_lists` accompanying student lists that make up the analysis sample for research questions one and two. 
+Decisions about research design and research questions depended substantially on the results of our data collection.
 
+__Analysis sample__. This report analyzes student lists purchased from College Board. Each student list purchased from College Board is associated with (1) an "order summary" of the search filters specified in the purchase (e.g., high school graduating class, test score range) and (2) the prospect-level student list produced by these search filters. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL/KARINA - ARE THESE NUMBERS RIGHT?]. The results presented below are based on data received from `r num_univs` universities that provided usable order summary data and usable student list data.
 
-<!-- NEED TO FLESH THIS OUT. ANALYSIS SAMPLE IS NOT THIS SIMPLE. SOME UNIVS GAVE US BOTH ORDER SUMMARIES AND LISTS BUT THEY DON"T MATCH. Our analysis sample consists of 12 universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data. -->
+Table \@ref(tab:purchased-data) summarizes the number of order summaries received and the number of prospects purchased across the `r num_univs` universities. We received order summaries for `r num_orders` student list purchases, including XXXX purchases where we also received the associated prospect-level student list data and XXXX purchases where we did not receive the associated prospect-level list data. 
 
-To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [@RN0008]. Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [@RN0009]. In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
+We received prospect-level student list data for `r num_lists` student list purchases, including XXXXX purchases where we also received the associated order summary and XXXXX purchases where we did not receive the order summary. There were XXXX prospects in these `r num_lists` student list purchases, including XXXX prospects from purchases where we also received the associated order summary and XXXX prospects from the purchases where we did not receive the associated order summary. [CRYSTAL/KARINA - FILL IN NUMBERS IN TEXT IN THS PARAGRAPH AND ABOVE; ALSO NUMBERS DON'T MATCH BETWEEN TEXT AND TABLE]
 
-Our inability to obtain data from all universities creates external validity concerns. An ideal analysis dataset includes all student lists purchased from College Board by all public universities in our data collection sample, or at least a random sample of these universities. Unfortunately, our analysis sample cannot be considered a random sample. Moreover, we suspect that non-response was systematically related to factors of substantive interest. For example, we were less successful obtaining records from universities that outsourced student list purchases to consulting firms. In turn, response bias affects external validity. Based on our results, we cannot make inferences about the population of universities in the four data collection states. Nor can we make inferences about the broader population of US public universities.
+Figure \@ref(fig:purchased-orders-carnegie) shows the number of student lists purchased by Carnegie Classification and state. Figure \@ref(fig:purchased-prospects-carnegie) shows the number of prospects purchased by Carnegie Classification and state.
 
-<!--
-- WHAT TO SHOW
-  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE ORDER SUMMARY DATA
-  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE STUDENT LIST DATA
-  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE **BOTH** USABLE ORDER SUMMARY DATA AND USABLE STUDENT LIST DATA
-- ORGANIZED BY [MAYBE A FIGURE WITH THREE SEPARATE PANELS? USE YOUR DISCRETION:
-  - STATE
-  - STATE AND CARNEGIE CLASSIFICATION
-  - STATE AND LEVEL OF URBANIZATION
+Figure \@ref(fig:orders-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
 
-Table/Figure X shows the number of lists and the number of prospects purchased by universities in our analysis sample [CRYSTAL ADD TEXT] [SPECIFICATIONS FOR FIGURE (USE YOUR DISCRETION!)]
+The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`).
 
-- WHAT DATA TO SHOW
-  - NUMBER OF ORDERS (REGARDLESS OF WHETHER WE HAVE STUDENT LIST DATA)
-  - NUMBER OF ORDERS WHERE WE HAVE STUDENT LIST DATA
-  - NUMBER OF PROSPECTS PURCHASED (REGARDLESS OF WHETHER WE HAVE THE ORDER SUMMARY)
-  - NUMBER OF PROSPECTS PURCHASED WHERE WE HAVE THE ORDER SUMMARY
-- SHOW DATA BY:
-  - STATE AND CARNEGIE CLASSIFICATION 
-- SUB-FIGURES? 
-  - USE YOUR DISCRETION
--->
 
 ```{r received-data}
 appendix_df <- univ_df %>% 
@@ -490,6 +485,27 @@ data.frame(
 ```
 
 ```{r purchased-orders-carnegie, fig.height = 2, fig.cap = 'Summary of orders purchased by carnegie classification'}
+orders_df %>% 
+  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
+  mutate(has_list = !is.na(n)) %>% 
+  group_by(has_list, univ_state, carnegie) %>% 
+  summarise(count = n()) %>% 
+  mutate(
+    has_list = factor(has_list, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    carnegie = factor(carnegie, levels = c("Research", "Master's", "Baccalaureate"))
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of orders') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 301)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has list') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
+
+
+```{r purchased-prospects-carnegie, fig.height = 2, fig.cap = 'Summary of prospects purchased by carnegie classification'}
 lists_df_summary %>% 
   mutate(has_order = !is.na(ord_num)) %>% 
   group_by(has_order, univ_state, univ_c15basic) %>% 
@@ -516,31 +532,24 @@ lists_df_summary %>%
   guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
 ```
 
-```{r purchased-prospects-carnegie, fig.height = 2, fig.cap = 'Summary of prospects purchased by carnegie classification'}
-orders_df %>% 
-  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
-  mutate(has_list = !is.na(n)) %>% 
-  group_by(has_list, univ_state, carnegie) %>% 
-  summarise(count = n()) %>% 
-  mutate(
-    has_list = factor(has_list, levels = c(T, F)),
-    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
-    carnegie = factor(carnegie, levels = c("Research", "Master's", "Baccalaureate"))
-  ) %>% 
-  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
-  geom_bar(position = 'stack', stat = 'identity') +
-  xlab('Number of orders') + ylab('') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 301)) +
-  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
-  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has list') +
-  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```{r orders-purchased, fig.height = 3, fig.cap = 'Orders purchased by carnegie classification'}
+orders_fig_totals %>% 
+  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
+  xlab('') + ylab('Total students') +
+  scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Carnegie classification') +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
 ```
 
-__Research questions and analyses__. Choices about research questions were informed by the limitations of our analysis sample and by substantive considerations. We cannot make statements about university behavior that extends beyond our analysis sample. Assuming our data is representative of lists purchased by universities in our sample, 
-we can make statements about the College Board student lists purchased by universities in our analysis sample. This reasoning suggests treating our sample as a multiple case study [@RN4116]. The behaviors observed in our sample identify behaviors that exist in the population of public public universities, but not the prevalence of these behaviors in the population.
 
+__Research questions and analyses__. Choices about research questions were informed by data limitations and by substantive considerations. Because we received order summary data and student list data from a non-random sample of universities, we utilize a multiple case study research design [@RN4116] rather than a large-N statistical design. Therefore, our analysis sample identifies behaviors that exist in the population of public universities, but not the prevalence of these behaviors in the population.
 
-More substantively, during the course of data collection we realized that research should focus on the student list products themselves rather than the behavior of customers (universities) who buy the product. Systematic inequality in purchased versus excluded names is a function of (A) which prospective students are included in the underlying data base and (B) the set of filters that universities can utilize to select prospects and finally (C) university choices about which filters to select. Thus, while universities choose which filters to apply to each list purchase, these choices -- and the resulting set of names -- are structured by what the product allows. These considerations suggest analyses that investigate the relationship between the filters chosen for a particular student list purchase and who is included in the resulting student list.
+More substantively, analyses should also focus on student list products themselves, not just the behavior of customers (universities) who buy the product. Systematic inequality in purchased versus excluded names is a function of: (A) which prospective students are included in the underlying data base; (B) the set of filters that universities can utilize to select prospects; and finally (C) university choices about which filters to select. Therefore, analyses should investigate the relationship between the filters chosen for a particular student list purchase and who is included in the resulting student list.
 
 <!--
 Prospective students who do not take College Board assessments are excluded from College Board lists. College Board filters encourage customers to purchase prospects based on their score ranges in SAT, PSAT, and AP assessments, but which students attends high schools with widespread access to AP classes? Geographic filters additionally enable to customers to filter prospects based zip code. which is highly correlated by race. More recently, College Board has created "geodemographic" filters that target prospects based on the recent college-going behaviors of nearby peers. 
@@ -555,32 +564,9 @@ In RQ1 the unit of analysis is the order or university-order. Analyses allow us 
 
 Empirical analyses consist of simple descriptive statistics presented in tables, figures, and maps. For each research question, analyses are anchored by a small set of tables or figures that present results for the entire analysis sample. Next, we present analyses of selected universities, purchases and/or localities that convey commonly observed or thematically important patterns, with a focus on the nexus between race, class, and geography. For RQ2 and RQ3, we contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups (e.g., all high school graduates in the metropolitan area).
 
-
-
-
 # Results  
 
 ## Characteristics of Student List Purchases 
-
-### Total Orders and Number of Prospects
-
-Figure \@ref(fig:orders-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
-
-The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`). The only baccalaureate college in the study purchased `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Baccalaureate"))$num_students, na.rm = T)), ',')` prospects in their one College Board order.
-
-```{r orders-purchased, fig.height = 3, fig.cap = 'Orders purchased by carnegie classification'}
-orders_fig_totals %>% 
-  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
-  geom_bar(stat = 'identity', alpha = 0.6) +
-  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
-  xlab('') + ylab('Total students') +
-  scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Carnegie classification') +
-  theme(
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_blank()
-  )
-```
 
 ### Frequency of Filters Used
 

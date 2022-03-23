@@ -1,0 +1,441 @@
+---
+title: "Geodemographics of Student List Purchases by Public Universities: A First Look "
+subtitle: ""
+author: 
+  - Karina Salazar
+  - Ozan Jaquette
+  - Crystal Han
+bibliography: ../bib/student_list_empirics.bib
+citeproc: no
+output: 
+  bookdown::pdf_document2:
+    toc: FALSE
+    pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
+eoutput: pdf_document
+always_allow_html: true
+csl: ../bib/apa.csl
+urlcolor: blue
+fontsize: 12pt
+#header-includes:
+#      - \usepackage{pdflscape}
+#      - \usepackage{geometry}
+header-includes:
+      - \usepackage{floatrow}
+      - \floatsetup{capposition=top}
+      - \usepackage{setspace}\onehalfspacing #\doublespacing
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+options(scipen=999)
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
+
+library(knitr)
+library(bookdown)
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(scales)
+library(leaflet)
+library(rgdal)
+library(english)
+
+data_dir <- file.path('..', '..', 'data')
+
+load(file.path(data_dir, 'tbl_fig_data.RData'))
+zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm')
+  )
+)
+
+color_palette <- c('#ba9a88', '#bbcfd7')
+
+# https://stackoverflow.com/a/65844319/6373540
+linesep <- function(x, y = character()){
+  if(!length(x))
+    return(y)
+  linesep(x[-length(x)], c(rep('', x[length(x)] - 1), '\\addlinespace', y))  
+}
+
+num_univs <- nrow(orders_fig_totals)
+num_orders <- sum(orders_fig_totals$total_orders)
+num_lists <- length(na.omit(lists_df_summary$ord_num))
+num_prospects <- sum(lists_df_summary$n)
+
+psat_min <- orders_df %>% filter(!is.na(psat_minbrks)) %>% count(psat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+psat_max <- orders_df %>% filter(!is.na(psat_maxbrks)) %>% count(psat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_min <- orders_df %>% filter(!is.na(sat_minbrks)) %>% count(sat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_max <- orders_df %>% filter(!is.na(sat_maxbrks)) %>% count(sat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+gender <- orders_df %>% filter(!is.na(gender)) %>% count(gender) %>% mutate(pct = round(n / sum(n) * 100))
+race <- orders_df %>%
+  filter(!is.na(race_ethnicity)) %>% 
+  mutate(
+    is_black = str_detect(race_ethnicity, 'Black'),
+    is_latinx = str_detect(race_ethnicity, 'Hispanic or Latino'),
+    is_native = str_detect(race_ethnicity, 'American Indian or Alaska Native'),
+    is_hawaiian = str_detect(race_ethnicity, 'Native Hawaiian or Other Pacific Islander'),
+    is_asian = str_detect(race_ethnicity, 'Asian'),
+    is_white = str_detect(race_ethnicity, 'White'),
+    num_race_filters = str_count(race_ethnicity, '\\|') + 1
+  )
+
+df_0 <- df_0 %>% 
+  mutate(pct = round(n / sum(n) * 100))
+
+df_rq2a_totals <- df_rq2a %>% filter(row_subj == 'Total N')
+df_rq2a_domestic <- df_rq2a %>% select(row_subj, all_domestic) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_instate <- df_rq2a %>% select(row_subj, in_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_outofstate <- df_rq2a %>% select(row_subj, out_of_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_instate <- df_rq2a %>% select(row_subj, research_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_outofstate <- df_rq2a %>% select(row_subj, research_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_instate <- df_rq2a %>% select(row_subj, regional_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_outofstate <- df_rq2a %>% select(row_subj, regional_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+
+df_rq3_gpa <- df_rq3 %>% select(row_subj, GPA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_psat <- df_rq3 %>% select(row_subj, PSAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_sat <- df_rq3 %>% select(row_subj, SAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_hsrank <- df_rq3 %>% select(row_subj, `HS RANK`) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_race <- df_rq3 %>% select(row_subj, RACE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_gender <- df_rq3 %>% select(row_subj, GENDER) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_zip <- df_rq3 %>% select(row_subj, ZIP) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_state <- df_rq3 %>% select(row_subj, STATE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_segment <- df_rq3 %>% select(row_subj, SEGMENT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_cbsa <- df_rq3 %>% select(row_subj, CBSA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+```
+
+
+<!-- # Executive Summary -->
+
+<!-- TEXT -->
+
+
+# Data Collection and Research Design
+
+This section describes, first, the data collection for the broader project. Second, we describe the research methods for analyses of student list purchases from College Board, which are the focus of this report.
+
+## Data Collection
+
+__Data collection sample__.  In 2019 we received funding from the Joyce Foundation and the Kresge Foundation for a research project that would utilize public records requests to collect data about recruiting behavior from all public universities in four states, California, Illinois, Minnesota, and Texas. Broadly, we sought two types of data: off-campus recruiting visits (e.g., visit from a university admissions representative to a local high school) and student list purchases. 
+
+IL and MN are focus states for the Joyce Foundation, while CA and TX are focus states for Kresge. The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In MN, there are 5 universities in the University of Minnesota system and 7 in the Minnesota State University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. We also collected data from Arizona State University and Northern Arizona University.
+
+Table \@ref(tab:univ-characteristics) and Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. 
+
+<!--
+- FIGURE
+  - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND CARNEGIE CLASSIFICATION
+  - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND LEVEL OF URBANIZATION (e.g., urban, suburban, rural - you decide on the variable)
+- APPENDIX TABLE
+  - Same as table 2 from private school chapter, with these differences:
+    - add column for system name and carnegie classification; delete column for USNWR rank
+    - sort by: state, system, carnegie classification, university name
+-->
+
+```{r, warning = F}
+ipeds_df <- read_csv(file.path(data_dir, 'ipeds_data.csv'), na = 'NULL', col_types = c('unitid' = 'c', 'endyear' = 'c', 'satactcomp25' = 'n', 'satactcomp75' = 'n', 'freshoutstpct' = 'n', 'pgrnt_n' = 'n', 'cohortsfaef' = 'n')) %>% filter(endyear == '2017')
+hd_df <- read_csv(file.path(data_dir, 'hd2017.csv'), col_types = c('UNITID' = 'c', 'SECTOR' = 'c', 'UGOFFER' = 'c', 'LOCALE' = 'c'))
+carnegie_df <- read_csv(file.path(data_dir, 'carnegie_2018.csv'), col_types = c('UNITID' = 'c', 'BASIC2015' = 'c'))
+
+univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>% 
+  left_join(carnegie_df %>% select(UNITID, BASIC2015), by = 'UNITID') %>% 
+  filter(
+    STABBR %in% c('CA', 'TX', 'IL', 'MN'),
+    SECTOR == 1,
+    UGOFFER == 1,
+    !BASIC2015 %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+    !UNITID %in% c('488800', '229337', '229300', '228644', '416801', '228653')
+  ) %>% 
+  left_join(ipeds_df %>% select(unitid, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_n, cohortsfaef, ugftptfreshwhmf, ugftptfreshblmf, ugftptfreshapmf, ugftptfreshhimf, ugftptfreshalmf), by = c('UNITID' = 'unitid')) %>% 
+  mutate(
+    system = case_when(
+      str_detect(INSTNM, 'University of California') ~ 'UC',
+      STABBR == 'CA' ~ 'CSU',
+      str_detect(INSTNM, 'Texas A') | UNITID %in% c('228529', '227526') ~ 'TX A&M',
+      str_detect(INSTNM, 'University of Houston') ~ 'U of Houston',
+      str_detect(INSTNM, 'University of North Texas') ~ 'UNT',
+      str_detect(INSTNM, 'University of Texas') ~ 'U of TX',
+      UNITID %in% c('222831', '229115') ~ 'TX Tech',
+      UNITID %in% c('226091', '227881', '228501', '228459') ~ 'TX State U',
+      STABBR == 'TX' ~ 'Indy TX',
+      str_detect(INSTNM, 'University of Illinois') ~ 'U of IL',
+      str_detect(INSTNM, 'Southern Illinois University') ~ 'SIU',
+      STABBR == 'IL' ~ 'IL State U',
+      str_detect(INSTNM, 'University of Minnesota') ~ 'UMN',
+      STABBR == 'MN' ~ 'MN State U'
+    ),
+    locale = str_sub(LOCALE, end = 1),
+    locale_text = recode_factor(
+      locale,
+      `4` = 'Rural',
+      `3` = 'Town',
+      `2` = 'Suburban',
+      `1` = 'City'
+    ),
+    carnegie = recode_factor(
+      BASIC2015,
+      `-2` = 'Unknown',
+      `15` = 'Doctoral Universities: Highest Research Activity',
+      `16` = 'Doctoral Universities: Higher Research Activity',
+      `17` = 'Doctoral Universities: Moderate Research Activity',
+      `18` = 'Master\'s Colleges & Universities: Larger Programs',
+      `19` = 'Master\'s Colleges & Universities: Medium Programs',
+      `20` = 'Master\'s Colleges & Universities: Small Programs',
+      `21` = 'Baccalaureate Colleges: Arts & Sciences Focus',
+      `22` = 'Baccalaureate Colleges: Diverse Fields',
+      `26` = 'Special Focus Four-Year: Other Health Professions Schools'
+    )
+  )
+
+univ_df$STABBR = factor(univ_df$STABBR, levels = c('IL', 'MN', 'CA', 'TX'))
+univ_df$system = factor(univ_df$system, levels = c('U of IL', 'IL State U', 'SIU', 'UMN', 'MN State U', 'UC', 'CSU', 'U of TX', 'TX State U', 'TX A&M', 'U of Houston', 'UNT', 'TX Tech', 'Indy TX'))
+```
+
+```{r univ-characteristics}
+univ_df %>%
+  mutate(
+    satactcomp25 = if_else(is.na(satactcomp25), '', prettyNum(round(satactcomp25, 0), ',')),
+    satactcomp75 = if_else(is.na(satactcomp75), '', prettyNum(round(satactcomp75, 0), ',')),
+    tfuginst = str_c('$', prettyNum(sprintf('%.2f', tfuginst), ',')),
+    tfugoutst = str_c('$', prettyNum(sprintf('%.2f', tfugoutst), ',')),
+    freshoutstpct = if_else(is.na(freshoutstpct), '', str_c(sprintf('%.1f', freshoutstpct * 100), '%')),
+    pgrnt_p = if_else(is.na(pgrnt_n), '', str_c(sprintf('%.1f', pgrnt_n / cohortsfaef * 100), '%')),
+    pctfreshwh = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshwhmf / ugftptfreshtot * 100), '%')), 
+    pctfreshbl = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshblmf / ugftptfreshtot * 100), '%')), 
+    pctfreshhi = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshhimf / ugftptfreshtot * 100), '%')), 
+    pctfreshap = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshapmf / ugftptfreshtot * 100), '%')), 
+    pctfreshal = if_else(ugftptfreshtot == 0, '', str_c(sprintf('%.1f', ugftptfreshalmf / ugftptfreshtot * 100), '%')),
+    ugftptfreshtot = if_else(ugftptfreshtot == 0, '', prettyNum(ugftptfreshtot, ','))
+  ) %>% 
+  select(STABBR, system, INSTNM, carnegie, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_p, pctfreshwh, pctfreshbl, pctfreshhi, pctfreshap, pctfreshal) %>% 
+  arrange(STABBR, system, desc(carnegie), INSTNM) %>% 
+  kable(booktabs = F, col.names = c('State', 'System', 'University', 'Carnegie', '25th pctl SAT/ACT', '75th pctl SAT/ACT', 'In-state tuition', 'Out-of-state tuition', '# Freshmen' , '% Out-of-state freshmen', '% Pell', '% White', '% Black', '% Latinx', '% Asian/PI', '% Non-resident alien'), caption = 'University characteristics') %>%
+  collapse_rows(columns = 1:2, latex_hline = 'custom', custom_latex_hline = 1:2, valign = 'middle') %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+```{r univ-carnegie, fig.height = 2, fig.cap = 'University by carnegie classification'}
+univ_df %>% 
+  group_by(STABBR, carnegie) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+\bigskip
+
+```{r univ-locale, fig.height = 2, fig.cap = 'University by locale'}
+univ_df %>% 
+  group_by(STABBR, locale_text) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+__Public records requests__. In late 2019, we signed an agreement with the Lawyers' Committee for Civil Rights Under Law (LCCR) to partner with us on the public records request data collection. LCCR was created by the Kennedy Administration to leverage private sector legal expertise towards civil rights. LCCR typically operates by connecting projects with the pro bono efforts of corporate law firms. LCCR recruited firms to work on our project. Unfortunately, several firms that expressed initial interest withdrew following conflict of interest checks. However, LCCR generously allocated time of an internal staff attorney towards our project. Additionally, one firm offered to help us collect data from Arizona public universities. Although Arizona was not part of the funded project, we gratefully accepted.
+
+<!--
+Although We had experience issuing public records requests from a previous data collection about off-campus recruiting visits by public research universities, the greater scale, complexity, and sensitivity of this project motivated us to find a partner with greater legal expertise. 
+-->
+
+We began issuing public records requests in February 2020, following several months of planning and pilot requests. We issued one records request letter for each public university. An example records request letter can be found [here](https://docs.google.com/document/d/1uVLwxmc9GnhOZOfsjSxQ_pVxKA0ASDRC/edit#). Each request letter asked for data about off-campus recruiting visits and student list purchases for the purpose of undergraduate recruiting, which were made from August 2016 to the present. For each student list purchase from a student list vendor, we requested two related pieces of data: the order summary, which specifies search criteria for the student list purchase; and the de-identified prospect-level list produced from the search criteria. 
+
+As such, we conceived of our data collection as requesting three types of information: (1) off-campus recruiting visits; (2) student list order summaries; and (3) de-identified student list data. Each request letter included examples of desired off-campus [recruiting visit data](), student list [order summary data](https://drive.google.com/drive/u/1/folders/16HWujljYw8Hc2MetU8yADp2N3tQ_dywY), and [de-identified student list data](https://drive.google.com/drive/u/1/folders/16HWujljYw8Hc2MetU8yADp2N3tQ_dywY) as attachments.
+
+__Data collection challenges and successes__. Appendix figures summarize  the success to date of our data collection efforts and report the status of data collection for each university. We received usable quantitative off-campus recruiting visit data from X universities, usable student list order summary data from X universities, and usable de-identified student list data from X universities. 
+
+Using public records requests to collect quantifiable data is difficult under the best of circumstances. Unfortunately, we started collecting data just as COVID-19 emerged. Several additional challenges -- some foreseeable and tractable and others not -- made data collection difficult. State public records request laws generally require public entities to redact records that contain sensitive personal information but do not require public entities to create new records. Consider a prospect-level student list stored by a public university in a spreadsheet format. Removing personally identifiable information (e.g., fields for name, mailing address, email address) is part of the redaction process. By contrast, if information about off-campus recruiting visits stored in old emails or an antiquated calendar system, compiling these records would be considered creating new records rather than redaction. This turned out to be the most common reason we did not obtain off-campus recruiting visit data.
+
+For student list purchases, an additional complication is that universities may purchase lists from multiple vendors. When we initiated data collection, the three largest vendors were College Board, ACT, and the National Research Center for College and University Admissions (NRCCUA), which had just been purchased by NRCCUA. In subsequent communication with universities, we narrowed our student list purchase requests to these three vendors.
+
+Many public universities outsourced student list purchases to an enrollment management consulting firm, which created several challenges. Employees at these universities often lacked knowledge about student list purchases and were unfamiliar with the records we requested. Employee turnover often exacerbated this lack of institutional knowledge. 
+Enrollment management consulting firms posed another barrier. When lists were purchased by a consulting firm, the university often did not have the requested order summaries and/or student lists in their possession. Furthermore, the summary information firms regularly sent to universities was too aggregate for our analyses, but firms were unwilling to help provide the original records we sought. 
+
+In response to early data collection challenges, we created a "[vendor portal document](https://docs.google.com/document/d/1pcxS4RwGV0YlnPw_A0XLF_quzKnoEvHdbfEyO_1nkpA/edit)." This document provided detailed instructions -- separately for College Board, ACT, and NRCCUA -- for how to log-in to the online portal, obtain the order summary for each student list purchase, obtain student list data for each purchase, and how to de-identify these data. Unfortunately, this document was less effective for ACT and NRCCUA than it was for College Board. ACT released the Encoura platform in [2021](https://encoura.org/about-encoura/press-room/), following its 2018 acquisition of NRCCUA. The online portals that provided access to students lists purchased from the legacy ACT and NRCCUA student list products were continued. Furthermore, whereas the College Board portal gave customers access to student lists purchased in the last X years, the Encoura portal provided access to purchases within the previous 12 months.
+
+The most common data collection challenges were universities not replying to the request or denying the request. The legal grounds for these denials were often questionable. We learned that obtaining these data depends on treating each university as a protracted negotiation -- often several negotiations -- that requires sustained effort and some degree of leverage. Even with time from a LCCR staff attorney, we lacked sufficient capacity for sustained negotiations with each university and we lacked a stick that commanded university attention.
+
+In Spring 2021, LCCR successfully recruited three law firms to represent data collection efforts in Illinois, Minnesota, and California, respectively. However, we were unable to obtain representation for Texas. The firms produced legal research that demonstrated the legitimacy of our requests and picked-apart denials based on questionable legal grounds (e.g,. "trade secrets"). Next, the firms systematically engaged universities, often directly engaging the university or system-level general counsel, who then directed the public records office and other offices to cooperate with our request. Firm representation substantially increased the number of successful requests. However, many universities provided legitimate reasons for not providing one or more requested data elements (e.g., records no longer exist, not required to create new records). Some universities denied request elements on grounds that firms believed lacked legal merit. However, we made a collective decision not pursue litigation.
+
+In hindsight, we identify several changes may benefit efforts to collect public records in the enrollment management space. First, many universities were understandably overwhelmed by a request for several complicated, esoteric data sources. We could have issued several narrower requests rather than a single multi-aceted request. Related, our request for student list data should have proceeded in two stages: first, requesting contracts with a specific set of student list vendors over a time period; and, second, for each contract received, issuing a separate records request for the student list order summaries de-identified student lists associated with that contract. Third, we underestimated the extent to which university personnel were unfamiliar with student list purchases and also the number of universities that outsourced student list purchases to a consulting firm. We should have created the "vendor portal" instructions document at the beginning of the data collection process.
+
+__Data processing__. Records received from universities were visually inspected to check whether they contained the requested fields and data structure. If not, we communicated the problems to the university and asked for revised records. Records that passed visual inspection were processed. The order summaries were generally provided as PDF files and were parsed using Python, a general-purpose programming language, and converted to tabular data. The student-level lists -- typically received as csv or text files -- were imported and cleaned using the statistical programming language R. If processing revealed additional problems with the data, we asked the university for revised records.
+
+## Research Design
+
+__Analysis sample__. We decided to restrict this report to student lists purchased from College Board in order to avoid overwhelming the reader (and ourselves!). Future analyses will incorporate lists purchased from ACT and other vendors. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. Preliminary results below are based on an analysis sample that consists of `r num_univs` universities that provided some order summary and some student list data. Across these `r num_univs` universities, we received `r num_orders` order summaries that make up the analysis sample for our first research question. Of those `r num_orders` order summaries, we received `r num_lists` accompanying student lists that make up the analysis sample for research questions one and two. 
+
+
+<!-- NEED TO FLESH THIS OUT. ANALYSIS SAMPLE IS NOT THIS SIMPLE. SOME UNIVS GAVE US BOTH ORDER SUMMARIES AND LISTS BUT THEY DON"T MATCH. Our analysis sample consists of 12 universities that provided usable data about student lists purchased from College Board, including X universities that provided both order summary and student list data, X universities that only provided order summary data, and X universities that only provided student list data. -->
+
+To what extent are the student list purchases we analyze representative of student lists purchased by universities in our analysis sample? Universities may purchase student lists from several different vendors but College Board and ACT dominate the market. In CA and TX, the majority of test-takers take the SAT [@RN0008]. Historically, most IL test-takers took the ACT, but in 2016 the state signed a contract with College Board for all IL juniors to take the SAT [@RN0009]. In MN, the vast majority of test-takers take the ACT. These state-by-state differences suggest that students lists purchased from College Board will not be representative of all student lists purchases, particularly for MN public universities. Another issue is that some universities provide incomplete data about student lists purchased from College Board during the requested time period. When we received the order summary for a particular purchase but not the de-identified student list -- or vice-versa -- we have direct evidence of incomplete data. However, we usually cannot assess whether the data we received identifies the full set of student lists purchased from College Board.
+
+Our inability to obtain data from all universities creates external validity concerns. An ideal analysis dataset includes all student lists purchased from College Board by all public universities in our data collection sample, or at least a random sample of these universities. Unfortunately, our analysis sample cannot be considered a random sample. Moreover, we suspect that non-response was systematically related to factors of substantive interest. For example, we were less successful obtaining records from universities that outsourced student list purchases to consulting firms. In turn, response bias affects external validity. Based on our results, we cannot make inferences about the population of universities in the four data collection states. Nor can we make inferences about the broader population of US public universities.
+
+<!--
+- WHAT TO SHOW
+  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE ORDER SUMMARY DATA
+  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE USABLE STUDENT LIST DATA
+  - NUMBER OF UNIVERSITIES THAT DID AND DID NOT PROVIDE **BOTH** USABLE ORDER SUMMARY DATA AND USABLE STUDENT LIST DATA
+- ORGANIZED BY [MAYBE A FIGURE WITH THREE SEPARATE PANELS? USE YOUR DISCRETION:
+  - STATE
+  - STATE AND CARNEGIE CLASSIFICATION
+  - STATE AND LEVEL OF URBANIZATION
+
+Table/Figure X shows the number of lists and the number of prospects purchased by universities in our analysis sample [CRYSTAL ADD TEXT] [SPECIFICATIONS FOR FIGURE (USE YOUR DISCRETION!)]
+
+- WHAT DATA TO SHOW
+  - NUMBER OF ORDERS (REGARDLESS OF WHETHER WE HAVE STUDENT LIST DATA)
+  - NUMBER OF ORDERS WHERE WE HAVE STUDENT LIST DATA
+  - NUMBER OF PROSPECTS PURCHASED (REGARDLESS OF WHETHER WE HAVE THE ORDER SUMMARY)
+  - NUMBER OF PROSPECTS PURCHASED WHERE WE HAVE THE ORDER SUMMARY
+- SHOW DATA BY:
+  - STATE AND CARNEGIE CLASSIFICATION 
+- SUB-FIGURES? 
+  - USE YOUR DISCRETION
+-->
+
+```{r received-data}
+appendix_df <- univ_df %>% 
+  select(INSTNM, STABBR, system, carnegie, locale_text) %>% 
+  mutate(
+  'num_received_summary' = rep_len(c(T, F), 91),
+  'num_not_received_summary' = rep_len(c(F, T), 91),
+  'num_received_list' = rep_len(c(T, F), 91),
+  'num_not_received_list' = rep_len(c(F, T), 91),
+  'num_received_both' = rep_len(c(T, F), 91),
+  'num_not_received_both' = rep_len(c(F, T), 91)
+) 
+
+appendix_df %>% 
+  group_by(STABBR) %>% 
+  summarise(
+    'num_received_summary' = sum(num_received_summary),
+    'num_not_received_summary' = sum(num_not_received_summary),
+    'num_received_list' = sum(num_received_list),
+    'num_not_received_list' = sum(num_not_received_list),
+    'num_received_both' = sum(num_received_both),
+    'num_not_received_both' = sum(num_not_received_both)
+  ) %>% 
+  kable(booktabs = T, col.names = c('State', '# received order summary', '# no order summary', '# received list', '# no list', '# received both', '# did not receive both'), align = rep('c', 7), caption = 'Summary of data received') %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = 'scale_down')
+```
+
+```{r purchased-data}
+data.frame(
+  orders_total = orders_df %>% nrow(),
+  orders_with_list = orders_df %>% left_join(lists_df_summary, by = c('order_num' = 'ord_num')) %>% filter(!is.na(n)) %>% nrow(),
+  prospects_total = prettyNum(sum(lists_df_summary$n), ','),
+  prospects_with_order = prettyNum(sum((lists_df_summary %>% filter(!is.na(ord_num)))$n), ',')
+) %>% 
+  kable(booktabs = T, col.names = c('# orders total', '# orders with list', '# prospects total', '# prospects with order'), align = rep('c', 4), caption = 'Summary of orders and prospects purchased') %>% 
+  row_spec(0, bold = T) %>% 
+  kable_styling(position = 'center')
+```
+
+```{r purchased-orders-carnegie, fig.height = 2, fig.cap = 'Summary of orders purchased by carnegie classification'}
+lists_df_summary %>% 
+  mutate(has_order = !is.na(ord_num)) %>% 
+  group_by(has_order, univ_state, univ_c15basic) %>% 
+  summarise(count = sum(n)) %>% 
+  mutate(
+    has_order = factor(has_order, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    univ_c15basic = as_factor(univ_c15basic),
+    carnegie = recode_factor(
+      univ_c15basic,
+      "Doctoral Universities: Highest Research Activity" = "Research",
+      "Doctoral Universities: Higher Research Activity" = "Research",
+      "Master's Colleges & Universities: Larger Programs" = "Master's",
+      "Master's Colleges & Universities: Medium Programs" = "Master's",
+      "Baccalaureate Colleges: Diverse Fields" = "Baccalaureate"
+    )
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_order, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of prospects') + ylab('') +
+  scale_x_continuous(labels = label_number(suffix = 'K', scale = 1e-3), expand = expansion(mult = c(0, 0.05)), limits = c(0, 855000)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has order summary') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
+
+```{r purchased-prospects-carnegie, fig.height = 2, fig.cap = 'Summary of prospects purchased by carnegie classification'}
+orders_df %>% 
+  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
+  mutate(has_list = !is.na(n)) %>% 
+  group_by(has_list, univ_state, carnegie) %>% 
+  summarise(count = n()) %>% 
+  mutate(
+    has_list = factor(has_list, levels = c(T, F)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    carnegie = factor(carnegie, levels = c("Research", "Master's", "Baccalaureate"))
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = carnegie, alpha = has_list, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of orders') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 301)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Carnegie classification') +
+  scale_alpha_manual(values = c(0.6, 0.3), name = 'Has list') +
+  guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
+```
+
+__Research questions and analyses__. Choices about research questions were informed by the limitations of our analysis sample and by substantive considerations. We cannot make statements about university behavior that extends beyond our analysis sample. Assuming our data is representative of lists purchased by universities in our sample, 
+we can make statements about the College Board student lists purchased by universities in our analysis sample. This reasoning suggests treating our sample as a multiple case study [@RN4116]. The behaviors observed in our sample identify behaviors that exist in the population of public public universities, but not the prevalence of these behaviors in the population.
+
+
+More substantively, during the course of data collection we realized that research should focus on the student list products themselves rather than the behavior of customers (universities) who buy the product. Systematic inequality in purchased versus excluded names is a function of (A) which prospective students are included in the underlying data base and (B) the set of filters that universities can utilize to select prospects and finally (C) university choices about which filters to select. Thus, while universities choose which filters to apply to each list purchase, these choices -- and the resulting set of names -- are structured by what the product allows. These considerations suggest analyses that investigate the relationship between the filters chosen for a particular student list purchase and who is included in the resulting student list.
+
+<!--
+Prospective students who do not take College Board assessments are excluded from College Board lists. College Board filters encourage customers to purchase prospects based on their score ranges in SAT, PSAT, and AP assessments, but which students attends high schools with widespread access to AP classes? Geographic filters additionally enable to customers to filter prospects based zip code. which is highly correlated by race. More recently, College Board has created "geodemographic" filters that target prospects based on the recent college-going behaviors of nearby peers. 
+-->
+The empirical analyses presented in this report are guided by three research questions, which focus on student lists purchased from College Board:
+
+1. Which filter criteria were selected in student lists purchased by universities in our sample?
+1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
+1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
+
+In RQ1 the unit of analysis is the order or university-order. Analyses allow us to make statements about how orders vary -- within-university variation and between-university variation -- for universities in our sample. In RQ2 the unit of analysis is university-prospect. Analyses allow us to make statements about the characteristics of prospects targeted by universities in our sample. In RQ3 the unit of analysis is order-prospect. Analyses allow us to make statements about the relationship between filter criteria and prospect characteristics that extend to lists purchased by any university that select similar filter criteria.
+
+Empirical analyses consist of simple descriptive statistics presented in tables, figures, and maps. For each research question, analyses are anchored by a small set of tables or figures that present results for the entire analysis sample. Next, we present analyses of selected universities, purchases and/or localities that convey commonly observed or thematically important patterns, with a focus on the nexus between race, class, and geography. For RQ2 and RQ3, we contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups (e.g., all high school graduates in the metropolitan area).
+
+__Secondary data__. Analyses incorporate several secondary data sources. Integrated Postsecondary Education Data System (IPEDS) data provides characteristics of universities in the analysis sample. NCES Common Core of Data (CCD) and Private School Universe Survey (PSS), respectively, provides data about U.S. public and private high schools. The Census American Community Survey (ACS) provide data about community characteristics. We use zip-code level data from ACS 5-year estimates.
+
+
+
+# References
+
+<div id="refs"></div>
+
+
+
