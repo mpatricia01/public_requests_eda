@@ -294,15 +294,7 @@ Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public 
 
 The Appendix discusses data collection challenges, successes, and lessons learned for future data collection efforts. Appendix Figure X-X reports the status of data collection for each university in the data collection sample.
 
-<!--
-- FIGURE
-  - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND CARNEGIE CLASSIFICATION
-  - SUB-FIGURE: NUMBER OF UNIVERSITIES BY STATE AND LEVEL OF URBANIZATION (e.g., urban, suburban, rural - you decide on the variable)
-- APPENDIX TABLE
-  - Same as table 2 from private school chapter, with these differences:
-    - add column for system name and carnegie classification; delete column for USNWR rank
-    - sort by: state, system, carnegie classification, university name
--->
+
 
 ```{r, warning = F}
 ipeds_df <- read_csv(file.path(data_dir, 'ipeds_data.csv'), na = 'NULL', col_types = c('unitid' = 'c', 'endyear' = 'c', 'satactcomp25' = 'n', 'satactcomp75' = 'n', 'freshoutstpct' = 'n', 'pgrnt_n' = 'n', 'cohortsfaef' = 'n')) %>% filter(endyear == '2017')
@@ -432,7 +424,10 @@ __Secondary data__. Analyses incorporate several secondary data sources. Integra
 
 Decisions about research design and research questions depended substantially on the results of our data collection.
 
-__Analysis sample__. This report analyzes student lists purchased from College Board. Each student list purchased from College Board is associated with (1) an "order summary" of the search filters specified in the purchase (e.g., high school graduating class, test score range) and (2) the prospect-level student list produced by these search filters. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL/KARINA - ARE THESE NUMBERS RIGHT?]. The results presented below are based on data received from `r num_univs` universities that provided usable order summary data and usable student list data.
+<!-- CUT TEXT
+Each student list purchased from College Board is associated with (1) an "order summary" of the search filters specified in the purchase (e.g., high school graduating class, test score range) and (2) the prospect-level student list produced by these search filters. 
+-->
+__Analysis sample__. This report analyzes student lists purchased from College Board. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL/KARINA - ARE THESE NUMBERS RIGHT?]. The results presented below are based on data received from `r num_univs` universities that provided usable order summary data and usable student list data.
 
 Table \@ref(tab:purchased-data) summarizes the number of order summaries received and the number of prospects purchased across the `r num_univs` universities. We received order summaries for `r num_orders` student list purchases, including XXXX purchases where we also received the associated prospect-level student list data and XXXX purchases where we did not receive the associated prospect-level list data. 
 
