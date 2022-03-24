@@ -38,7 +38,26 @@ zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zc
   merge(zip_data, by.x = 'ZCTA5CE10', by.y = 'zip_code', all.x = T)
 
 
-# Define function
+# Define functions
+
+create_popup <- function(df, popup_type) {
+  
+  paste0('<b>',df$name,'</b><br>', 
+         '<b>School Type</b>: ', df[[str_c(popup_type, '_sch_type')]], '<br><br>',
+         '<b>Total Enrollment</b>: ', format(df$total_students, big.mark = ','), '<br>',
+         '% Black: ', sprintf('%.1f', df$pct_black), '<br>',
+         '% Latinx: ', sprintf('%.1f', df$pct_hispanic), '<br>',
+         '% Native: ', sprintf('%.1f', df$pct_native), '<br>',
+         '% Asian: ', sprintf('%.1f', df$pct_asian), '<br>',
+         '% White: ', sprintf('%.1f', df$pct_white), '<br><br>',
+         '<b>Total Purchased</b>: ', format(df$stu_total, big.mark = ','), '<br>',
+         '# Black: ', df$stu_race_black, '<br>',
+         '# Latinx: ', df$stu_race_latinx, '<br>',
+         '# Native: ', df$stu_race_native, '<br>',
+         '# Asian: ', df$stu_race_asian, '<br>',
+         '# White: ', df$stu_race_white)
+  
+}
 
 create_metro_map <- function(cbsa_code, hs_df) {
   
@@ -81,8 +100,10 @@ create_metro_map <- function(cbsa_code, hs_df) {
       stu_total = stu_race_noresponse + stu_race_missing + stu_race_aian + stu_race_asian + stu_race_black + stu_race_latinx + stu_race_nhpi + stu_race_white + stu_race_other + stu_race_multi
     )
   
-  privhs_data <- hs_data %>% filter(school_control == 'private')
-  pubhs_data <- hs_data %>% filter(school_control == 'public')
+  pubhs_data_visited <- hs_data %>% filter(school_control == 'public', stu_total > 0)
+  pubhs_data_nonvisited <- hs_data %>% filter(school_control == 'public', stu_total == 0)
+  privhs_data_visited <- hs_data %>% filter(school_control == 'private', stu_total > 0)
+  privhs_data_nonvisited <- hs_data %>% filter(school_control == 'private', stu_total == 0)
   
   # color scales
   color_income <- colorFactor('YlGnBu', zip_data$inc_brks)
@@ -99,35 +120,10 @@ create_metro_map <- function(cbsa_code, hs_df) {
   race_msa <- paste0('<b>ZCTA5 ', cbsa_zip_shps$ZCTA5CE10, '</b><br>',
                      '% 15-19yo Population of Color: ', sprintf('%.1f', cbsa_zip_shps$pop_poc_15_19_pct)) %>% lapply(htmltools::HTML)
   
-  popup_privhs <- paste0('<b>',privhs_data$name,'</b><br>', 
-                         '<b>School Type</b>: ', privhs_data$priv_sch_type, '<br><br>',
-                         '<b>Total Enrollment</b>: ', format(privhs_data$total_students, big.mark = ','), '<br>',
-                         '% Black: ', sprintf('%.1f', privhs_data$pct_black), '<br>',
-                         '% Latinx: ', sprintf('%.1f', privhs_data$pct_hispanic), '<br>',
-                         '% Native: ', sprintf('%.1f', privhs_data$pct_native), '<br>',
-                         '% Asian: ', sprintf('%.1f', privhs_data$pct_asian), '<br>',
-                         '% White: ', sprintf('%.1f', privhs_data$pct_white), '<br><br>',
-                         '<b>Total Purchased</b>: ', format(privhs_data$stu_total, big.mark = ','), '<br>',
-                         '# Black: ', privhs_data$stu_race_black, '<br>',
-                         '# Latinx: ', privhs_data$stu_race_latinx, '<br>',
-                         '# Native: ', privhs_data$stu_race_native, '<br>',
-                         '# Asian: ', privhs_data$stu_race_asian, '<br>',
-                         '# White: ', privhs_data$stu_race_white)
-  
-  popup_pubhs <- paste0('<b>',pubhs_data$name,'</b><br>', 
-                        '<b>School Type</b>: ', pubhs_data$pub_sch_type, '<br><br>',
-                        '<b>Total Enrollment</b>: ', format(pubhs_data$total_students, big.mark = ','), '<br>',
-                        '% Black: ', sprintf('%.1f', pubhs_data$pct_black), '<br>',
-                        '% Latinx: ', sprintf('%.1f', pubhs_data$pct_hispanic), '<br>',
-                        '% Native: ', sprintf('%.1f', pubhs_data$pct_native), '<br>',
-                        '% Asian: ', sprintf('%.1f', pubhs_data$pct_asian), '<br>',
-                        '% White: ', sprintf('%.1f', pubhs_data$pct_white), '<br><br>',
-                        '<b>Total Purchased</b>: ', format(pubhs_data$stu_total, big.mark = ','), '<br>',
-                        '# Black: ', pubhs_data$stu_race_black, '<br>',
-                        '# Latinx: ', pubhs_data$stu_race_latinx, '<br>',
-                        '# Native: ', pubhs_data$stu_race_native, '<br>',
-                        '# Asian: ', pubhs_data$stu_race_asian, '<br>',
-                        '# White: ', pubhs_data$stu_race_white)
+  popup_pubhs_visited <- create_popup(pubhs_data_visited, 'pub')
+  popup_pubhs_nonvisited <- create_popup(pubhs_data_nonvisited, 'pub')
+  popup_privhs_visited <- create_popup(privhs_data_visited, 'priv')
+  popup_privhs_nonvisited <- create_popup(privhs_data_nonvisited, 'priv')
   
   highlight_shp <- highlightOptions(fillOpacity = 0.5, bringToFront = F)  # highlightOptions(color = 'black', bringToFront = T, sendToBack = T)
   
@@ -145,13 +141,21 @@ create_metro_map <- function(cbsa_code, hs_df) {
     addPolygons(data = cbsa_zip_shps, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, fillColor = ~color_race(race_brks), label = race_msa, group = 'MSA by Race/Ethnicity', highlightOptions = highlight_shp) %>% 
     
     # add markers
-    addCircleMarkers(data = pubhs_data, lng = ~longitude, lat = ~latitude, group = 'Public High Schools',
-                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0.2, fillColor = 'white', opacity = 1, weight = 1.5, color = ~color_race(race_brks),
-                     popup = popup_pubhs) %>%
+    addCircleMarkers(data = pubhs_data_visited, lng = ~longitude, lat = ~latitude, group = 'Public High School Visits',
+                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0, opacity = 1, weight = 1.5, color = 'blue',
+                     popup = popup_pubhs_visited) %>%
     
-    addCircleMarkers(data = privhs_data, lng = ~longitude, lat = ~latitude, group = 'Private High Schools',
-                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0.2, fillColor = 'white', opacity = 1, weight = 1.5, color = ~color_race(race_brks),
-                     popup = popup_privhs) %>%
+    addCircleMarkers(data = pubhs_data_nonvisited, lng = ~longitude, lat = ~latitude, group = 'Non-Visited Public High Schools',
+                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0, opacity = 1, weight = 1.5, color = 'red',
+                     popup = popup_pubhs_nonvisited) %>%
+    
+    addCircleMarkers(data = privhs_data_visited, lng = ~longitude, lat = ~latitude, group = 'Private High School Visits',
+                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0, opacity = 1, weight = 1.5, color = '#ffa01c',
+                     popup = popup_privhs_visited) %>%
+    
+    addCircleMarkers(data = privhs_data_nonvisited, lng = ~longitude, lat = ~latitude, group = 'Non-Visited Private High Schools',
+                     radius = ~sqrt(stu_total) + 2, fillOpacity = 0, opacity = 1, weight = 1.5, color = 'red',
+                     popup = popup_privhs_nonvisited) %>%
     
     # add legends
     addLegend(data = cbsa_zip_shps,
@@ -179,12 +183,14 @@ create_metro_map <- function(cbsa_code, hs_df) {
     addLayersControl(
       position = c('bottomleft'),
       baseGroups = c('MSA', 'MSA by Population', 'MSA by Median Household Income', 'MSA by Race/Ethnicity'),
-      overlayGroups = c('Public High Schools', 'Private High Schools'),
+      overlayGroups = c('Public High School Visits', 'Non-Visited Public High Schools', 'Private High School Visits', 'Non-Visited Private High Schools'),
       options = layersControlOptions(collapsed = FALSE)
     ) %>%
     
-    hideGroup('Public High Schools') %>%
-    hideGroup('Private High Schools') %>%
+    hideGroup('Public High School Visits') %>%
+    hideGroup('Non-Visited Public High Schools') %>%
+    hideGroup('Private High School Visits') %>%
+    hideGroup('Non-Visited Private High Schools') %>%
     
     htmlwidgets::onRender("
         function(el, x) {
