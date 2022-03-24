@@ -40,14 +40,14 @@ library(readxl)
     rm(lists_orders_df, lists_orders_zip_df)
     
     #remove ASU due to memory issues
-    lists_df <- lists_df %>% filter(univ_id!="104151") 
-    lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="104151") 
+    # lists_df <- lists_df %>% filter(univ_id!="104151") 
+    # lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="104151") 
     
     #removing secondary R1 in CA (UC Davis); IL (UI Chicago)
     #lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="145600" & univ_id!="110644")
 
     # remove ASU from orders_df too
-    orders_df <- orders_df %>% filter(univ_id!="104151") 
+    # orders_df <- orders_df %>% filter(univ_id!="104151") 
     
     orders_df %>% 
       summarise(n=n_distinct(univ_id)) 
@@ -859,8 +859,8 @@ library(readxl)
         
         
         #format table
-        df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
-        df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
+        # df_rq3 <- df_rq3 %>% mutate_if(is.numeric, round, 0)
+        # df_rq3 <- df_rq3 %>%  mutate_each(funs(prettyNum(., big.mark=",")))
         
 
   ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- IN-STATE/ZIP TEXAS A&M Texerkana Example

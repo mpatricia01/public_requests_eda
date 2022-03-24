@@ -147,7 +147,12 @@ n_distinct(lists_df_104151$order_no)  # 193 lists
 
 # potentially missing variables (not all important) [ozan 10/18/2021]
    #list_names %>% anti_join(y=(names(lists_df_104151) %>% as.tibble() %>% rename(var_name=value)), by = 'var_name') %>% print(n=50)
-    # lists df: hs_code, 
+
+
+# Northern Arizona University (105330)
+load(file = file.path(data_dir, '105330_data.RData'))
+
+n_distinct(orders_df_105330$order_num)  # 136 order summaries
 
 
 # Texas A & M University-College Station (228723)
@@ -242,9 +247,15 @@ n_distinct(lists_df_110635$order_no)  # 1 list
 # Pending order summary + list for 23 additional College Board orders (known from invoices they've provided)
 
 
+# University of California-Irvine (110653)
+load(file = file.path(data_dir, '110653_data.RData'))
+
+n_distinct(orders_df_110653$order_num)  # 68 order summaries
+
+
 # Combine data
 orders_df <- dplyr::bind_rows(
-  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776, orders_df_145813
+  orders_df_145637, orders_df_224545, orders_df_228431, orders_df_174358, orders_df_174075, orders_df_110680, orders_df_228529, orders_df_104151, orders_df_228723, orders_df_110644, orders_df_145600, orders_df_148654, orders_df_147776, orders_df_145813, orders_df_105330, orders_df_110653
 )
 
 lists_df <- dplyr::bind_rows(
