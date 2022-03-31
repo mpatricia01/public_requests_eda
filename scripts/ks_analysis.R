@@ -34,39 +34,69 @@ library(readxl)
     #save(lists_orders_zip_hs_df, file = file.path(data_dir, 'tbl_fig_listdata.RData'))    
     
     
-################### NEED TO REDUCE OBS TO MAKE MANIPULATIONS MANAGEABLE         
+################### FINAL SAMPLE FOR EMPIRICAL REPORT
     
-    #remove extra lists_orders_dfs
+    #remove extra dataframes
     rm(lists_orders_df, lists_orders_zip_df)
     
-    #remove ASU due to memory issues
-    # lists_df <- lists_df %>% filter(univ_id!="104151") 
-    # lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="104151") 
+    #remove MN universities from ordersdf
+    orders_df %>% count(univ_id, univ_name)
+    orders_df <- orders_df %>% filter(univ_id!="174358" &  univ_id!="174075") 
     
-    #removing secondary R1 in CA (UC Davis); IL (UI Chicago)
-    #lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="145600" & univ_id!="110644")
-
-    # remove ASU from orders_df too
-    # orders_df <- orders_df %>% filter(univ_id!="104151") 
+    #remove MN universities from lists dfs
+    lists_df %>% count(univ_id, univ_name)
+    lists_orders_zip_hs_df %>% count(univ_id, univ_name)
     
+    lists_df <- lists_df %>% filter(univ_id!="174358" &  univ_id!="174075") 
+    lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% filter(univ_id!="174358" &  univ_id!="174075") 
+    
+   
+    # Orders-- 14 universities (includes NAU)
     orders_df %>% 
       summarise(n=n_distinct(univ_id)) 
     
+    # Orders-- 835 total orders
     orders_df %>% 
       summarise(n=n_distinct(order_num)) 
     
+    # Lists-- 13 universities (don't have any lists for NAU)
     lists_orders_zip_hs_df %>% 
       summarise(n=n_distinct(univ_id)) 
     
     lists_orders_zip_hs_df %>% 
       summarise(n=n_distinct(ord_num)) 
     
+    # Lists-- 596 total lists
     lists_df %>% 
       summarise(n=n_distinct(univ_id)) 
     
-    orders_df %>% count(univ_id)
-    lists_df %>% count(univ_id)
+    # number of orders & lists for each university
+    orders_df %>% count(univ_name, univ_id)
+    lists_df %>% count(univ_name)
+    
+    
+    # create regional versus research university according to our sample
+    orders_df <- orders_df %>% mutate(
+      univ_type = ifelse(univ_id=="145637" | univ_id=="145600" | univ_id=="104151" |
+                         univ_id=="110653" | univ_id=="110680" | univ_id=="110644" |
+                         univ_id=="228723" , "research", "regional"))
 
+    orders_df %>% count(univ_name, univ_type)
+    
+    lists_df <- lists_df %>% mutate(
+      univ_type = ifelse(univ_id=="145637" | univ_id=="145600" | univ_id=="104151" |
+                           univ_id=="110653" | univ_id=="110680" | univ_id=="110644" |
+                           univ_id=="228723" , "research", "regional"))
+    
+    lists_df %>% count(univ_name, univ_type)
+    
+    lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% mutate(
+      univ_type = ifelse(univ_id=="145637" | univ_id=="145600" | univ_id=="104151" |
+                           univ_id=="110653" | univ_id=="110680" | univ_id=="110644" |
+                           univ_id=="228723" , "research", "regional"))
+    
+    lists_orders_zip_hs_df %>% count(univ_name, univ_type)
+    
 ################### GET SOME TOTALS FOR MARKET REPORT
     
     #UC SAN DIEGO TOTALS IN 2020
@@ -203,34 +233,22 @@ library(readxl)
     orders_df %>% 
       summarise(n=n_distinct(order_num)) 
     
-    # how many orders total + students total; then by university/carnegie
+    # how many orders total + students total; then by research vs regional
         orders_df %>% count()
         orders_fig_totals <- orders_df %>% 
-            group_by(univ_id) %>%
+            group_by(univ_id, univ_type) %>%
             summarise(total_orders = n(),
                       total_students = sum(num_students, na.rm = T))
         
-        orders_fig_totals <-  orders_fig_totals %>% arrange(-total_students) %>%
-            mutate(university = as.factor(row_number()))
+        orders_fig_totals <-  orders_fig_totals %>% arrange(-total_students) 
+        
+        orders_fig_totals<-tibble::rowid_to_column(orders_fig_totals, "university")
+
         
         orders_fig_totals$total_orders_st <- str_c(orders_fig_totals$total_orders, ' orders')
-        
-        orders_fig_totals<- merge(x = orders_fig_totals, y = univ_data[ , c("c15basic", "univ_id", "univ_name")], by = "univ_id", all.x=TRUE)
-        
-        
-        orders_fig_totals<- orders_fig_totals %>%
-            mutate(carnegie = recode(c15basic,
-                                     `15`= "Research",
-                                     `16` = "Research",
-                                     `17` = "Research",
-                                     `18`= "Master's",
-                                     `19`= "Master's",
-                                     `20` = "Master's",
-                                     `21`= "Baccalaureate",
-                                     `22`= "Baccalaureate"))
-        
-    
-        ggplot(orders_fig_totals, aes(x=reorder(university, -total_students), y=total_students, fill=carnegie)) +
+      
+        #CURERENTLY FIGURE 7: Orders purchased by carnegie classification
+        ggplot(orders_fig_totals, aes(x=reorder(university, -total_students), y=total_students, fill=univ_type)) +
             geom_bar(stat = "identity") +
             geom_text(aes(label=total_orders_st), vjust=0, size=2.5) 
         
@@ -242,18 +260,8 @@ library(readxl)
             .names = "{col}_{fn}"
           ))
         
-        orders_df<- orders_df %>%
-          mutate(carnegie = recode(univ_c15basic,
-                                   `15`= "Research",
-                                   `16` = "Research",
-                                   `17` = "Research",
-                                   `18`= "Master's",
-                                   `19`= "Master's",
-                                   `20` = "Master's",
-                                   `21`= "Baccalaureate",
-                                   `22`= "Baccalaureate"))
         
-        orders_df %>% group_by(carnegie) %>% select(num_students) %>%
+        orders_df %>% group_by(univ_type) %>% select(num_students) %>%
           summarise(across(
             .cols = where(is.numeric), 
             .fns = list(Mean = mean, SD=sd, median =median), na.rm = TRUE, 
@@ -266,7 +274,7 @@ library(readxl)
         
     # Frequency of Filters Used Across Orders
         orders_filters <- orders_df %>% 
-                        select(hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
+                        select(univ_type, hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
                                 gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
                                 psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
                                 gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
@@ -287,24 +295,48 @@ library(readxl)
                 ap_score = ifelse(!is.na(ap_scores), 1, 0))
         
         
-        orders_filters1 <- orders_filters %>% 
+        orders_filters1 <- orders_filters %>% group_by(univ_type) %>%
             select(hsgrad_class, zip, states_fil, cbsa, 
                    intl, segment, race, gender,sat, psat,
                    gpa, rank, geomarket, ap_score) %>%
             summarize_if(is.numeric, sum, na.rm=TRUE)
         
-        orders_filters1  <- as.data.frame(t(orders_filters1))
-        orders_filters1$filters <- rownames(orders_filters1)
-
-        orders_filters1  <- orders_filters1 %>%
+        
+        
+        orders_filters_research <- orders_filters1 %>% filter(univ_type=="research") %>% select(-univ_type)
+        orders_filters_regional <- orders_filters1 %>% filter(univ_type=="regional") %>% select(-univ_type)
+        
+        orders_filters_research  <- as.data.frame(t(orders_filters_research))
+        orders_filters_regional  <- as.data.frame(t(orders_filters_regional))
+        
+        orders_filters_research$filters <- rownames(orders_filters_research)
+        orders_filters_regional$filters <- rownames(orders_filters_regional)
+        
+        total_orders_research <- orders_df %>% filter(univ_type=="research") %>% count()
+        total_orders_regional <- orders_df %>% filter(univ_type=="regional") %>% count()
+        
+        orders_filters_research  <- orders_filters_research %>%
             mutate(
-                percent= round((V1/sum(orders_fig_totals$total_orders))*100)
+                percent= round((V1/sum(total_orders_research$n))*100)
             )
         
-        orders_filters1$percent <- str_c(orders_filters1$percent, '%')
+        orders_filters_regional  <- orders_filters_regional %>%
+          mutate(
+            percent= round((V1/sum(total_orders_regional$n))*100)
+          )
         
-        ggplot(orders_filters1, aes(x=reorder(filters, V1), y=V1)) +
+        orders_filters_research$percent <- str_c(orders_filters_research$percent, '%')
+        orders_filters_regional$percent <- str_c(orders_filters_regional$percent, '%')
+        
+        orders_filters_research$type <- "research"
+        orders_filters_regional$type <- "regional"
+        
+        orders_filters <- rbind(orders_filters_research,orders_filters_regional)
+        
+        #CURRENTLY FIGURE 8: Filters used in order purchases
+        ggplot(orders_filters, aes(x=reorder(filters, V1), y=V1)) +
             geom_bar(stat = "identity") +
+          facet_wrap(~type) +
             ylab("Number of Orders") +
             geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) +
             coord_flip()
@@ -321,22 +353,33 @@ library(readxl)
         orders_df %>% count(gpa_low)
         orders_df %>% count(gpa_high)
         
-        table_gpalow <- orders_df %>% group_by(gpa_low) %>%
+        research_gpalow <- orders_df %>% filter(univ_type=="research")
+        research_gpalow <- research_gpalow %>% filter(!is.na(gpa_high) | !is.na(gpa_low))
+        
+        regional_gpalow <- orders_df %>% filter(univ_type=="regional")
+        regional_gpalow <- regional_gpalow %>% filter(!is.na(gpa_high) | !is.na(gpa_low))
+        
+        research_gpalow <- research_gpalow  %>% group_by(gpa_low) %>%
             summarise(n_low = n()) %>%
             mutate(pct_low = round(n_low / sum(n_low)*100, digits=1))
         
-        table_gpahigh <-orders_df %>% group_by(gpa_high) %>%
-            summarise(n_high = n()) %>%
-            mutate(pct_high = round(n_high / sum(n_high)*100, digits=1))
-                                     
-        table_gpa <- merge(table_gpalow, table_gpahigh, by.x = "gpa_low", by.y = "gpa_high", all = T)
-        table_gpa <- table_gpa %>%
-            rename(gpa = gpa_low)
+        regional_gpalow <- regional_gpalow %>% group_by(gpa_low) %>%
+          summarise(n_low = n()) %>%
+          mutate(pct_low = round(n_low / sum(n_low)*100, digits=1))
         
-        #remove orders that did not use GPA filter
-        table_gpa <- table_gpa %>% filter(!is.na(gpa), nchar(gpa) > 0)
-        table_gpa$gpa <- factor(table_gpa$gpa, levels = c('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-', 'D+', 'D', 'D-', 'F'))
-        table_gpa <- table_gpa %>% arrange(gpa)
+        
+        research_gpalow$type <- "research"
+        regional_gpalow$type <- "regional"
+        
+        table_gpa <- rbind(research_gpalow,regional_gpalow)
+        
+        
+        #CURRENTLY TABLE 3: FILTER BY GPA RANGES
+        ggplot(table_gpa, aes(x=gpa_low, y=n_low, fill=type)) +
+          geom_bar(position="dodge", stat="identity") +
+          ylab("Number of Orders") +
+          geom_text(aes(label = pct_low), hjust = -0.1, colour = "black", size=2) 
+        
         
         # descriptive stats on PSAT/SAT Filter
         orders_df %>% count(psat_score_max)
@@ -347,93 +390,118 @@ library(readxl)
         
         # PSAT cutoffs tabulations
         
-        orders_df$psat_minbrks <- cut(orders_df$psat_score_min, 
-                               breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
-                               labels=c("<1000", "1000-1100", "1110-1200", 
-                                        "1210-1300", "1310-1400", "1410-1500"))
+        orders_df$brks <- cut(orders_df$psat_score_min, 
+                              breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
+                              labels=c("<1000", "1000-1100", "1110-1200", 
+                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
         
         orders_df %>% group_by(psat_score_min) %>%
           summarise(n_high = n()) %>%
           mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
         
 
-        orders_df %>% filter(!is.na(psat_minbrks)) %>% group_by(psat_minbrks) %>%
+        psat_min<- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type, brks) %>%
           summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% complete(univ_type, brks)
+
+        psat_min$test<- "PSAT"
+        psat_min$range<- "min"
         
+        orders_df$brks <- cut(orders_df$psat_score_max, 
+                              breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
+                              labels=c("<1000", "1000-1100", "1110-1200", 
+                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
         
-        orders_df$psat_maxbrks <- cut(orders_df$psat_score_max, 
-                                      breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
-                                      labels=c("<1000", "1000-1100", "1110-1200", 
-                                               "1210-1300", "1310-1400", "1410-1500"))
-        
-        orders_df %>% filter(!is.na(psat_maxbrks)) %>% group_by(psat_maxbrks) %>%
+        psat_max<- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type,brks) %>%
           summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% complete(univ_type,brks)
         
+        psat_max$test<- "PSAT"
+        psat_max$range<- "max"
         
-        orders_df %>% group_by(psat_score_max) %>%
-          summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
-        
-        
+    
         
         # SAT cutoffs tabulations
 
-        orders_df$sat_minbrks <- cut(orders_df$sat_score_min, 
-                                      breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501), 
-                                      labels=c("<1000", "1000-1100", "1110-1200", 
-                                               "1210-1300", "1310-1400", "1410-1500"))
+        orders_df$brks <- cut(orders_df$sat_score_min, 
+                              breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
+                              labels=c("<1000", "1000-1100", "1110-1200", 
+                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
         
         orders_df %>% group_by(sat_score_min) %>%
           summarise(n_high = n()) %>%
           mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
         
         
-        orders_df %>% filter(!is.na(sat_minbrks)) %>% group_by(sat_minbrks) %>%
+        sat_min <- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type, brks) %>%
           summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% complete(univ_type,brks)
         
+        sat_min$test<- "SAT"
+        sat_min$range<- "min"
         
-        orders_df %>% group_by(sat_score_max) %>%
-          summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+         
         
-        
-        orders_df$sat_maxbrks <- cut(orders_df$sat_score_max, 
+        orders_df$brks <- cut(orders_df$sat_score_max, 
                                       breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
                                       labels=c("<1000", "1000-1100", "1110-1200", 
                                                "1210-1300", "1310-1400", "1410-1500", "1500+"))
         
-        orders_df %>% filter(!is.na(sat_maxbrks)) %>% group_by(sat_maxbrks) %>%
+        sat_max <- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type, brks) %>%
           summarise(n_high = n()) %>%
-          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% print(n=50)
+          mutate(pct_high = round(n_high / sum(n_high)*100, digits=1)) %>% complete(univ_type,brks)
         
         
-    
+        sat_max$test<- "SAT"
+        sat_max$range<- "max"
         
         
-        test_scores <- orders_df %>% group_by(univ_c15basic) %>%
-            select(psat_score_min, psat_score_max, 
-                   sat_score_min, sat_score_max, 
-                   sat_score_old_min, sat_score_old_max) %>%
-            summarise(across(
-                .cols = where(is.numeric), 
-                .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
-                .names = "{col}_{fn}"
-            ))
+        table_scores <- rbind(psat_min,psat_max, sat_min, sat_max)
         
         
-        #average max/min scores by institution type
-        test_scores <- orders_df %>% group_by(carnegie) %>%
-          select(psat_score_min, psat_score_max, 
-                 sat_score_min, sat_score_max, 
-                 sat_score_old_min, sat_score_old_max) %>%
-          summarise(across(
-            .cols = where(is.numeric), 
-            .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
-            .names = "{col}_{fn}"
-          ))
+        #NEWFIGURE: Filters used in order purchases
+        table_scores %>% filter(range=="min") %>%
+        ggplot(aes(x=brks, y=n_high, fill=c(test))) +
+          geom_bar(position="dodge", stat="identity") +
+          facet_wrap(~univ_type) +
+          ylab("Number of Orders") +
+          ggtitle("Minimum Score Filters") +
+          geom_text(aes(label = pct_high), hjust = -0.1, colour = "black", size=2) +
+          coord_flip()
+        
+        
+        #NEWFIGURE: Filters used in order purchases
+        table_scores %>% filter(range=="max") %>%
+          ggplot(aes(x=brks, y=n_high, fill=c(test))) +
+          geom_bar(position="dodge", stat="identity") +
+          facet_wrap(~univ_type) +
+          ylab("Number of Orders") +
+          ggtitle("Maximum Score Filters") +
+          geom_text(aes(label = pct_high), hjust = -0.1, colour = "black", size=2) +
+          coord_flip()
+        
+        
+        # test_scores <- orders_df %>% group_by(univ_c15basic) %>%
+        #     select(psat_score_min, psat_score_max, 
+        #            sat_score_min, sat_score_max, 
+        #            sat_score_old_min, sat_score_old_max) %>%
+        #     summarise(across(
+        #         .cols = where(is.numeric), 
+        #         .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
+        #         .names = "{col}_{fn}"
+        #     ))
+        # 
+        # 
+        # #average max/min scores by institution type
+        # test_scores <- orders_df %>% group_by(carnegie) %>%
+        #   select(psat_score_min, psat_score_max, 
+        #          sat_score_min, sat_score_max, 
+        #          sat_score_old_min, sat_score_old_max) %>%
+        #   summarise(across(
+        #     .cols = where(is.numeric), 
+        #     .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
+        #     .names = "{col}_{fn}"
+        #   ))
            
     # descriptive stats on HS RANK Filter
         orders_df %>% count(rank_high)
