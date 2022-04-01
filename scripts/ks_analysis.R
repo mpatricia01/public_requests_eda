@@ -11,6 +11,7 @@ library(tidyr)
 library(stringr)
 library(eatATA)
 library(readxl)
+library(usmap)
 
 ################### OPEN DATA BY OJ
 
@@ -541,10 +542,15 @@ library(readxl)
         
         #zip code filters
         orders_df %>% count(zip_code)
+        orders_df %>% count(zip_code_file)
+        
           #KS NOTES: all 3-digits: https://en.wikipedia.org/wiki/List_of_ZIP_Code_prefixes
         
+            #check NAU
+              nau <- orders_df %>% filter(univ_id=="105330")
+        
         #ZIP CODES
-        orders_df %>% filter(!is.na(zip_code)) %>% count(carnegie)
+        orders_df %>% filter(!is.na(zip_code) | !is.na(zip_code_file) ) %>% count(univ_type)
         orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_state)
         orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_name)
         
@@ -559,10 +565,111 @@ library(readxl)
         # descriptive stats of STATE filter  
         
         orders_df %>% count(state_name) %>% print(n=50)
+        orders_df %>% group_by(univ_type) %>% count(state_name) %>% print(n=50)
         
-        orders_df %>% count(state_name, univ_state) %>% print(n=50)
+            #parse state filters for regional univs
+            regional_states <- orders_df %>% filter(univ_type=="regional") %>% count(state_name)
+            strsplit(regional_states$state_name, split = "|", fixed=T)
+            
+            
+            regional_states <- regional_states %>% 
+             mutate(name=strsplit(state_name, split = "|", fixed=T)) %>% 
+             unnest(name) 
+           
+            regional_states <- regional_states %>% 
+              mutate(name=if_else(name=="Arizona", "AZ", name),
+                     name= if_else(name=="Texas", "TX", name),
+                     name= as.factor(name))
+            
+            regional_states$fips <- fips(regional_states$name)
+            states <- us_map(regions = "states")
+            states <- states %>% count(fips)
+            states <- states %>% mutate(
+              filtered_state = ifelse(fips %in% regional_states$fips, 1, 0),
+              filtered_state= as.factor(filtered_state)
+            )
+            
+            # CURRENT NOT IN EMPIRICAL REPORT: STATE FILTER MAPS--Dummy coded
+            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey")+ 
+              theme(panel.background = element_rect(colour = "black")) +
+              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") + 
+              theme(legend.position = "right") +
+              labs(title = "State Filters for Regional Universities")
         
-        
+            # CURRENT NOT IN EMPIRICAL REPORT: STATE FILTER MAPS--Scale by # of Orders using filter
+            states <- us_map(regions = "states")
+            states <- states %>% group_by(fips, abbr, full) %>% count(fips)
+            
+            regional_states_num <- regional_states %>% filter(!is.na(name)) %>% group_by(name) %>% 
+              summarise(frequency = sum(n))
+            
+            states <- merge(states, regional_states_num, by.x = "abbr", by.y = "name", all.x = TRUE)
+            states <- states %>% mutate(
+              frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
+            )
+            
+            plot_usmap(regions = "states", data=states, values = "frequency",color="grey")+ 
+              theme(panel.background = element_rect(colour = "black")) +
+              scale_fill_continuous(low = "white", high ="darkgreen", 
+                                    name = "filtered_state",label = scales::comma,
+                                    limits = c(0,35)) + 
+              theme(legend.position = "right") +
+              labs(title = "State Filters for Regional Universities")
+            
+            
+            
+            
+            #parse state filters for research univs
+            research_states <- orders_df %>% filter(univ_type=="research") %>% count(state_name)
+            strsplit(research_states$state_name, split = "|", fixed=T)
+            
+            
+            research_states <- research_states %>% 
+              mutate(name=strsplit(state_name, split = "|", fixed=T)) %>% 
+              unnest(name) 
+            
+            
+            #filtered versus not filtered
+            states <- us_map(regions = "states")
+            states <- states %>% group_by(fips, abbr, full) %>% count(fips)
+            states <- states %>% mutate(
+              filtered_state_abbr = ifelse(abbr %in% research_states$name, 1, 0),
+              filtered_state_name = ifelse(full %in% research_states$name, 1, 0),
+              filtered_state = ifelse(filtered_state_abbr==1|filtered_state_name==1, 1,0),
+              filtered_state= as.factor(filtered_state)
+            )
+            
+            # research_states <- research_states %>% 
+            #   mutate(name=if_else(name=="Arizona", "AZ", name),
+            #          name= if_else(name=="Texas", "TX", name),
+            #          name= if_else(name=="Armed Forces Americas (Except Canada)", NA_character_, name),
+            #          name= if_else(name=="Connecticut", "CT", name),
+            #          name= if_else(name=="Armed Forces Canada, Europe, Middle East, Africa", NA_character_, name),
+            #          name= if_else(name=="Missouri", "MO", name),
+            #          name= if_else(name=="Missouri", "MO", name),
+            #          name= if_else(name=="California", "CA", name),
+            #          name= if_else(name=="Armed Forces Pacific", NA_character_, name),
+            #          name= if_else(name=="Delaware", "DE", name),
+            #          name= if_else(name=="Hawaii", "HI", name),
+            #          name= if_else(name=="Massachusetts", "MA", name),
+            #          name= if_else(name=="Maryland", "MD", name),
+            #          name= if_else(name=="Iowa", "IA", name),
+            #          name= if_else(name=="Iowa", "IA", name),
+            #          
+            #          name= as.factor(name))
+            
+      
+            #NOT CURRENT IN FIGURES: BUT ALL STATES FILTERED BY RESEARCH UNIVS
+            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey")+ 
+              theme(panel.background = element_rect(colour = "black")) +
+              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") + 
+              theme(legend.position = "right") +
+              labs(title = "State Filters for research Universities")
+            
+            
+            
+            
+            
         # descriptive stats for segment filter
         orders_df %>% count(segment, univ_id)
         orders_df %>% filter(univ_id == '145637') %>% count(segment)
