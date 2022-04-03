@@ -231,7 +231,7 @@ library(usmap)
 ################### ANALYSIS VISUALS FOR RQ1: CHARACTERISTICS OF ORDERS
     
     # unique IDs for order nums
-    orders_df %>% 
+    orders_df %>% group_by(univ_type) %>%
       summarise(n=n_distinct(order_num)) 
     
     # how many orders total + students total; then by research vs regional
@@ -344,8 +344,8 @@ library(usmap)
         
         
      # descriptive stats on GPA Filter
-        orders_df %>% count(gpa_low)
-        orders_df %>% count(gpa_high)
+        orders_df %>% filter(!is.na(gpa_high) | !is.na(gpa_high)) %>% group_by(univ_type) %>% count(gpa_low)
+        orders_df %>% filter(!is.na(gpa_high) | !is.na(gpa_high)) %>% group_by(univ_type) %>% count(gpa_high)
         
         #replace empty strings with NA
         orders_df <- orders_df %>%
@@ -459,26 +459,28 @@ library(usmap)
         
         table_scores <- rbind(psat_min,psat_max, sat_min, sat_max)
         
+        table_scores %>% group_by(univ_type,test) %>%
+          summarise(num = sum(n_high, na.rm = T))
         
-        #NEWFIGURE: Filters used in order purchases
+        #NEWFIGURE: PSAT/SAT Filters used in order purchases --min thresholds
         table_scores %>% filter(range=="min") %>%
-        ggplot(aes(x=brks, y=n_high, fill=c(test))) +
+        ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) +
           geom_bar(position="dodge", stat="identity") +
-          facet_wrap(~univ_type) +
-          ylab("Number of Orders") +
+          facet_wrap(~test) +
+          ylab("Percent of Orders") +
           ggtitle("Minimum Score Filters") +
-          geom_text(aes(label = pct_high), hjust = -0.1, colour = "black", size=2) +
+          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) +
           coord_flip()
         
         
-        #NEWFIGURE: Filters used in order purchases
+        #NEWFIGURE: PSAT/SAT Filters used in order purchases--max thresholds
         table_scores %>% filter(range=="max") %>%
-          ggplot(aes(x=brks, y=n_high, fill=c(test))) +
+          ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) +
           geom_bar(position="dodge", stat="identity") +
-          facet_wrap(~univ_type) +
-          ylab("Number of Orders") +
+          facet_wrap(~test) +
+          ylab("Percent of Orders") +
           ggtitle("Maximum Score Filters") +
-          geom_text(aes(label = pct_high), hjust = -0.1, colour = "black", size=2) +
+          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) +
           coord_flip()
         
         
