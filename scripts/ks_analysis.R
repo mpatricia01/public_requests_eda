@@ -236,6 +236,18 @@ library(usmap)
     
     # how many orders total + students total; then by research vs regional
         orders_df %>% count()
+        
+        orders_df %>%
+          distinct(univ_type, univ_id, order_num) %>%
+          group_by(univ_id) %>%
+          summarize("orders by each univ" = n())
+        
+        
+        orders_df %>%
+          distinct(univ_type, univ_id, order_num) %>%
+          group_by(univ_type) %>%
+          summarize("orders by univ type" = n())
+        
         orders_fig_totals <- orders_df %>% 
             group_by(univ_id, univ_type) %>%
             summarise(total_orders = n(),
@@ -553,10 +565,33 @@ library(usmap)
         
         #ZIP CODES
         orders_df %>% filter(!is.na(zip_code) | !is.na(zip_code_file) ) %>% count(univ_type)
+        
+        orders_with_zip <- orders_df %>%
+          filter(!is.na(zip_code) | !is.na(zip_code_file) ) 
+        
+        orders_with_zip %>%
+          distinct(univ_type, univ_id, order_num) %>%
+          group_by(univ_type) %>%
+          summarize("orders by univ type" = n())
+        
+        orders_with_zip %>%
+          filter(!is.na(zip_code)) %>%
+          distinct(univ_type, univ_id, order_num) %>%
+          summarize("orders by univ type" = n())
+        
+        orders_with_zip %>%
+          distinct(univ_id) %>%
+          summarize("orders by univ type" = n())
+        
         orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_state)
         orders_df %>% filter(!is.na(zip_code)) %>% count(zip_code, univ_name)
         
         
+        #how many did not have attached zip code files
+        orders_df %>% filter(!is.na(zip_code) | !is.na(zip_code_file) ) %>%
+          count(order_num) 
+
+                
         # descriptive stats on SEGMENT Filter
         orders_df %>% count(segment)
         orders_df %>% filter(!is.na(segment)) %>% count(univ_id) # only Urbana-Champagne (21) and Northeastern (1)
@@ -629,38 +664,78 @@ library(usmap)
             research_states <- research_states %>% 
               mutate(name=strsplit(state_name, split = "|", fixed=T)) %>% 
               unnest(name) 
+          
             
+            research_states <- research_states %>%
+              mutate(name=if_else(name=="Arizona", "AZ", name),
+                     name= if_else(name=="Texas", "TX", name),
+                     name= if_else(name=="Armed Forces Americas (Except Canada)", NA_character_, name),
+                     name= if_else(name=="Connecticut", "CT", name),
+                     name= if_else(name=="Armed Forces Canada, Europe, Middle East, Africa", NA_character_, name),
+                     name= if_else(name=="Missouri", "MO", name),
+                     name= if_else(name=="Vermont", "VT", name),
+                     name= if_else(name=="California", "CA", name),
+                     name= if_else(name=="Armed Forces Pacific", NA_character_, name),
+                     name= if_else(name=="Delaware", "DE", name),
+                     name= if_else(name=="Hawaii", "HI", name),
+                     name= if_else(name=="Massachusetts", "MA", name),
+                     name= if_else(name=="Maryland", "MD", name),
+                     name= if_else(name=="Iowa", "IA", name),
+                     name= if_else(name=="Rhode Island", "RI", name),
+                     name= if_else(name=="Maine", "ME", name),
+                     name= if_else(name=="Virginia", "VA", name),
+                     name= if_else(name=="Michigan", "MI", name),
+                     name= if_else(name=="Idaho", "ID", name),
+                     name= if_else(name=="Arkansas", "AR", name),
+                     name= if_else(name=="Utah", "UT", name),
+                     name= if_else(name=="Illinois", "IL", name),
+                     name= if_else(name=="Indiana", "IN", name),
+                     name= if_else(name=="Minnesota", "MN", name),
+                     name= if_else(name=="Montana", "MT", name),
+                     name= if_else(name=="Mississippi", "MS", name),
+                     name= if_else(name=="New Hampshire", "NH", name),
+                     name= if_else(name=="New Jersey", "NJ", name),
+                     name= if_else(name=="New Mexico", "NM", name),
+                     name= if_else(name=="Alaska", "AK", name),
+                     name= if_else(name=="Alabama", "AL", name),
+                     name= if_else(name=="North Dakota", "ND", name),
+                     name= if_else(name=="Nebraska", "NE", name),
+                     name= if_else(name=="New York", "NY", name),
+                     name= if_else(name=="Georgia", "GA", name),
+                     name= if_else(name=="Nevada", "NV", name),
+                     name= if_else(name=="Tennessee", "TN", name),
+                     name= if_else(name=="Oklahoma", "OK", name),
+                     name= if_else(name=="Ohio", "OH", name),
+                     name= if_else(name=="Wyoming", "WY", name),
+                     name= if_else(name=="Florida", "FL", name),
+                     name= if_else(name=="South Dakota", "SD", name),
+                     name= if_else(name=="South Carolina", "SC", name),
+                     name= if_else(name=="North Carolina", "NC", name),
+                     name= if_else(name=="Connecticut", "CT", name),
+                     name= if_else(name=="West Virginia", "WV", name),
+                     name= if_else(name=="District of Columbia", "DC", name),
+                     name= if_else(name=="Wisconsin", "WI", name),
+                     name= if_else(name=="Kentucky", "KY", name),
+                     name= if_else(name=="Kansas", "KS", name),
+                     name= if_else(name=="Oregon", "OR", name),
+                     name= if_else(name=="Louisiana", "LA", name),
+                     name= if_else(name=="Washington", "WA", name),
+                     name= if_else(name=="Colorado", "CO", name),
+                     name= if_else(name=="Pennsylvania", "PA", name),
+                     name= as.factor(name))
+
+      
             
-            #filtered versus not filtered
+            research_states$fips <- fips(research_states$name)
             states <- us_map(regions = "states")
-            states <- states %>% group_by(fips, abbr, full) %>% count(fips)
+            states <- states %>% count(fips)
             states <- states %>% mutate(
-              filtered_state_abbr = ifelse(abbr %in% research_states$name, 1, 0),
-              filtered_state_name = ifelse(full %in% research_states$name, 1, 0),
-              filtered_state = ifelse(filtered_state_abbr==1|filtered_state_name==1, 1,0),
+              filtered_state = ifelse(fips %in% research_states$fips, 1, 0),
               filtered_state= as.factor(filtered_state)
             )
             
-            # research_states <- research_states %>% 
-            #   mutate(name=if_else(name=="Arizona", "AZ", name),
-            #          name= if_else(name=="Texas", "TX", name),
-            #          name= if_else(name=="Armed Forces Americas (Except Canada)", NA_character_, name),
-            #          name= if_else(name=="Connecticut", "CT", name),
-            #          name= if_else(name=="Armed Forces Canada, Europe, Middle East, Africa", NA_character_, name),
-            #          name= if_else(name=="Missouri", "MO", name),
-            #          name= if_else(name=="Missouri", "MO", name),
-            #          name= if_else(name=="California", "CA", name),
-            #          name= if_else(name=="Armed Forces Pacific", NA_character_, name),
-            #          name= if_else(name=="Delaware", "DE", name),
-            #          name= if_else(name=="Hawaii", "HI", name),
-            #          name= if_else(name=="Massachusetts", "MA", name),
-            #          name= if_else(name=="Maryland", "MD", name),
-            #          name= if_else(name=="Iowa", "IA", name),
-            #          name= if_else(name=="Iowa", "IA", name),
-            #          
-            #          name= as.factor(name))
             
-      
+          
             #NOT CURRENT IN FIGURES: BUT ALL STATES FILTERED BY RESEARCH UNIVS
             plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey")+ 
               theme(panel.background = element_rect(colour = "black")) +
@@ -669,20 +744,45 @@ library(usmap)
               labs(title = "State Filters for research Universities")
             
             
+            # CURRENT NOT IN EMPIRICAL REPORT: STATE FILTER MAPS--Scale by # of Orders using filter
+            states <- us_map(regions = "states")
+            states <- states %>% group_by(fips, abbr, full) %>% count(fips)
+            
+            research_states_num <- research_states %>% filter(!is.na(name)) %>% group_by(name) %>% 
+              summarise(frequency = sum(n))
+            
+            states <- merge(states, research_states_num, by.x = "abbr", by.y = "name", all.x = TRUE)
+            states <- states %>% mutate(
+              frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
+            )
+            
+            plot_usmap(regions = "states", data=states, values = "frequency",color="grey")+ 
+              theme(panel.background = element_rect(colour = "black")) +
+              scale_fill_continuous(low = "blue", high ="green", 
+                                    name = "filtered_state",label = scales::comma,
+                                    limits = c(0,120)) + 
+              theme(legend.position = "right") +
+              labs(title = "State Filters for Research Universities")
             
             
             
         # descriptive stats for segment filter
-        orders_df %>% count(segment, univ_id)
+        orders_df %>% filter(!is.na(segment)) %>% count(univ_id)
+        orders_df %>% filter(univ_id == '110653') %>% count(segment)
         orders_df %>% filter(univ_id == '145637') %>% count(segment)
         orders_df %>% filter(univ_id == '147776') %>% count(segment) #just says include all students, did this Northeastern order use segment?
         
-        
+
     # Demographic filters
         
         orders_df %>% count(race_ethnicity) %>% print(n=40)
         
         orders_df %>% count(gender) %>% print(n=40)
+        
+        
+        #SEE END OF R-SCRIPT FOR NEW FIGURE UNDER TARGETING SOC DEEP DIVE
+        
+        
         
     # Descriptives on Filter Combos
         
@@ -1853,25 +1953,49 @@ library(usmap)
               race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native", "Native American", NA_character_),
               race_filter = ifelse(race_ethnicity=="Black or African American", "Black", race_filter),
               race_filter = ifelse(race_ethnicity=="Cuban|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx", race_filter),
-              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian", race_filter),
+              #race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian", race_filter),
               
               race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian, White", race_filter),
               race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|Native Hawaiian or Other Pacific Islander", "Native American, Native Hawaii/PI", race_filter),
               race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx, Native American", race_filter),
-              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)|Native Hawaiian or Other Pacific Islander", "Asian, NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)|Native Hawaiian or Other Pacific Islander", "Asian, White, NativeHawaii/PI", race_filter),
               race_filter = ifelse(race_ethnicity=="Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino", "Latinx, Black", race_filter),
               race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban", "Latinx, Black, Native American", race_filter), 
               race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|White (including Middle Eastern origin)|Other", "Asian, White", race_filter), 
-              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Native Hawaiian or Other Pacific Islander|Cuban", "Latinx, Black, Native American, NativeHawaii/PI ", race_filter),
-              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|\rAsian (including Indian subcontinent and Philippines origin)|Cuban|\rBlack or African American|\rHispanic or Latino (including Spanish origin)|\rMexican|\rPuerto Rican|\rOther Hispanic or Latino|\rNative Hawaiian or Other Pacific Islander", "Latinx, Black, Asian, Native American", race_filter)            )
+              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Native Hawaiian or Other Pacific Islander|Cuban", "Latinx, Black, Native American, NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="American Indian or Alaska Native|\rAsian (including Indian subcontinent and Philippines origin)|Cuban|\rBlack or African American|\rHispanic or Latino (including Spanish origin)|\rMexican|\rPuerto Rican|\rOther Hispanic or Latino|\rNative Hawaiian or Other Pacific Islander", "Latinx, Black, Asian, Native American", race_filter),
+              #adding in new univs
+              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Native Hawaiian or Other Pacific Islander", "Black, Native American, NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban", "Latinx", race_filter),
+              race_filter = ifelse(race_ethnicity=="Native Hawaiian or Other Pacific Islander", "NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Native Hawaiian or Other Pacific Islander|Cuban", "Latinx, Black, Native American, NativeHawaii/PI", race_filter),
+              race_filter = ifelse(race_ethnicity=="Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian, White", race_filter),
+              race_filter = ifelse(race_ethnicity=="Black or African American", "Black", race_filter),
+              race_filter = ifelse(race_ethnicity=="Other|Asian (including Indian subcontinent and Philippines origin)|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)", "Asian, White", race_filter),
+              race_filter = ifelse(race_ethnicity=="NA", NA_character_, race_filter),
+              
+              )
             
-            
-            race_orders %>%  count(race_filter, race_ethnicity)
+
+            race_orders %>%  count(univ_id, race_filter, race_ethnicity) %>% print(n=25)
             race_orders %>%  count(race_filter)
             
         
           #universities using race/ethnicity filter
+            race_orders %>% distinct(order_num) %>% count()
+            race_orders %>% distinct(race_filter) %>% count()
+            
             race_orders %>% count(univ_name)
+            
+            
+          #NEW FIGURE FOR RQ1 under DEMOGRAPHIC FILTERS
+            race_orders_aggregate <- race_orders %>% filter(!is.na(race_filter)) %>% group_by(univ_type) %>% count(race_filter)
+            
+            ggplot(race_orders_aggregate, aes(fill=univ_type, y=n, x=race_filter)) + 
+              geom_bar(position="stack", stat="identity") +
+              coord_flip()
+            
+            
             
             
               # Texas A&M CS- 10 orders for Latinx, Black students (4 instate, 6 out of state)
