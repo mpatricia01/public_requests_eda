@@ -776,31 +776,49 @@ library(usmap)
     # Demographic filters
         
         orders_df %>% count(race_ethnicity) %>% print(n=40)
-        
+
         orders_df %>% count(gender) %>% print(n=40)
+        orders_df %>% count(univ_type, gender) %>% print(n=40)
         
         
-        #SEE END OF R-SCRIPT FOR NEW FIGURE UNDER TARGETING SOC DEEP DIVE
+        #SEE END OF R-SCRIPT FOR NEW RACE FILTER: FIGURE UNDER TARGETING SOC DEEP DIVE
         
         
         
     # Descriptives on Filter Combos
         
-       filter_combos <- orders_filters %>%
+        
+        orders_filters <- orders_df %>% 
+          select(univ_type, hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
+                 gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
+                 psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
+                 gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
+          mutate(
+            hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
+            zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
+            states_fil = ifelse(!is.na(state_name), 1, 0), 
+            cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
+            intl = ifelse(!is.na(intl_region), 1, 0), 
+            segment = ifelse(!is.na(segment), 1, 0), 
+            race = ifelse(!is.na(race_ethnicity), 1, 0), 
+            gender = ifelse(!is.na(gender), 1, 0), 
+            sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
+            psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
+            gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
+            rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
+            geomarket = ifelse(!is.na(geomarket), 1, 0), 
+            ap_score = ifelse(!is.na(ap_scores), 1, 0))
+        
+        
+        
+       filter_combos <- orders_filters %>% group_by(univ_type) %>%
             select(hsgrad_class, zip, states_fil, cbsa, 
                    intl, segment, race, gender,sat, psat,
                    gpa, rank, geomarket, ap_score) %>%
             mutate(filter_sum = hsgrad_class + zip + states_fil + cbsa + 
                              intl + segment + race + gender + sat + psat +
                              gpa + rank + geomarket + ap_score)
-        
-       filter_combosum <- filter_combos %>% count(filter_sum)
-        colnames(filter_combosum) <- c("num_of_filters", "freq")
-       
-        ggplot(filter_combosum, aes(x = "", y=freq, fill = factor(num_of_filters))) +
-            geom_bar(stat="identity", width=1) +
-            coord_polar("y") 
-        
+      
         
         filter_combos <- filter_combos %>% 
             mutate(
@@ -822,30 +840,54 @@ library(usmap)
         
         filter_combos[filter_combos == "NA"] <- NA_character_
         
+        filter_combos_research <- filter_combos %>% filter(univ_type=="research")
+        filter_combos_regional <- filter_combos %>% filter(univ_type=="regional")
         
-       combos <- unique(filter_combos[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
+        combos_research <- unique(filter_combos_research[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
+                                         "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+        
+        
+        combos_regional <- unique(filter_combos_regional[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
+                                                           "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+        
+        
+        combos <- unique(filter_combos[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
                       "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
         
-        
-            filter_combos %>% count(hsgrad_class, zip, states_fil, cbsa, intl, 
-                                    segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score, sort = TRUE) %>% top_n(30, n)
-            
+     
        
-            
-            df_0 <- group_by(filter_combos, hsgrad_class, zip, states_fil, 
+        #CURRENTLY TABLE 7: UPDATE SHOW RESEARCH VERSUS REGIONAL
+            df_0_research <- group_by(filter_combos_research, hsgrad_class, zip, states_fil, 
                           cbsa, intl, segment, race, gender, 
                           sat, psat, gpa, rank, geomarket, ap_score) %>% count()
             
-            df_0 %>% arrange(-n)
+            df_0_research %>% arrange(-n)
 
-            df_0 <- df_0  %>% unite("string", c(hsgrad_class, zip, states_fil, 
+            df_0_research <- df_0_research  %>% unite("string", c(hsgrad_class, zip, states_fil, 
                                                 cbsa, intl, segment, race, gender, 
                                                 sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0 <- df_0 %>% arrange(-n)  # %>% head(10)
+            df_0_research <- df_0_research %>% arrange(-n)  # %>% head(10)
             
-            sum(df_0$n)
+            sum(df_0_research$n)
+            
+            
+            
+            df_0_regional <- group_by(filter_combos_regional, hsgrad_class, zip, states_fil, 
+                                      cbsa, intl, segment, race, gender, 
+                                      sat, psat, gpa, rank, geomarket, ap_score) %>% count()
+            
+            df_0_regional %>% arrange(-n)
+            
+            df_0_regional <- df_0_regional  %>% unite("string", c(hsgrad_class, zip, states_fil, 
+                                                                  cbsa, intl, segment, race, gender, 
+                                                                  sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
+            
+            
+            df_0_regional <- df_0_regional %>% arrange(-n)  # %>% head(10)
+            
+            sum(df_0_regional$n)
           
             
           # Descriptives for geomarket
