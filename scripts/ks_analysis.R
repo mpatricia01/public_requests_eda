@@ -900,7 +900,8 @@ library(usmap)
     # how many students lists do we have?
         lists_orders_zip_hs_df %>% 
             summarise(n=n_distinct(ord_num)) 
-             
+        
+        lists_orders_zip_hs_df %>% count()
                 
     #FUNCTION FOR TABLE ON N, RACE, INCOME, PUB/PRIV SCHOOL CHARACTERISTICS OF STUDENT LIST PROSPECTS
         table_rq2a <- function(variables, columns) {
@@ -1007,7 +1008,10 @@ library(usmap)
         # df_rq2a <- df_rq2a %>% mutate_if(is.numeric, round, 0)
         # df_rq2a <- df_rq2a %>%  mutate_each(funs(prettyNum(., big.mark=",")))
 
- 
+        
+        df_rq2a_out_of_state_research <- df_rq2a %>% select(row_subj, research_univ_outofstate, research_univ_instate)
+        df_rq2a_out_of_state_regional <- df_rq2a %>% select(row_subj, regional_univ_instate, regional_univ_outofstate)
+        
       # international students
         
         df_int <- lists_orders_zip_hs_df %>% 
