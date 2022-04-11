@@ -971,7 +971,7 @@ table_texasam_zip_inc %>%
 <!-- COMPLETE IN JANUARY Another common combination of filters used across orders include the same academic filters (i.e., PSAT scores and GPA) but geographically filtered by specific states and filtered for specific race/ethnicity groups. Some of these orders were made by research universities in the study -->
 
 
-### Out-of-State Zip Codes & Test Scores
+### CBSA, Segment, and Test Scores
 
 Other common combinations of filters were used by research universities in the study to target out-of-state prospects. Some of these orders filtered by graduation class, state, CBSA, segment, SAT or PSAT, and GPA. We "zoom" into orders by The University of Illinois at Urbana-Champaign in order to analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters.
 
