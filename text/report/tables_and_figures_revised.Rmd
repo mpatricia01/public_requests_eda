@@ -1,0 +1,492 @@
+---
+title: 'Tables & Figures'
+output:
+  pdf_document: default
+---
+
+```{r setup, include = F}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
+
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(scales)
+library(usmap)
+
+data_dir <- file.path('..', '..', 'data')
+
+load(file.path(data_dir, 'tbl_fig_data_revised.RData'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm')
+  )
+)
+```
+
+
+## Figure 7
+
+```{r, fig.height = 3}
+orders_fig_totals %>% 
+  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = univ_type, width = 0.8)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 1.8) +
+  xlab('') + ylab('Total students') +
+  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Univ Type') +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+```
+
+
+## Figure 8
+
+```{r, fig.height = 4}
+orders_filters2 %>% 
+  ggplot(aes(x = reorder(filters, V1), y = V1)) +
+  geom_bar(stat = 'identity', fill = '#d2c8bc') +
+  geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2) +
+  xlab('') + ylab('Number of orders') +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  facet_wrap(~factor(type, levels = c('research', 'regional'))) +
+  coord_flip()
+```
+
+
+## Table 3
+
+```{r, fig.height = 3}
+table_gpa %>% 
+  pivot_wider(
+    id_cols = gpa_low, 
+    names_from = type, 
+    values_from = c(n_low, pct_low), 
+    values_fill = list(n_low = 0, pct_low = 0)
+  ) %>% 
+  pivot_longer(
+    cols = -gpa_low, 
+    names_pattern = '(\\w+_\\w+)_(\\w+)', 
+    names_to = c('.value', 'type')
+  ) %>% 
+  ggplot(aes(x = factor(gpa_low, levels = c('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-')), y = n_low, fill = type)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Univ Type') +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  xlab('') + ylab('Number of orders') +
+  geom_text(aes(label = pct_low), hjust = 0.5, vjust = 0, colour = 'black', size = 2, position = position_dodge(0.9)) 
+```
+
+
+## NEW min test scores
+
+```{r, fig.height = 4}
+table_scores %>% 
+  mutate_at(vars(n_high:pct_high), ~replace(., is.na(.), 0)) %>%
+  filter(range == 'min') %>%
+  ggplot(aes(x = brks, y = pct_high, fill = univ_type)) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Univ Type') +
+  facet_wrap(~test) +
+  xlab('') + ylab('Percent of Orders') +
+  ggtitle('Minimum Score Filters') +
+  geom_text(aes(label = n_high), hjust = -0.1, colour = 'black', size = 2, position = position_dodge(0.9)) +
+  coord_flip()
+```
+
+
+## NEW max test scores
+
+```{r, fig.height = 4}
+table_scores %>% 
+  mutate_at(vars(n_high:pct_high), ~replace(., is.na(.), 0)) %>%
+  filter(range == 'max') %>%
+  ggplot(aes(x = brks, y = pct_high, fill = univ_type)) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Univ Type') +
+  facet_wrap(~test) +
+  xlab('') + ylab('Percent of Orders') +
+  ggtitle('Maximum Score Filters') +
+  geom_text(aes(label = n_high), hjust = -0.1, colour = 'black', size = 2, position = position_dodge(0.9)) +
+  coord_flip()
+```
+
+
+\newpage
+## NEW state map (research)
+
+```{r, fig.height = 2.8}
+get_state_abb <- Vectorize(
+  function(x) {
+    if (is.na(x)) return(NA_character_)
+    if (nchar(x) == 2) return(x)
+    if (x == 'District of Columbia') return('DC')
+    a <- state.abb[grep(str_c('^', x, '$'), state.name)]
+    ifelse(length(a) == 0, NA_character_, a)
+  }
+)
+
+states_research_num <- orders_df %>% 
+  filter(univ_type == 'research') %>% 
+  group_by(univ_state, state_name) %>% 
+  summarise(n = n()) %>% 
+  mutate(name = strsplit(state_name, split = '|', fixed = T)) %>% 
+  unnest(name) %>% 
+  ungroup() %>% 
+  mutate(
+    abb = get_state_abb(name)
+  ) %>%
+  mutate(locale = if_else(univ_state == name, 'instate', 'outofstate')) %>% 
+  filter(!is.na(abb)) %>% 
+  group_by(abb, locale) %>% 
+  summarise(frequency = sum(n))
+
+states_research <- us_map(regions = 'states') %>% 
+  group_by(fips, abbr, full) %>% 
+  count(fips) %>%
+  left_join(data.frame(locale = c('instate', 'outofstate')), by = character()) %>% 
+  left_join(states_research_num, by = c('abbr' = 'abb', 'locale' = 'locale')) %>% 
+  mutate(
+    frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
+  )
+
+# All
+plot_usmap(
+  regions = 'states',
+  data = states_research %>% group_by(fips) %>% summarise(frequency = sum(frequency)),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'blue',
+    high = 'green', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 120)
+  ) + 
+  labs(title = 'State Filters for Research Universities') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r, fig.height = 2.8}
+# Out-of-state
+plot_usmap(
+  regions = 'states',
+  data = states_research %>% filter(locale == 'outofstate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'blue',
+    high = 'green', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 120)
+  ) + 
+  labs(title = 'State Filters for Research Universities (Out-of-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r, fig.height = 2.8}
+# In-state
+plot_usmap(
+  regions = 'states',
+  data = states_research %>% filter(locale == 'instate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'blue',
+    high = 'green', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 10)
+  ) + 
+  labs(title = 'State Filters for Research Universities (In-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+
+\newpage
+## NEW state map (regional)
+
+```{r, fig.height = 2.8}
+states_regional_num <- orders_df %>% 
+  filter(univ_type == 'regional') %>% 
+  group_by(univ_state, state_name) %>% 
+  summarise(n = n()) %>% 
+  mutate(name = strsplit(state_name, split = '|', fixed = T)) %>% 
+  unnest(name) %>% 
+  ungroup() %>% 
+  mutate(
+    abb = get_state_abb(name)
+  ) %>%
+  mutate(locale = if_else(univ_state == name, 'instate', 'outofstate')) %>% 
+  filter(!is.na(abb)) %>% 
+  group_by(abb, locale) %>% 
+  summarise(frequency = sum(n))
+
+states_regional <- us_map(regions = 'states') %>% 
+  group_by(fips, abbr, full) %>% 
+  count(fips) %>%
+  left_join(data.frame(locale = c('instate', 'outofstate')), by = character()) %>% 
+  left_join(states_regional_num, by = c('abbr' = 'abb', 'locale' = 'locale')) %>% 
+  mutate(
+    frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
+  )
+
+# All
+plot_usmap(
+  regions = 'states',
+  data = states_regional %>% group_by(fips) %>% summarise(frequency = sum(frequency)),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'lightgray',
+    high = 'darkgreen', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 35)
+  ) + 
+  labs(title = 'State Filters for Regional Universities') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r, fig.height = 2.8}
+# Out-of-state
+plot_usmap(
+  regions = 'states',
+  data = states_regional %>% filter(locale == 'outofstate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'lightgray',
+    high = 'darkgreen', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 35)
+  ) + 
+  labs(title = 'State Filters for Regional Universities (Out-of-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r, fig.height = 2.8}
+# In-state
+plot_usmap(
+  regions = 'states',
+  data = states_regional %>% filter(locale == 'instate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'lightgray',
+    high = 'darkgreen', 
+    name = 'Filtered States',
+    label = scales::comma,
+    limits = c(0, 15)
+  ) + 
+  labs(title = 'State Filters for Regional Universities (In-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+
+## NEW demographic race
+
+```{r, fig.height = 3}
+race_orders_aggregate %>% 
+  ggplot(aes(fill = univ_type, y = n, x = reorder(race_filter, n))) + 
+  geom_bar(position = 'stack', stat = 'identity') +
+  geom_text(aes(label = n), hjust = -0.1, colour = 'black', size = 2) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Univ Type') +
+  xlab('') + ylab('Number of Orders') +
+  coord_flip()
+```
+
+
+## Table 7
+
+```{r}
+bind_cols(
+  df_0_research %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(n / sum(n) * 100), '%')),
+  df_0_regional %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(n / sum(n) * 100), '%'))
+) %>% 
+  kable(booktabs = T, col.names = rep(c('Filters', 'Count', 'Percent'), 2), align = rep(c('l', 'c', 'c'), 2), caption = 'Filter combos used in order purchases') %>%
+  add_header_above(c('Research' = 3, 'Regional' = 3), bold = T) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center', latex_options = 'hold_position')
+```
+
+
+## Figure 10
+
+```{r, fig.height = 2.5}
+df_rq2a_counts <- df_rq2a %>% 
+  filter(row_subj == 'Total N') %>% 
+  select(all_domestic, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_counts <- data.frame(df_rq2a_counts, row.names = rownames(df_rq2a_counts)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_counts) %>% 
+  mutate(loc_type = 'Domestic') %>% 
+  rbind(c('all_domestic', df_int2$n[[2]], 'International')) %>% 
+  arrange(count_type, loc_type)
+
+df_rq2a_counts$count <- as.numeric(df_rq2a_counts$count)
+df_rq2a_counts$count_type <- factor(df_rq2a_counts$count_type, levels = rev(c('all_domestic', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+df_rq2a_counts$loc_type <- factor(df_rq2a_counts$loc_type, levels = rev(c('Domestic', 'International')))
+
+df_rq2a_counts %>% 
+  ggplot(aes(x = count_type, y = count, fill = loc_type, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  xlab('') + ylab('') +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 3700000)) +
+  scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T)) +
+  coord_flip()
+```
+
+```{r}
+create_rq2a_figure <- function(categories, legend_title) {
+  df_rq2a_fig <- df_rq2a %>% 
+    filter(row_subj %in% categories) %>% 
+    select(row_subj, all_domestic, research_univ_instate, regional_univ_instate, research_univ_outofstate, regional_univ_outofstate) %>% 
+    pivot_longer(-row_subj, names_to = 'pct_type', values_to = 'pct')
+  
+  df_rq2a_fig$pct_type <- factor(df_rq2a_fig$pct_type, levels = rev(c('all_domestic', 'research_univ_instate', 'regional_univ_instate', 'research_univ_outofstate', 'regional_univ_outofstate')))
+  df_rq2a_fig$row_subj <- factor(df_rq2a_fig$row_subj, levels = rev(categories))
+  
+  df_rq2a_fig %>% 
+    ggplot(aes(x = pct, y = pct_type, fill = row_subj, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+    geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+    xlab('') + ylab('') +
+    scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
+    scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = legend_title) +
+    theme(
+      axis.text.x = element_blank()
+    ) +
+    guides(fill = guide_legend(reverse = T))
+}
+```
+
+## Figure 11
+
+```{r, fig.height = 2.3}
+create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct Race-Missing'), 'Race/ethnicity')
+```
+
+## Figure 12
+
+```{r, fig.height = 2.5}
+df_rq2a_income <- df_rq2a %>% 
+  filter(row_subj == 'Median Household Income (mean)') %>% 
+  select(all_domestic, in_state, out_of_state, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
+  t()
+
+df_rq2a_income <- data.frame(df_rq2a_income, row.names = rownames(df_rq2a_income)) %>% 
+  rownames_to_column(var = 'count_type') %>% 
+  dplyr::rename(count = df_rq2a_income)
+
+df_rq2a_income$count_type <- factor(df_rq2a_income$count_type, levels = rev(c('all_domestic', 'in_state', 'out_of_state', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
+
+df_rq2a_income %>% 
+  ggplot(aes(x = count, y = count_type, width = 0.6)) +
+  geom_bar(stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
+  geom_text(aes(x = count + 800, label = str_c('$', round(count / 1000, 0), 'K')), color = '#555555', size = 2, hjust = 0) +
+  xlab('') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 110000)) +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = 'top'
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+
+## Figure 13
+
+```{r, fig.height = 2}
+lists_df_urbanization %>% 
+  mutate(
+    count_type = str_c(univ_type, '_univ_', region),
+    locale_group = str_sub(LOCALE, 1, 1),
+    locale_text = recode_factor(
+      locale_group,
+      '4' = 'Rural',
+      '3' = 'Town',
+      '2' = 'Suburban',
+      '1' = 'City'
+    )
+  ) %>% 
+  group_by(count_type, locale_text) %>% 
+  summarise(
+    n = sum(n)
+  ) %>% 
+  ungroup() %>% 
+  group_by(count_type) %>% 
+  mutate(
+    pct = n / sum(n) * 100
+  ) %>% 
+  ggplot(aes(x = pct, y = count_type, fill = locale_text, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+    geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+    xlab('') + ylab('') +
+    scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
+    scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+    theme(
+      axis.text.x = element_blank()
+    ) +
+    guides(fill = guide_legend(reverse = T))
+```
+
+
+## Appendix
+
+```{r, fig.height = 2.3}
+create_rq2a_figure(c('Pct Public', 'Pct Private', 'Pct School Unknown'), 'School type')
+```
