@@ -12,6 +12,7 @@ library(stringr)
 library(eatATA)
 library(readxl)
 library(usmap)
+library(haven)
 
 ################### OPEN DATA BY OJ
 
@@ -344,10 +345,10 @@ library(usmap)
         orders_filters_research$type <- "research"
         orders_filters_regional$type <- "regional"
         
-        orders_filters <- rbind(orders_filters_research,orders_filters_regional)
+        orders_filters2 <- rbind(orders_filters_research,orders_filters_regional)
         
         #CURRENTLY FIGURE 8: Filters used in order purchases
-        ggplot(orders_filters, aes(x=reorder(filters, V1), y=V1)) +
+        ggplot(orders_filters2, aes(x=reorder(filters, V1), y=V1)) +
             geom_bar(stat = "identity") +
           facet_wrap(~type) +
             ylab("Number of Orders") +
@@ -2529,12 +2530,28 @@ library(usmap)
                     
                          
 lists_df_summary <- lists_orders_zip_hs_df %>% count(univ_id, univ_state, univ_c15basic, ord_num)
-        
+
+zip_locale <- read_sas(file.path(data_dir, 'EDGE_ZCTALOCALE_2021_LOCALE.sas7bdat'))
+lists_df_urbanization <- lists_orders_zip_hs_df %>% 
+  mutate(
+    region = case_when(
+      stu_in_us == 1 & stu_nonres == 0 ~ 'instate',
+      stu_in_us == 1 & stu_nonres == 1 ~ 'outofstate',
+      T ~ NA_character_
+    )
+  ) %>% 
+  filter(!is.na(region)) %>% 
+  inner_join(zip_locale, by = c('stu_zip_code' = 'ZCTA5CE20')) %>% 
+  group_by(univ_type, region, LOCALE) %>% 
+  summarise(n = n())
+
+
 # FOR CRYSTAL
 save(lists_orders_zip_hs_df, file = file.path("/Users/karinasalazar/Dropbox", 'lists_orders_zip_hs_df.RData'))
 save(orders_df, file = file.path("/Users/karinasalazar/Dropbox", 'orders_df.RData'))
 save(acs_race_zipcodev3, file = file.path("/Users/karinasalazar/Dropbox", 'acs_race_zipcodev3.RData'))
 
-save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, fig_rq3_segment_race_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
+# save(orders_df, orders_fig_totals, orders_filters1, table_gpa, df_0, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, table_texasam_zip, table_texasam_zip_inc, fig_rq3_segment_race_inc, file = file.path(data_dir, 'tbl_fig_data.RData'))
+save(orders_df, orders_fig_totals, orders_filters2, table_gpa, table_scores, df_0_research, df_0_regional, race_orders_aggregate, df_rq2a, df_int, df_int2, df_rq3, lists_df_summary, lists_df_urbanization, table_texasam_zip, table_texasam_zip_inc, fig_rq3_segment_race_inc, file = file.path(data_dir, 'tbl_fig_data_revised.RData'))
 save(houston_pubprivhs, houston_pubhs, txhs, la_pubprivhs, la_pubhs, lahs, acs_race_zipcodev3, file = file.path(data_dir, 'map_data.RData'))
             
