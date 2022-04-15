@@ -1593,7 +1593,7 @@ library(haven)
        
      
           
-      ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Out of State/Segment Illinois Example
+################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES--  SERGMENT + TEST SCORES UNIV OF ILLINOIS URBANA-CHAMPAIGN Example
           
           # check filters across orders that use segment; these filter by segment at the state level but not cbsa
           lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_states_fil==1 &  filter_cbsa!=1 &  filter_psat==1) %>% count(ord_num)
@@ -1654,7 +1654,9 @@ library(haven)
           
         
         # racial composition of all students in public high schools in the CBSA
-        philly_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
+          pubhs_privhs_data %>% count(cbsa_1, cbsatitle_1) %>% print(n=1000)
+          
+          philly_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
             summarize(
                 metro = "Philadelphia",
                 population = "Public HS Students",
@@ -1794,7 +1796,7 @@ library(haven)
       )
         
         
-    ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Women in STEM Example for UC San Diego
+################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES-- Women in STEM Example for UC San Diego
     
     #check orders that used female
     orders_df %>% filter(gender=="Female") %>% count(univ_name,univ_id)
@@ -1803,7 +1805,7 @@ library(haven)
       orders_gender <- orders_df %>% filter(gender=="Female" & univ_id==110680)
       
         # see orders by Urbana Champaign
-        orders_gender_urbana <- orders_df %>% filter(gender=="Female" & univ_id==145637)
+        #orders_gender_urbana <- orders_df %>% filter(gender=="Female" & univ_id==145637)
       
         # order titles
           orders_gender %>% count(order_title) #5 order for in-state, 6 for out-of-state
@@ -1812,7 +1814,7 @@ library(haven)
           )
           
               # order titles for Urbana Champaign
-              orders_gender_urbana %>% count(order_title) #7 orders for OOS, all looking for "Female ENG"
+              #orders_gender_urbana %>% count(order_title) #7 orders for OOS, all looking for "Female ENG"
         
       # instate versus outofstate
           orders_gender %>% count(instate) #5 order for in-state, 6 for out-of-state (Urbana had all OOS)
@@ -1867,7 +1869,10 @@ library(haven)
                                            total_students = sum(num_students, na.rm = T))
               
               #only look at orders using AP-Scores for AP comparison group
-              orders_gender <- orders_gender %>% filter(!is.na(ap_scores)) 
+              orders_gender_AP <- orders_gender %>% filter(!is.na(ap_scores)) 
+              
+              #only look at orders using SAT for AP comparison group
+              orders_gender_SAT <- orders_gender %>% filter(!is.na(ap_scores)) 
               
               
         # resulting student lists 
@@ -1890,193 +1895,224 @@ library(haven)
             #orders by state
             list_gender %>% count(stu_state) %>% arrange(-n)
             
-              #merge in stu_cbsa
-              list_gender <- merge(x = list_gender, y = zip_cbsa_name_data[ , c("zip_code", "cbsa_1", "cbsatitle_1")], by.x  = "stu_zip_code", by.y  = "zip_code", all.x=TRUE)
+            list_gender %>% count(zip_cbsa_1, zip_cbsatitle_1) %>% arrange(-n) %>% print(n=30)
+            list_gender %>% count(zip_csatitle,zip_cbsa_1) %>% arrange(-n) %>% print(n=40)
             
-            #orders by metro area
-              list_gender %>% count(cbsatitle_1, cbsa_1) %>% arrange(-n)
+                  #mean income by CBSA
+                  list_gender %>% group_by(zip_cbsatitle_1) %>% select(zip_median_household_income) %>%
+                    summarise(across(
+                      .cols = where(is.numeric), 
+                      .fns = list(Mean = mean), na.rm = TRUE, 
+                      .names = "{col}_{fn}"
+                    )) %>% arrange(-zip_median_household_income_Mean) %>% print(n=100)
             
-            #create order vars in lists df
-            list_gender <- merge(x = list_gender, y = orderswlists_gender[ , c("instate", "major", "ap_score_range", "order_num")], by.x  = "ord_num", by.y  = "order_num", all.x=TRUE)
-
-            
-       #income characteristics
-            list_gender %>% group_by(instate) %>% count() #10.6k out of state versus 2.3k in-state
-            
-            list_gender %>% group_by(instate) %>% select(zip_median_household_income) %>%
-              summarise(across(
-                .cols = where(is.numeric), 
-                .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
-                .names = "{col}_{fn}"
-              ))
-            
-          #race characteristics
-            list_gender %>% group_by(instate) %>%
-              count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
-            
-            list_gender %>% 
-              count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
-            
-            
-              #instate= 56% White; 30% Asian; 2% Black, 5% Latinx, 4%multiracial, 0% Native
-              #outofstate= 32% White; 41% Asian; 1% Black, 14% Latinx, 6%multiracial, 0% Native
-       
-          # Zip Codes for one metro/one state
-            
-          #metro_zips <- acs_race_zipcodev3 %>% filter(cbsa_1=="19100") #BOSTON MSA=14460
-          metro_zips <- acs_race_zipcodev3 %>% filter(state_code=="TX") 
-        
-          
-          # aggregate num of prospects purchased at zip level for Boston
-           #filter student lists for just those with gender filter from UCSD
-          #list_gender_metro <-   subset(list_gender, stu_zip_code %in% metro_zips$zip_code) #only 314 students purchased in Boston
-           
-           list_gender_metro <-   list_gender %>% filter(stu_state=="TX") 
-           
-           list_gender_metro %>% count(stu_race_cb)
-
-           #create dummies of race/ethnicity & order filters to aggregate
-           list_gender_metro <- list_gender_metro %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
-                                                                   stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
-                                                                   stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
-                                                                   stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
-                                                                   stu_race_black = ifelse(stu_race_cb==3, 1, 0),
-                                                                   stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
-                                                                   stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
-                                                                   stu_race_white = ifelse(stu_race_cb==9, 1, 0),
-                                                                   stu_race_other = ifelse(stu_race_cb==10, 1, 0),
-                                                                   stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
-                                                                   stu_ordertypeAP = ifelse(ord_title=="(f) NR 2021 Female AP Stem" | ord_title=="(f) NR 2022 Female AP STEM", 1, 0),
-                                                                   stu_ordertypeSAT = ifelse(ord_title=="(f) NR 2021 Female SAT STEM"| ord_title=="(f) NR 2022 Female SAT STEM"| ord_title=="(f) NR 2023 Female SAT STEM", 1, 0))
-           
-                                          #checks
-                                            list_gender_metro %>% count(stu_ordertypeAP, ord_title)
-                                            list_gender_metro %>% count(stu_ordertypeSAT, ord_title)
-                                            list_gender_metro %>% count(stu_zip_code) %>% arrange(-n)
-                                            
-           
-           #aggregate student list data to zipcode-level with total num prospects + prospect race/ethnicity       
-            list_gender_metro <- list_gender_metro %>% select(stu_zip_code, stu_race_noresponse, stu_race_missing,
-                                                              stu_race_aian, stu_race_asian, stu_race_black,
-                                                              stu_race_latinx, stu_race_nhpi, stu_race_white,
-                                                              stu_race_other, stu_race_multi, stu_ordertypeAP, stu_ordertypeSAT) %>% group_by(stu_zip_code) %>% summarize_all(sum)
-           
-            #list_gender_metro <- list_gender_metro %>% filter(stu_ordertypeAP>0)
-            # merge in purchased prospects
-            metro_zips<- merge(x = metro_zips, y = list_gender_metro, by.x  = "zip_code",  by.y  = "stu_zip_code", all.x=TRUE)
-            
-            # replace NAs to zeros
-            metro_zips <- mutate(metro_zips, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
-            metro_zips <- mutate(metro_zips, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
-            
-            #add a total prospect purchased by zip; then pct by race
-            metro_zips <- metro_zips %>% rowwise() %>%
-              mutate(tot_prospects = sum(across(starts_with("stu_race")), na.rm = T))
-          
-            
-            metro_zips <- metro_zips %>% group_by(zip_code) %>%
-              mutate(stu_pct_white = (stu_race_white/tot_prospects)*100, 
-                     stu_pct_asian = (stu_race_asian/tot_prospects)*100,
-                     stu_pct_black = (stu_race_black/tot_prospects)*100,
-                     stu_pct_latinx= (stu_race_latinx/tot_prospects)*100)
-            
-            #print top purchased zips
-            metro_topzips <- metro_zips %>% select(zip_code, median_household_income,tot_prospects, pop_white_15_19_pct,  stu_pct_white,pop_asian_15_19_pct, stu_pct_asian, pop_black_15_19_pct, stu_pct_black, pop_hispanic_15_19_pct, stu_pct_latinx) %>% arrange(-tot_prospects) 
-            
-            metro_topzips <- metro_zips %>% mutate(
-              purchased_zip_dummy = if_else(tot_prospects>=1,1,0),
-              purchased_zip = if_else(tot_prospects>=1,"1-5","0"),
-              purchased_zip = if_else(tot_prospects>5,"6-10",purchased_zip),
-              purchased_zip = if_else(tot_prospects>10,"10+",purchased_zip),
-              purchased_zip = as.factor(purchased_zip))
-            
-                  #look at number of AI students rather than proportion across purchased zips
-                  # purchased_zips <- metro_topzips %>% filter(purchased_zip_dummy==1)
-                  # tx_zips <- acs_race_zipcodev3 %>% filter(state_code=="TX") 
-                  # tx_zips <-   subset(tx_zips, zipcode %in% purchased_zips$zip_code)
-                  # sum(tx_zips$pop_amerindian_15_19)
                   
-            #purchased versus non purchased zips in metro
-              metro_topzips %>% group_by(purchased_zip_dummy) %>% count()
+                #race/ethnicity by cbsa
+                  list_gender %>%  filter(zip_cbsa_1=="35620"|zip_cbsa_1=="31080"|zip_cbsa_1=="12060"|zip_cbsa_1=="16980"|zip_cbsa_1=="42660"|zip_cbsa_1=="37980"|zip_cbsa_1=="14460"| zip_cbsa_1=="19820"| zip_cbsa_1=="35620") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  philly_lists_ap <- list_gender %>% filter(zip_cbsa_1=="37980")
+                  philly_lists_ap %>% count(stu_race_cb)
+                  
             
-            metro_topzips$purchased_zip <-  factor(metro_topzips$purchased_zip, levels = c("0", "1-5", "6-10", "10+"))
-
-            metro_topzips %>% group_by(purchased_zip) %>% count()
-
-            #average number of prospects purchased across zips>0
-            metro_topzips %>% group_by(purchased_zip_dummy) %>% summarise(mean_pros = mean(tot_prospects, na.rm=T),
-                                                                          med_pros = median(tot_prospects, na.rm=T))
-            
-            
-           figure_gender <- metro_topzips %>% group_by(purchased_zip_dummy) %>%
-              summarise(total_zips= n(),
-                        mean_avginc = mean(median_household_income, na.rm=T),
-                        mean_pct_white = mean(pop_white_15_19_pct, na.rm=T),
-                        mean_pct_asian = mean(pop_asian_15_19_pct, na.rm=T),
-                        mean_pct_black= mean(pop_black_15_19_pct, na.rm=T),
-                        mean_pct_latinx = mean(pop_hispanic_15_19_pct, na.rm=T),
-                        mean_pct_native = mean(pop_amerindian_15_19_pct, na.rm=T),
-                        stu_pct_white = mean(stu_pct_white, na.rm=T),
-                        stu_pct_asian = mean(stu_pct_asian, na.rm=T),
-                        stu_pct_black= mean(stu_pct_black, na.rm=T),
-                        stu_pct_latinx = mean(stu_pct_latinx, na.rm=T))
-            
-            #wide to long
-           figure_gender_long <- figure_gender %>% pivot_longer(cols = mean_pct_white:stu_pct_latinx,
-                                                           names_to= "population",
-                                                           names_prefix=c("mean", "stu"),
-                                                           values_to= "pct")
-           
-           figure_gender_long <- figure_gender_long %>% mutate(
-             race= ifelse(str_detect(population, "white"), "white", ""),
-             race= ifelse(str_detect(population, "asian"), "asian", race),
-             race= ifelse(str_detect(population, "black"), "black", race),
-             race= ifelse(str_detect(population, "latinx"), "latinx", race),
-             race= ifelse(str_detect(population, "native"), "native", race),
-             population= ifelse(str_detect(population, "stu"), "prospects", "zip population"),
-           )
-           
-           #compare to population of 15-19 year olds
-           ggplot(figure_gender_long, aes(fill=population, y=pct, x=race)) + 
-             geom_bar(position="dodge", stat="identity") +
-             ggtitle("Texas: Non-Purchased versus Purchased Prospects' Zip Codes") +
-             facet_wrap(~purchased_zip_dummy) +
-             xlab("")
-
-           #race/ethnicity of Texas Prospects
-           list_gender_metro <-   list_gender %>% filter(stu_state=="TX") #only 314 students purchased in Boston
-           
-           tx_prospects<- list_gender_metro %>% 
-             count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
-           
-           tx_prospects <- tx_prospects %>% mutate(race = ifelse(is.na(stu_race_cb), "missing", ""),
-                                                                   race = ifelse(stu_race_cb==0, "no response", race),
-                                                                   race = ifelse(stu_race_cb==1, "native", race),
-                                                                   race = ifelse(stu_race_cb==2, "asian", race),
-                                                                   race = ifelse(stu_race_cb==3, "black", race),
-                                                                   race = ifelse(stu_race_cb==4, 'latinx', race),
-                                                                   race = ifelse(stu_race_cb==8, "nhpi", race),
-                                                                   race = ifelse(stu_race_cb==9, "white", race),
-                                                                   race = ifelse(stu_race_cb==10, "other", race),
-                                                                   race = ifelse(stu_race_cb==12, "multiracial", race))
-                                                                   
-           
-           tx_prospects <- tx_prospects %>% select(race, V1)
-           
-           tx_prospects$population <- "purchased prospects"
-           
-           # https://tea.texas.gov/sites/default/files/ap-ib-texas-2019-20.pdf, table 3
-           tx_testtakers  <- data.frame(race=c("no response", "native", "asian", "black", "latinx", "nhpi", "white", "multiracial", NA_character_),
-                                        V1=c(NA, 0.2291236, 16.19576, 6.906439, 39.98795,0.1348556, 33.99277, 2.545236, NA),
-                                        population=c("science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", NA_character_))
-           tx <- rbind(tx_prospects, tx_testtakers)
-           
-           tx <- na.omit(tx)
-           
-           ggplot(tx, aes(fill=population, y=V1, x=race)) + 
-             geom_bar(position="dodge", stat="identity") +
-             ggtitle("Texas Test Takers Versus Purchased Prospects") +
-             ylab("Percent")
+                  # CBSA public HS student chars
+                  xyz_metro <- pubhs_privhs_data %>% filter(school_control == 'public',total_12>0, cbsa_1 == '37980') %>%
+                    summarize(
+                      metro = "Philadelphia",
+                      population = "Public HS Students",
+                      #n_obs = sum(total_students, na.rm = TRUE),
+                      tot_students = sum(total_students, na.rm = TRUE),
+                      #tot_white = sum(total_white, na.rm = TRUE),
+                      #tot_asian = sum(total_asian, na.rm = TRUE),
+                      White = sum(total_white, na.rm = TRUE)/tot_students*100,
+                      Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
+                      Black = sum(total_black, na.rm = TRUE)/tot_students*100,
+                      Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
+                      AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+                      Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
+                      #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
+                      #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+                    )
+                  
+                  
+      # ######## OLD ANALYSIS CODE      
+      #  #income characteristics
+      #       list_gender %>% group_by(instate) %>% count() #10.6k out of state versus 2.3k in-state
+      #       
+      #       list_gender %>% group_by(instate) %>% select(zip_median_household_income) %>%
+      #         summarise(across(
+      #           .cols = where(is.numeric), 
+      #           .fns = list(Mean = mean, SD=sd), na.rm = TRUE, 
+      #           .names = "{col}_{fn}"
+      #         ))
+      #       
+      #     #race characteristics
+      #       list_gender %>% group_by(instate) %>%
+      #         count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+      #       
+      #       list_gender %>% 
+      #         count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+      #       
+      #       
+      #         #instate= 56% White; 30% Asian; 2% Black, 5% Latinx, 4%multiracial, 0% Native
+      #         #outofstate= 32% White; 41% Asian; 1% Black, 14% Latinx, 6%multiracial, 0% Native
+      #  
+      #     # Zip Codes for one metro/one state
+      #       
+      #     #metro_zips <- acs_race_zipcodev3 %>% filter(cbsa_1=="19100") #BOSTON MSA=14460
+      #     metro_zips <- acs_race_zipcodev3 %>% filter(state_code=="TX") 
+      #   
+      #     
+      #     # aggregate num of prospects purchased at zip level for Boston
+      #      #filter student lists for just those with gender filter from UCSD
+      #     #list_gender_metro <-   subset(list_gender, stu_zip_code %in% metro_zips$zip_code) #only 314 students purchased in Boston
+      #      
+      #      list_gender_metro <-   list_gender %>% filter(stu_state=="TX") 
+      #      
+      #      list_gender_metro %>% count(stu_race_cb)
+      # 
+      #      #create dummies of race/ethnicity & order filters to aggregate
+      #      list_gender_metro <- list_gender_metro %>% mutate(stu_race_missing = ifelse(is.na(stu_race_cb), 1, 0),
+      #                                                              stu_race_noresponse = ifelse(stu_race_cb==0, 1, 0),
+      #                                                              stu_race_aian = ifelse(stu_race_cb==1, 1, 0),
+      #                                                              stu_race_asian = ifelse(stu_race_cb==2, 1, 0),
+      #                                                              stu_race_black = ifelse(stu_race_cb==3, 1, 0),
+      #                                                              stu_race_latinx = ifelse(stu_race_cb==4, 1, 0),
+      #                                                              stu_race_nhpi = ifelse(stu_race_cb==8, 1, 0),
+      #                                                              stu_race_white = ifelse(stu_race_cb==9, 1, 0),
+      #                                                              stu_race_other = ifelse(stu_race_cb==10, 1, 0),
+      #                                                              stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
+      #                                                              stu_ordertypeAP = ifelse(ord_title=="(f) NR 2021 Female AP Stem" | ord_title=="(f) NR 2022 Female AP STEM", 1, 0),
+      #                                                              stu_ordertypeSAT = ifelse(ord_title=="(f) NR 2021 Female SAT STEM"| ord_title=="(f) NR 2022 Female SAT STEM"| ord_title=="(f) NR 2023 Female SAT STEM", 1, 0))
+      #      
+      #                                     #checks
+      #                                       list_gender_metro %>% count(stu_ordertypeAP, ord_title)
+      #                                       list_gender_metro %>% count(stu_ordertypeSAT, ord_title)
+      #                                       list_gender_metro %>% count(stu_zip_code) %>% arrange(-n)
+      #                                       
+      #      
+      #      #aggregate student list data to zipcode-level with total num prospects + prospect race/ethnicity       
+      #       list_gender_metro <- list_gender_metro %>% select(stu_zip_code, stu_race_noresponse, stu_race_missing,
+      #                                                         stu_race_aian, stu_race_asian, stu_race_black,
+      #                                                         stu_race_latinx, stu_race_nhpi, stu_race_white,
+      #                                                         stu_race_other, stu_race_multi, stu_ordertypeAP, stu_ordertypeSAT) %>% group_by(stu_zip_code) %>% summarize_all(sum)
+      #      
+      #       #list_gender_metro <- list_gender_metro %>% filter(stu_ordertypeAP>0)
+      #       # merge in purchased prospects
+      #       metro_zips<- merge(x = metro_zips, y = list_gender_metro, by.x  = "zip_code",  by.y  = "stu_zip_code", all.x=TRUE)
+      #       
+      #       # replace NAs to zeros
+      #       metro_zips <- mutate(metro_zips, across(starts_with("stu_race"), ~ifelse(is.na(.x),0,.x)))
+      #       metro_zips <- mutate(metro_zips, across(starts_with("stu_ordertype"), ~ifelse(is.na(.x),0,.x)))
+      #       
+      #       #add a total prospect purchased by zip; then pct by race
+      #       metro_zips <- metro_zips %>% rowwise() %>%
+      #         mutate(tot_prospects = sum(across(starts_with("stu_race")), na.rm = T))
+      #     
+      #       
+      #       metro_zips <- metro_zips %>% group_by(zip_code) %>%
+      #         mutate(stu_pct_white = (stu_race_white/tot_prospects)*100, 
+      #                stu_pct_asian = (stu_race_asian/tot_prospects)*100,
+      #                stu_pct_black = (stu_race_black/tot_prospects)*100,
+      #                stu_pct_latinx= (stu_race_latinx/tot_prospects)*100)
+      #       
+      #       #print top purchased zips
+      #       metro_topzips <- metro_zips %>% select(zip_code, median_household_income,tot_prospects, pop_white_15_19_pct,  stu_pct_white,pop_asian_15_19_pct, stu_pct_asian, pop_black_15_19_pct, stu_pct_black, pop_hispanic_15_19_pct, stu_pct_latinx) %>% arrange(-tot_prospects) 
+      #       
+      #       metro_topzips <- metro_zips %>% mutate(
+      #         purchased_zip_dummy = if_else(tot_prospects>=1,1,0),
+      #         purchased_zip = if_else(tot_prospects>=1,"1-5","0"),
+      #         purchased_zip = if_else(tot_prospects>5,"6-10",purchased_zip),
+      #         purchased_zip = if_else(tot_prospects>10,"10+",purchased_zip),
+      #         purchased_zip = as.factor(purchased_zip))
+      #       
+      #             #look at number of AI students rather than proportion across purchased zips
+      #             # purchased_zips <- metro_topzips %>% filter(purchased_zip_dummy==1)
+      #             # tx_zips <- acs_race_zipcodev3 %>% filter(state_code=="TX") 
+      #             # tx_zips <-   subset(tx_zips, zipcode %in% purchased_zips$zip_code)
+      #             # sum(tx_zips$pop_amerindian_15_19)
+      #             
+      #       #purchased versus non purchased zips in metro
+      #         metro_topzips %>% group_by(purchased_zip_dummy) %>% count()
+      #       
+      #       metro_topzips$purchased_zip <-  factor(metro_topzips$purchased_zip, levels = c("0", "1-5", "6-10", "10+"))
+      # 
+      #       metro_topzips %>% group_by(purchased_zip) %>% count()
+      # 
+      #       #average number of prospects purchased across zips>0
+      #       metro_topzips %>% group_by(purchased_zip_dummy) %>% summarise(mean_pros = mean(tot_prospects, na.rm=T),
+      #                                                                     med_pros = median(tot_prospects, na.rm=T))
+      #       
+      #       
+      #      figure_gender <- metro_topzips %>% group_by(purchased_zip_dummy) %>%
+      #         summarise(total_zips= n(),
+      #                   mean_avginc = mean(median_household_income, na.rm=T),
+      #                   mean_pct_white = mean(pop_white_15_19_pct, na.rm=T),
+      #                   mean_pct_asian = mean(pop_asian_15_19_pct, na.rm=T),
+      #                   mean_pct_black= mean(pop_black_15_19_pct, na.rm=T),
+      #                   mean_pct_latinx = mean(pop_hispanic_15_19_pct, na.rm=T),
+      #                   mean_pct_native = mean(pop_amerindian_15_19_pct, na.rm=T),
+      #                   stu_pct_white = mean(stu_pct_white, na.rm=T),
+      #                   stu_pct_asian = mean(stu_pct_asian, na.rm=T),
+      #                   stu_pct_black= mean(stu_pct_black, na.rm=T),
+      #                   stu_pct_latinx = mean(stu_pct_latinx, na.rm=T))
+      #       
+      #       #wide to long
+      #      figure_gender_long <- figure_gender %>% pivot_longer(cols = mean_pct_white:stu_pct_latinx,
+      #                                                      names_to= "population",
+      #                                                      names_prefix=c("mean", "stu"),
+      #                                                      values_to= "pct")
+      #      
+      #      figure_gender_long <- figure_gender_long %>% mutate(
+      #        race= ifelse(str_detect(population, "white"), "white", ""),
+      #        race= ifelse(str_detect(population, "asian"), "asian", race),
+      #        race= ifelse(str_detect(population, "black"), "black", race),
+      #        race= ifelse(str_detect(population, "latinx"), "latinx", race),
+      #        race= ifelse(str_detect(population, "native"), "native", race),
+      #        population= ifelse(str_detect(population, "stu"), "prospects", "zip population"),
+      #      )
+      #      
+      #      #compare to population of 15-19 year olds
+      #      ggplot(figure_gender_long, aes(fill=population, y=pct, x=race)) + 
+      #        geom_bar(position="dodge", stat="identity") +
+      #        ggtitle("Texas: Non-Purchased versus Purchased Prospects' Zip Codes") +
+      #        facet_wrap(~purchased_zip_dummy) +
+      #        xlab("")
+      # 
+      #      #race/ethnicity of Texas Prospects
+      #      list_gender_metro <-   list_gender %>% filter(stu_state=="TX") #only 314 students purchased in Boston
+      #      
+      #      tx_prospects<- list_gender_metro %>% 
+      #        count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100)
+      #      
+      #      tx_prospects <- tx_prospects %>% mutate(race = ifelse(is.na(stu_race_cb), "missing", ""),
+      #                                                              race = ifelse(stu_race_cb==0, "no response", race),
+      #                                                              race = ifelse(stu_race_cb==1, "native", race),
+      #                                                              race = ifelse(stu_race_cb==2, "asian", race),
+      #                                                              race = ifelse(stu_race_cb==3, "black", race),
+      #                                                              race = ifelse(stu_race_cb==4, 'latinx', race),
+      #                                                              race = ifelse(stu_race_cb==8, "nhpi", race),
+      #                                                              race = ifelse(stu_race_cb==9, "white", race),
+      #                                                              race = ifelse(stu_race_cb==10, "other", race),
+      #                                                              race = ifelse(stu_race_cb==12, "multiracial", race))
+      #                                                              
+      #      
+      #      tx_prospects <- tx_prospects %>% select(race, V1)
+      #      
+      #      tx_prospects$population <- "purchased prospects"
+      #      
+      #      # https://tea.texas.gov/sites/default/files/ap-ib-texas-2019-20.pdf, table 3
+      #      tx_testtakers  <- data.frame(race=c("no response", "native", "asian", "black", "latinx", "nhpi", "white", "multiracial", NA_character_),
+      #                                   V1=c(NA, 0.2291236, 16.19576, 6.906439, 39.98795,0.1348556, 33.99277, 2.545236, NA),
+      #                                   population=c("science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", "science test takers", NA_character_))
+      #      tx <- rbind(tx_prospects, tx_testtakers)
+      #      
+      #      tx <- na.omit(tx)
+      #      
+      #      ggplot(tx, aes(fill=population, y=V1, x=race)) + 
+      #        geom_bar(position="dodge", stat="identity") +
+      #        ggtitle("Texas Test Takers Versus Purchased Prospects") +
+      #        ylab("Percent")
            
            # ### filter only schools in Boston Metro for AP test takers
          #   boston <- pubhs_privhs_data %>% filter(private==0 & cbsa_1=="14460")
@@ -2097,8 +2133,11 @@ library(haven)
          #   list_gender %>% filter(zip_cbsa_1=="14460") %>% count(stu_race_cb)
          #   
          #   
-           
-        ## PROSPECT CHARS ACROSS COMBOS of FILTERS-- Targeting Students of Color
+      
+                  
+                  
+                       
+################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES-- Targeting Students of Color
             
             #check orders that used race/ethnicity explicitly
             orders_df %>%  count(race_ethnicity)
