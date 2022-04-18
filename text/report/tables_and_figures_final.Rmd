@@ -1,0 +1,213 @@
+---
+title: 'Tables & Figures'
+output:
+  pdf_document: default
+---
+
+```{r setup, include = F}
+options(knitr.kable.NA = '')
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
+
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(scales)
+library(usmap)
+
+data_dir <- file.path('..', '..', 'data')
+
+load(file.path(data_dir, 'tbl_fig_data_final.RData'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm'),
+    strip.text.x = element_text(size = 7, face = 'bold')
+  )
+)
+
+color_palette <- c('#bbcfd7', '#d2c8bc', '#ba9a88')
+```
+
+
+## Figure 7: Orders and prospects purchased by research vs. MA/doctoral
+
+```{r, fig.height = 3}
+orders_prospects_purchased %>% 
+  ggplot(aes(x = reorder(univ_id, -total_students), y = total_students, fill = univ_label, width = 0.8)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_c(total_orders, if_else(total_orders == 1, ' order', ' orders')), y = total_students + 2000), vjust = 0, size = 1.8) +
+  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Number of prospects') +
+  theme(
+    axis.ticks.x = element_blank(),
+    axis.text.x = element_blank()
+  )
+```
+
+
+## Figure 8: Filters used in order purchases by research vs. MA/doctoral
+
+```{r, fig.height = 4}
+orders_filters %>% 
+  add_row(univ_label = 'Research', filters = 'academic', num = 0) %>% 
+  add_row(univ_label = 'MA/Doctoral', filters = 'academic', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'geographic', num = 0) %>% 
+  add_row(univ_label = 'MA/Doctoral', filters = 'geographic', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'demographic', num = 0) %>% 
+  add_row(univ_label = 'MA/Doctoral', filters = 'demographic', num = 0) %>% 
+  mutate(
+    filters_label = recode_factor(
+      filters,
+      'gender' = 'Gender',
+      'race' = 'Race',
+      'demographic' = '  ',
+      'intl' = 'International',
+      'cbsa' = 'CBSA',
+      'segment' = 'Segment',
+      'geomarket' = 'Geomarket',
+      'zip' = 'Zip code',
+      'states_fil' = 'State',
+      'geographic' = ' ',
+      'ap_score' = 'AP score',
+      'rank' = 'Rank',
+      'psat' = 'PSAT',
+      'sat' = 'SAT',
+      'gpa' = 'GPA',
+      'academic' = '',
+      'hsgrad_class' = 'HS grad class'
+    )
+  ) %>% 
+  ggplot(aes(x = filters_label, y = num)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = if_else(filters %in% c('academic', 'geographic', 'demographic') & univ_label == 'Research', str_c(str_to_title(filters), ' filters'), ''), y = 0), hjust = 0, size = 2, fontface = 'bold') +
+  geom_text(aes(label = if_else(!filters %in% c('academic', 'geographic', 'demographic'), str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('Number of orders') +
+  facet_wrap(~ factor(univ_label, levels = c('Research', 'MA/Doctoral'))) +
+  coord_flip()
+```
+
+
+## Figure 9: GPA filter used by research vs. MA/doctoral
+
+```{r, fig.height = 3}
+orders_gpa %>% 
+  ggplot(aes(x = factor(gpa_low, levels = c('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-')), y = pct_low, fill = univ_label)) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  geom_text(aes(label = n_low), hjust = 0.5, vjust = 0, size = 2, position = position_dodge(0.9)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Percent of orders')
+```
+
+
+## Figure 10: SAT filter used by research vs. MA/doctoral
+
+```{r, fig.height = 4}
+orders_sat %>% 
+  ggplot(aes(x = brks, y = pct, fill = univ_label)) +
+  geom_bar(position = position_dodge2(reverse = T, padding = 0), stat = 'identity') +
+  geom_text(aes(label = num), hjust = -0.1, size = 2, position = position_dodge2(0.9, reverse = T, padding = 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)), labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Percent of orders') +
+  facet_wrap(~ range_label) +
+  coord_flip()
+```
+
+
+## Figure 11: PSAT filter used by research vs. MA/doctoral
+
+```{r, fig.height = 4}
+orders_psat %>% 
+  ggplot(aes(x = brks, y = pct, fill = univ_label)) +
+  geom_bar(position = position_dodge2(reverse = T, padding = 0), stat = 'identity') +
+  geom_text(aes(label = num), hjust = -0.1, size = 2, position = position_dodge2(0.9, reverse = T, padding = 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)), labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Percent of orders') +
+  facet_wrap(~ range_label) +
+  coord_flip()
+```
+
+
+\newpage
+## Figure 12: State filter used by research universities, in-state vs. out-of-state
+
+```{r, fig.height = 2.8}
+# In-state
+plot_usmap(
+  regions = 'states',
+  data = orders_state_research %>% filter(locale == 'instate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'lightgray',
+    high = 'salmon', 
+    name = 'Number of orders',
+    label = label_number(accuracy = 1),
+    limits = c(0, 10)
+  ) + 
+  labs(title = 'State filter used by research universities (in-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r, fig.height = 2.8}
+# Out-of-state
+plot_usmap(
+  regions = 'states',
+  data = orders_state_research %>% filter(locale == 'outofstate'),
+  values = 'frequency'
+) +
+  scale_fill_gradient2(
+    low = 'gray',
+    mid = 'lightgray',
+    high = 'salmon', 
+    midpoint = 35,
+    name = 'Number of orders',
+    label = label_number(accuracy = 1),
+    limits = c(0, 120)
+  ) + 
+  labs(title = 'State filter used by research universities (out-of-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+
+## Table 7: Filter combos used in order purchases by research vs. MA/doctoral
+
+```{r}
+bind_cols(
+  orders_filters_combo %>% 
+    filter(univ_type == 'research') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%')),
+  orders_filters_combo %>% 
+    filter(univ_type == 'regional') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%'))
+) %>% 
+  kable(booktabs = T, col.names = rep(c('Filters', 'Count', 'Percent'), 2), align = rep(c('l', 'c', 'c'), 2)) %>%
+  add_header_above(c('Research' = 3, 'MA/doctoral' = 3), bold = T) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center', latex_options = c('hold_position', 'scale_down'))
+```
