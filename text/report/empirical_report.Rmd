@@ -561,18 +561,21 @@ Empirical analyses consist of simple descriptive statistics presented in tables,
 
 # Results  
 
-## Filter Criteria Selected in Purchases 
+## RQ1: Filter Criteria Selected in Purchases 
 
-Filters used to select prospect lists varied across academic criteria (e.g., GPA, PSAT, SAT, academic rank, AP Score), geographic location (e.g., zip code, state, segment, core based statistical area, geomarket, international), and demographic characteristics (e.g., high school graduation class, race/ethnicity, gender). We first analyze the frequency of filters used by research versus regional universities. Then, we explore in-depth patterns (e.g., ranges, maximums, minimums) of how these filters were used to select student lists. 
+Research question 1 asks, which filter criteria were selected in student lists purchased by universities in our sample? We first describe broad pattens in filters used by research vs. ma/doctoral universities. The filters commonly used by universities in our sample can be categorized into three groups: academic (e.g., GPA, PSAT, SAT, academic rank, AP Score); geographic (e.g., zip code, state, segment, core based statistical area, geomarket, international); and demographic (e.g., race/ethnicity, gender). Next, we describe patterns observed, for academic, geographic, and demographic filters, respectively, and how filters are used in combination.
 
 
 <!-- Some geographic filters are metrics created by the College Board. For example, segment filters come from the College Board’s “Segment Analysis Service” which merges demographic, geographic, and academic data on SAT test takers to create "geodemographic profiles" for college-bound students (The College Board, 2011, p. 3). These profiles are created at the neighborhood-level and at the school-level. Geomarket filters are also created by the College Board within Enrollment Management Services, which uses information about SAT score senders from the past five admissions cycles within a specific geographic locality (e.g., counties, metropolitan areas, cities) to make projections about high high school graduates in the area [CITE].  -->
 
-Figure \@ref(fig:orders-filters) shows how often filters were used across orders by research and regional universities. All orders by both research universities (n = 377) and regional universities (n = 458) filtered by high school graduation class. Other frequently used filters across both types of universities include GPA, SAT, and PSAT. For example, 88% of orders by regional universities and 61% of orders by research universities used a GPA filter. Similar patterns are evident across SAT and PSAT filters, although a larger proportion of orders by research universities used PSAT filters. 
+### Broad Patterns
 
-Orders by regional versus research universities differed across geographic filters. While more than 8 of every 10 orders by regional universities used a zipcode filter, zip code filters were not used across any orders by research universities. Similarly, nearly 77% of orders by research universities used a state filter but only 11% of orders by regional universities filtered for entire states.  
+Figure \@ref(fig:orders-filters) shows how often filters were used by university type. All orders by both research universities (n = 377) [CHECK] and ma/doctoral universities (n = 458) filtered by high school graduation class. Commonly used academic filters across university type include GPA, SAT, and PSAT. Compared to ma/doctoral universities, research universities were somewhat less likely to filter on GPA or SAT score and more likely to filter on PSAT score. Additionally, research universities filtered on high school class rank (12% of orders) and AP score (10% of orders), but few ma/doctoral orders utilzied these filters.
 
-Research universities also made orders filtered by students' race/ethnicity (27%), geomarket (16%), academic rank (12%), segment (12%), AP score (10%), gender (6%), core based statistical area (4%), and international status (4%). However, less than 5% of orders by regional universities used these same filters. 
+Orders by ma/doctoral versus research universities differed across geographic filters. Nearly 77% of orders by research universities used a state filter but only 11% of orders by ma/doctoral universities filtered for entire states. 83% of orders by ma/doctoral universities used a zip-code filter. However, it is worth noting that most of these orders came from one doctoral university that recruits out-of-state students extensively. By contrast, Research universities in our sample did not use zip code filters. However, research universities also filtered by geomarket (16%), segment (12%), core based statistical area (4%), and international status (4%), whereas ma/doctoral universities generally did not.
+
+Finally, ma/doctoral universities did not utilize demographic filters. For research universities, about 27% or orders filtered by students' race/ethnicity and 6% of orders filtered on gender.
+
 
 ```{r orders-filters, fig.height = 3, fig.cap = 'Filters used in order purchases'}
 orders_filters1 %>% 
@@ -585,17 +588,11 @@ orders_filters1 %>%
 ```
 
 
-### Academic Filters 
+### Academic Filters
 
-The three most commonly used academic filters (GPA, PSAT, SAT) were used by specifying a "low/minimum" and a "high/maximum" threshold. Nearly all orders using a GPA filter across both research and regional university purchases used a GPA high filter of A+. ^[The only exception is one order by a research university that used a GPA high of A-] However, research and regional universities differed in the specified low threshold for orders filtering by GPA, as shown in FIGURE X.  For research universities, low GPA thresholds ranged from A+ to B-, with the majority of orders using a low of B- (46%) or B (33%). Regional universities' orders used low GPA thresholds that ranged from A to C-, with more than half of these orders specifying a low between C- and C+.  
+The three most commonly used academic filters (GPA, PSAT, SAT) were used by specifying a "low/minimum" and a "high/maximum" threshold. Across university type, nearly all orders that filtered on GPA used a high threshold of "A+." ^[The only exception is one order by a research university that used a GPA high of A-] However, Figure X shows that research and ma/doctoral universities differed in the specified low threshold for orders filtering by GPA.  For research universities, low GPA thresholds ranged from A+ to B-, with the majority of orders using a low of B- (46%) or B (33%). ma/doctoral universities' orders used low GPA thresholds that ranged from A to C-, with more than half of these orders specifying a low between C- and C+.  
 
-
-FIGURE X shows differences across minimum thresholds for orders that used PSAT and SAT filters. Across both tests, research universities tended to make orders with minimum thresholds at higher score ranges than orders by regional universities. For example, orders by research universities' using a SAT filter (n=368) indicated the following minimum score thresholds: less than 1000 (9%), 1000-1100 (13%), 1110-1200 (24%), 1210-1300 (16%), 1310-1400 (30%), 1410-1500 (8%). In contrast, orders by regional universities' (n=306) using a SAT filter indicated the following minimum score thresholds: less than 1000 (28%), 1000-1100 (19%), 1110-1200 (16%), 1210-1300 (1%), 1310-1400 (%), 1410-1500 (8%). Interestingly,  7% of regional universities' SAT filter orders indicated a minimum threshold of 1500+, whereas research universities made zero orders at that minimum threshold. These 21 orders were made by two different regional universities that, presumably, targeted a different student population (e.g., extremely high achieving) than other orders using the SAT filter.    
-
-Similar patterns are evident across orders with minimum PSAT filters (Figure X). For example, more than half (56%) of all orders by research universities indicated a minimum PSAT threshold in the highest three score ranges (1210-1300, 1310-1400, 1410-1500). However, only 12% of regional universities' orders indicated these same minimum thresholds. Similarly, 47% of all orders by regional universities versus 8.5% of orders by research universities using a PSAT filter indicated a low score threshold of less than 1000, respectively.
-
-Similar to Figure X,  FIGURE Y shows differences across maximum thresholds for PSAT and SAT filter orders purchased by research versus regional universities. Research universities made a larger percentage of orders (48%) indicating the highest scores (1500+) as maximum thresholds than regional universities (24%). On the flip side, more than half of regional universities' orders indicated a maximum SAT filter below 1300. Similar patterns are evident across orders using PSAT maximum threshold filters. 
-
+Figure X shows minimum and maximum thresholds used in SAT score filters and figure X shows thresholds for PSAT score. Although substantial overlap exists across university type, research universities tended to specify higher minimum score thresholds and higher maximum score threshoulds compared to ma/doctoral universities. In Figure X, for example, X% of orders by research universities specified a minimum SAT score of 1110 compared to X% of orders by ma/doctoral. X% of orders by research universities specified a maximum SAT score of 1310 or higher compared to X% of orders by ma/doctoral.  Interestingly,  7% of ma/doctoral universities' SAT filter orders indicated a minimum SAT score threshold of 1500+, whereas research universities made zero orders at that minimum threshold. These 21 orders were made by two different ma/doctoral universities targeting prospects for specific scholarship programs.
 
 ```{r orders-gpa}
 table_gpa %>% 
@@ -611,7 +608,17 @@ table_gpa %>%
 
 ### Geographic filters
 
-Zip code and state were the most commonly used geographic filters across all orders, although they were each used nearly exclusively by either research or regional universities. For example, only regional universities selected prospective students by filtering for their home zip codes. Zip code filters were used in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. In the second approach, universities indicated five-digit zip codes (usually in a separate excel or text file) as filters. While we can account for the total number of orders that filtered by zip codes (N=381), some universities did not provide the separate documents listing five-digit zip codes after multiple requests (n=157 orders). Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of regional universities targeting prospective students in their local regions. [SHOULD WE INCLUDE THE MAP OF THESE OR NOT? REMOVED FOR NOW.]
+The research universities in our sample used different geographic filters than the ma/doctoral universities in our sample. About 77% of orders by research universities filtered on state. These orders filtered on multiple states or on a single state. Orders that filtered on multiple states were used to target out-of-state prospects. The majority of single-state orders were used to target in-state prospects. However, single-state orders to target out-of-state prospects in populous states (e.g., CA) were also common. 
+
+Figure X shows orders by research universities that filtered on state, with separate maps for orders that filtered on out-of-state prospects and in-state prospects. CA, TX, and IL were the most commonly filtered states by universities searching for out-of-state prospects. Orders for out-of-state prospects tended to avoid less populous and less affluent states. 
+
+Aside from state, research universities also filtered on other geographic filters created by College Board, including "geomarkets" (16% of orders), "segment" (12% of orders), CBSA (4%), and 4% of order targeted international prospects. Geomarket filters are created by the College Board within their Enrollment Management Services, which use information about SAT score senders from the past five admissions cycles within a specific geographic locality (e.g., counties, metropolitan areas, cities) to make projections about high school graduates in the area [CITE]. 
+
+Segment filters come from the College Board’s “Segment Analysis Service,” which categorizes each high school and each neighborhood (census tract) into a type based on its demographic, geographic, academic, historical college-going characteristics [@RN2039]. Universities can then filter on prospects who attend a particular "type" of high school and/or live in a particular "type" of neighborhood. We analyze Segment orders in more detail in Research Question 3, below.
+
+[START HERE WEDS 4/20/2022, GEOGRAPHIC ORDERS FOR MA/DOCTORAL. SAY A LOT OF UNIVERSITIES USED ZIP CODE, BUT WE OFTEN COULDN'T GET THE ZIP CODE FILES]
+
+Zip code and state were the most commonly used geographic filters across all orders, although they were each used nearly exclusively by either research or ma/doctoral universities. For example, only ma/doctoral universities selected prospective students by filtering for their home zip codes. Zip code filters were used in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. In the second approach, universities indicated five-digit zip codes (usually in a separate excel or text file) as filters. While we can account for the total number of orders that filtered by zip codes (N=381), some universities did not provide the separate documents listing five-digit zip codes after multiple requests (n=157 orders). Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. [SHOULD WE INCLUDE THE MAP OF THESE OR NOT? REMOVED FOR NOW.]
 
 ```{r orders-zip, fig.height = 4, fig.cap = 'Filter by 3-digit zip code'}
 zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
@@ -621,7 +628,7 @@ leaflet() %>%
   addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
 ```
 
-[KS REVISE ONCE WE HAVE FINAL FIGURES] Orders using state filters, which were predominantly made by research universities, generally followed two distinct patterns. Orders with multiple-state filters were used to target out-of-state prospects, whereas orders that filtered by only a single state were used for purchasing in-state prospects. Figure X presents the number of orders filtering for each state across the U.S. by research universities. 
+
 
 ```{r orders-state}
 orders_df %>%
@@ -643,76 +650,7 @@ orders_df %>%
   kable_styling(position = 'center')
 ```
 
-Research universities also used other geographical filters created by the College Board, such as geomarkets and segments. For example, geomarket filters are created by the College Board within their Enrollment Management Services, which use information about SAT score senders from the past five admissions cycles within a specific geographic locality (e.g., counties, metropolitan areas, cities) to make projections about high school graduates in the area [CITE]. 
 
-Segment filters come from the College Board’s “Segment Analysis Service” which merges demographic, geographic, and academic data on SAT test takers to create "geodemographic profiles" for college-bound students (The College Board, 2011, p. 3) based on where they live and attend high school. Profiles are created at the neighborhood and school-level, which are then categorized into "clusters" based on similarities across profiles. Figures \@ref(tab:orders-cluster-en) and \@ref(tab:orders-cluster-hs) show all possible neighborhood and high school clusters that can be used as segment filters to purchase student lists.
-
-The `r (orders_filters1 %>% filter(filters == 'segment'))$V1` orders using segment filters were made by three public research universities in the sample. For example, one of these universities made 21 of the 45 orders using the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78), which are highlighted in Figure X. Using average characteristics of neighborhood clusters calculated and advertised by the College Board (and presented in Figure X), the filtered neighborhoods range from median household incomes between \$68,213 to \$134,400 and range from 19% to 87% non-white.  Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79. Figure X shows these high schools range from average SAT mathematics scores between 390 to 606 and previous cohorts in these schools on average ranged from 32% to 74% in going out of state for college. 
-
-<!-- Paragraph above: ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY? -->
-
-
-```{r orders-cluster-en}
-en_df <- data.frame(
-  cluster = c(51:83, 'Total'),
-  sat_math = c(546, 480, 561, 458, 566, 420, 541, 533, 561, 589, 585, 596, 548, 466, 440, 499, 519, 552, 534, 613, 405, 399, 528, 433, 459, 514, 502, 594, 550, 534, 491, 496, 500, 512),
-  sat_cr = c(533, 470, 544, 443, 565, 411, 519, 489, 562, 590, 567, 595, 541, 466, 433, 492, 501, 558, 521, 598, 408, 397, 514, 435, 457, 509, 492, 578, 551, 527, 483, 491, 490, 502),
-  pct_outofstate = c(0.32, 0.3, 0.32, 0.25, 0.52, 0.29, 0.52, 0.28, 0.52, 0.63, 0.51, 0.67, 0.39, 0.48, 0.23, 0.2, 0.27, 0.52, 0.37, 0.65, 0.39, 0.31, 0.29, 0.29, 0.28, 0.27, 0.26, 0.56, 0.57, 0.39, 0.27, 0.29, 0.19, 0.32),
-  pct_nonwhite = c(0.3, 0.58, 0.5, 0.83, 0.24, 0.93, 0.47, 0.87, 0.24, 0.37, 0.3, 0.24, 0.23, 0.34, 0.93, 0.12, 0.53, 0.35, 0.19, 0.29, 0.97, 0.87, 0.42, 0.84, 0.85, 0.38, 0.18, 0.26, 0.32, 0.39, 0.57, 0.21, 0.26, 0.43),
-  pct_aid = c(0.57, 0.71, 0.55, 0.76, 0.63, 0.66, 0.43, 0.69, 0.74, 0.36, 0.4, 0.72, 0.65, 0.29, 0.78, 0.76, 0.59, 0.65, 0.65, 0.61, 0.68, 0.47, 0.62, 0.79, 0.72, 0.64, 0.75, 0.39, 0.74, 0.65, 0.72, 0.75, 0.71, 0.65),
-  med_income = c(95432, 63578, 92581, 38977, 71576, 35308, 67394, 68213, 54750, 104174, 123858, 59824, 69347, 49829, 45081, 50453, 60960, 57902, 88100, 86381, 42661, 32708, 90849, 44065, 50421, 61332, 62372, 134400, 40909, 49877, 63030, 53465, 49335, 70231)
-)
-
-en_df %>% 
-  mutate(
-    pct_outofstate = percent(pct_outofstate, accuracy = 1),
-    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
-    pct_aid = percent(pct_aid, accuracy = 1),
-    med_income = dollar(med_income)
-  ) %>% 
-  kable(
-    booktabs = T,
-    linesep = linesep(nrow(en_df) - 1, 1),
-    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
-    align = c('l', rep('c', 6)),
-    caption = 'Filter by neighborhood segments'
-  ) %>% 
-  row_spec(c(0, nrow(en_df)), bold = T) %>%
-  row_spec(c(1, 3, 8, 10, 11, 13, 19, 20, 23, 28), background = '#bbcfd7') %>% 
-  column_spec (1:7, border_left = F, border_right = F) %>% 
-  kable_styling(latex_options = 'scale_down')
-```
-
-```{r orders-cluster-hs}
-hs_df <- data.frame(
-  cluster = c(51:79, 'Total'),
-  sat_math = c(462, 489, 471, 376, 489, 536, 434, 592, 499, 523, 485, 474, 440, 606, 515, 498, 526, 541, 390, 595, 400, 528, 451, 654, 514, 600, 595, 473, 594, 514),
-  sat_cr = c(457, 496, 484, 371, 481, 508, 435, 577, 489, 549, 370, 473, 427, 542, 503, 515, 546, 540, 395, 581, 412, 544, 438, 579, 502, 584, 508, 468, 585, 502),
-  pct_outofstate = c(0.14, 0.81, 0.28, 0.33, 0.39, 0.73, 0.29, 0.51, 0.19, 0.23, 0.33, 0.34, 0.28, 0.37, 0.28, 0.37, 0.48, 0.41, 0.36, 0.56, 0.57, 0.35, 0.24, 0.76, 0.31, 0.72, 0.64, 0.48, 0.61, 0.32),
-  pct_nonwhite = c(0.33, 0.99, 0.38, 0.96, 0.46, 0.43, 0.82, 0.27, 0.18, 0.3, 0.89, 0.92, 0.86, 0.89, 0.43, 0.37, 0.41, 0.26, 0.92, 0.33, 0.98, 0.25, 0.89, 0.8, 0.2, 0.5, 0.75, 0.43, 0.26, 0.44),
-  pct_aid = c(0.68, 0.77, 0.62, 0.38, 0.44, 0.49, 0.79, 0.32, 0.74, 0.33, 0.09, 0.67, 0.72, 0.57, 0.65, 0.73, 0.69, 0.62, 0.74, 0.48, 0.8, 0.64, 0.76, 0.46, 0.71, 0.28, 0.39, 0.22, 0.71, 0.65),
-  med_income = c(40918, 64730, 60833, 38146, 71845, 63967, 48301, 104509, 47685, 70175, 61385, 55515, 49238, 81911, 72692, 60272, 71279, 79260, 43391, 105721, 43137, 70018, 48406, 59089, 72850, 90265, 39490, 56703, 65180, 70223)
-)
-
-hs_df %>% 
-  mutate(
-    pct_outofstate = percent(pct_outofstate, accuracy = 1),
-    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
-    pct_aid = percent(pct_aid, accuracy = 1),
-    med_income = dollar(med_income)
-  ) %>% 
-  kable(
-    booktabs = T,
-    linesep = linesep(nrow(hs_df) - 1, 1),
-    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
-    align = c('l', rep('c', 6)),
-    caption = 'Filter by high school segments'
-  ) %>% 
-  row_spec(c(0, nrow(hs_df)), bold = T) %>%
-  row_spec(c(8, 13:16, 18:20, 23, 25, 29), background = '#bbcfd7') %>% 
-  column_spec (1:7, border_left = F, border_right = F) %>% 
-  kable_styling(latex_options = 'scale_down')
-```
 
 ### Demographic Filters
 
@@ -723,10 +661,10 @@ Research universities also made `r (orders_filters1 %>% filter(filters == 'gende
 
 ### Combination of Filters
 
-The ten most commonly used combinations of filters across orders by research (N=377) and regional (N=458) universities are presented in Table \@ref(tab:orders-filter-combos). For research universities, the top ten filter combinations account for 71% of all orders.  The most common filter combination used included high school graduation class, state, and PSAT scores (n=47). These filters were also used across the top three combinations. For 41 orders, high school graduation class, state, and PSAT scores were combined with race and gpa filters. Another 39 orders added race, gpa, SAT, and high school rank. The fourth and fifth most common combinations switched PSAT scores for SAT scores. The remaining common filter combinations across orders by research universities used other academic filters (e.g., high school rank, AP scores) and geographical filters (e.g., geomarkets, segment). 
+The ten most commonly used combinations of filters across orders by research (N=377) and ma/doctoral (N=458) universities are presented in Table \@ref(tab:orders-filter-combos). For research universities, the top ten filter combinations account for 71% of all orders.  The most common filter combination used included high school graduation class, state, and PSAT scores (n=47). These filters were also used across the top three combinations. For 41 orders, high school graduation class, state, and PSAT scores were combined with race and gpa filters. Another 39 orders added race, gpa, SAT, and high school rank. The fourth and fifth most common combinations switched PSAT scores for SAT scores. The remaining common filter combinations across orders by research universities used other academic filters (e.g., high school rank, AP scores) and geographical filters (e.g., geomarkets, segment). 
 
 
-For regional universities, the top 10 filter combinations account for 97% of all orders. This is a function of nearly half of all orders using a combination of high school graduation class, zip, SAT scores, and GPA to filter prospect lists. Another 32% of orders used these same filters but used PSAT scores rather than SAT scores. Other orders by regional universities used similar patterns of filters by using all three top academic filters together (PSAT, SAT, and GPA) or switching zip codes for a state filter.
+For ma/doctoral universities, the top 10 filter combinations account for 97% of all orders. This is a function of nearly half of all orders using a combination of high school graduation class, zip, SAT scores, and GPA to filter prospect lists. Another 32% of orders used these same filters but used PSAT scores rather than SAT scores. Other orders by ma/doctoral universities used similar patterns of filters by using all three top academic filters together (PSAT, SAT, and GPA) or switching zip codes for a state filter.
 
 ```{r orders-filter-combos}
 df_0 %>% 
@@ -748,11 +686,11 @@ df_0 %>%
 
 ## Characteristics of Prospects 
 
-Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by public versus regional universities, focusing on domestic students. Research universities in the study purchased nearly four times the number of prospects (N= 2,785,481) than regional universities (N=764,334).
+Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by public versus ma/doctoral universities, focusing on domestic students. Research universities in the study purchased nearly four times the number of prospects (N= 2,785,481) than ma/doctoral universities (N=764,334).
 
-Figure \@ref(fig:prospects-count) also shows the number of prospects purchased by in-state versus out-of-state across institutional type.  Research universities purchased many more out-of-state students than regional universities. For example, of the nearly `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects purchased by research universities,  `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. In comparison, only only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% of regional universities nearly `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects were out-of-state students. 
+Figure \@ref(fig:prospects-count) also shows the number of prospects purchased by in-state versus out-of-state across institutional type.  Research universities purchased many more out-of-state students than ma/doctoral universities. For example, of the nearly `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects purchased by research universities,  `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. In comparison, only only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% of ma/doctoral universities nearly `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects were out-of-state students. 
 
-Below we describe the racial, economic, and geographical characteristics of prospect lists purchased by research and regional universities. 
+Below we describe the racial, economic, and geographical characteristics of prospect lists purchased by research and ma/doctoral universities. 
 
 ```{r prospects-count, fig.height = 2.5, fig.cap = 'Number of prospects purchased'}
 df_rq2a_counts <- df_rq2a %>% 
@@ -830,12 +768,12 @@ create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct N
 We also analyze the urbanicity characteristics of prospects in list purchased by research universities. Figure X shows...
 
 
-### Public Regional Universities 
+### Public ma/doctoral Universities 
 
-Figure \@ref(fig:prospects-race) presents the racial characteristics of prospects from lists purchased by regional university across in-state versus out-of-state status. Similar to research universities, a greater proportion of out-of-state prospects in lists purchased by regional universities were White (43%) relative to in-state prospects (35%), although greater number of prospects in lists purchased by regional universities did not report their race/ethnicity. While disparities for Asian, Black, and Native American prospects across out-of-state versus in-state list purchases by were not as large relative to research universities, out-of-state prospects in lists purchased by regional universities included a much lower percentage of Latinx students (9%) than in-state lists (22%). 
+Figure \@ref(fig:prospects-race) presents the racial characteristics of prospects from lists purchased by ma/doctoral university across in-state versus out-of-state status. Similar to research universities, a greater proportion of out-of-state prospects in lists purchased by ma/doctoral universities were White (43%) relative to in-state prospects (35%), although greater number of prospects in lists purchased by ma/doctoral universities did not report their race/ethnicity. While disparities for Asian, Black, and Native American prospects across out-of-state versus in-state list purchases by were not as large relative to research universities, out-of-state prospects in lists purchased by ma/doctoral universities included a much lower percentage of Latinx students (9%) than in-state lists (22%). 
 
 
-Contrary to prospect characteristics in lists purchased by research universities, out-of-state prospects in lists purchased by regional universities on average live in less affluent areas than in-state prospects. However, the magnitude in differences across median average household incomes is smaller across purchased for regional universities. For example, Figure \@ref(fig:prospects-income) shows out-of-state prospects live in areas where the average median household income is \$`r prettyNum(round(df_rq2a_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')` in comparison to \$`r prettyNum(round(df_rq2a_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')` for in-state prospects.
+Contrary to prospect characteristics in lists purchased by research universities, out-of-state prospects in lists purchased by ma/doctoral universities on average live in less affluent areas than in-state prospects. However, the magnitude in differences across median average household incomes is smaller across purchased for ma/doctoral universities. For example, Figure \@ref(fig:prospects-income) shows out-of-state prospects live in areas where the average median household income is \$`r prettyNum(round(df_rq2a_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')` in comparison to \$`r prettyNum(round(df_rq2a_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')` for in-state prospects.
 
 
 ```{r prospects-income, fig.height = 2.5, fig.cap = 'Prospects purchased by income'}
@@ -922,15 +860,15 @@ Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions o
 
 ### Prospect Characteristics Across Combinations of Filters
 
-### Regional Zip Codes & Test Scores
+### ma/doctoral Zip Codes & Test Scores
 
-We begin analyzing the characteristics of prospects across some of the most common combination of filters. Many of the orders in our analysis filtered by high school graduation class, PSAT scores, GPA, and zip code. Figure \@ref(fig:orders-zip) and analyses above suggest orders using this combination of filters were made by master's universities to identify in-state and regional prospects. We "zoom" into orders by one of these master's universities, Texas A & M University- Texerkana, in order analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters. 
+We begin analyzing the characteristics of prospects across some of the most common combination of filters. Many of the orders in our analysis filtered by high school graduation class, PSAT scores, GPA, and zip code. Figure \@ref(fig:orders-zip) and analyses above suggest orders using this combination of filters were made by master's universities to identify in-state and ma/doctoral prospects. We "zoom" into orders by one of these master's universities, Texas A & M University- Texerkana, in order analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters. 
 
 Texas A & M University- Texerkana made 65 orders using graduation class, PSAT scores, GPA, and zip code filters. These orders targeted 2019-2022 high school graduating classes with minimum PSAT scores ranging from 920-1300 and maximum SAT scores ranging from 970-1450. The university also filtered for prospects with GPAs ranging from a low of C+ to a high of A+. Lastly, prospects were also filtered using a series of 3-digit zip codes that included both in-state and neighboring state zip codes. 
 
 <!-- Nine of the 65 orders targeted students living in Texas (Greenville, Denton, Palestine, Lufkin, and Tyler areas), although orders also included neighboring state zip codes in Arkansas (Camden and Hot Springs areas), Oklahoma (Durant area), and Louisiana (Monroe and Shreveport areas). Another 13 orders targeted these same areas in addition to prospects in the Conroe, Richmond, and Pasadena areas of Texas. Twenty-seven orders focused on targeting prospects in zip codes for the Texerkana (Texas and Arkansas), Dallas, Fort-Worth, and Long View areas. Lastly, 16 orders targeted prospects only in the Houston, Conroe, Richmond and Pasadena areas.  -->
 
-For each three-digit zip code used as an order filter, we compare the average racial and economic characteristics of the resulting purchased prospects to the zip code's population of 15-19 year-olds. We select the zip code population as the comparison group for purchase prospects filtered by graduation class, PSAT scores, GPA, and zip code filters for various reasons. First, the university included a three-digit zip code filter which encapsulates all students living within in a specified area (usually a City or County), which should hypothetically cast a wider, more equitable net than filtering explicitly by 5-digit zip codes. However, we analyze whether this wider net is compromised when it is used along with test scores and GPA. Secondly, master's universities are like to serve regional student markets, rather than the entire state where they are located. Therefore, we use a filtered zip code's population as a comparison group for prospects purchased within that zip code rather than all zip codes in the state from which prospects were not purchased from. 
+For each three-digit zip code used as an order filter, we compare the average racial and economic characteristics of the resulting purchased prospects to the zip code's population of 15-19 year-olds. We select the zip code population as the comparison group for purchase prospects filtered by graduation class, PSAT scores, GPA, and zip code filters for various reasons. First, the university included a three-digit zip code filter which encapsulates all students living within in a specified area (usually a City or County), which should hypothetically cast a wider, more equitable net than filtering explicitly by 5-digit zip codes. However, we analyze whether this wider net is compromised when it is used along with test scores and GPA. Secondly, master's universities are like to serve ma/doctoral student markets, rather than the entire state where they are located. Therefore, we use a filtered zip code's population as a comparison group for prospects purchased within that zip code rather than all zip codes in the state from which prospects were not purchased from. 
 
 For example, the three-digit zip code 752 was included in 27 of the 65 orders that filtered across graduation class, PSAT scores, GPA and zip code. The 49 five-digit zip codes nested within the three-digit 752 zip code includes communities across the Dallas metropolitan area (see Figure X). The student lists for these orders resulted in 8,707 purchased prospects living in one of the 47 five-digit zip codes. About 40% of purchased prospects identified as White, 39% as Latinx, 8% Black, 5% Asian, and 3% multiracial. In comparison, the population of 15-19 year olds in these 49 five-digit zip codes are 24% White, 43% Hispanic, 20% Black, 3% Asian, and 3% multiracial.
 
@@ -972,6 +910,76 @@ table_texasam_zip_inc %>%
 
 
 ### CBSA, Segment, and Test Scores   
+
+Segment filters come from the College Board’s “Segment Analysis Service” which merges demographic, geographic, and academic data on SAT test takers to create "geodemographic profiles" for college-bound students (The College Board, 2011, p. 3) based on where they live and attend high school. Profiles are created at the neighborhood and school-level, which are then categorized into "clusters" based on similarities across profiles. Figures \@ref(tab:orders-cluster-en) and \@ref(tab:orders-cluster-hs) show all possible neighborhood and high school clusters that can be used as segment filters to purchase student lists.
+
+The `r (orders_filters1 %>% filter(filters == 'segment'))$V1` orders using segment filters were made by three public research universities in the sample. For example, one of these universities made 21 of the 45 orders using the same patterns of segments. These 21 orders filtered for 10 different neighborhood clusters (51, 53, 58, 60, 61, 63, 69, 70, 73, and 78), which are highlighted in Figure X. Using average characteristics of neighborhood clusters calculated and advertised by the College Board (and presented in Figure X), the filtered neighborhoods range from median household incomes between \$68,213 to \$134,400 and range from 19% to 87% non-white.  Orders also filtered by high school segment clusters 58, 63, 64, 65, 66, 68, 69, 70, 73, 75, and 79. Figure X shows these high schools range from average SAT mathematics scores between 390 to 606 and previous cohorts in these schools on average ranged from 32% to 74% in going out of state for college. 
+
+<!-- Paragraph above: ONE SENTENCE ABOUT PATTERNS in CHARACTERISTICS OF THESE NEIGHBORHOODS. ONE SENTENCE ABOUT PATTERNS IN CHARACTERISTICS OF THESE HIGH SCHOOLS. ONE SENTENCE ON SEGMENT ORDER BY NORTHEASTERN UNVIERSITY? -->
+
+
+```{r orders-cluster-en}
+en_df <- data.frame(
+  cluster = c(51:83, 'Total'),
+  sat_math = c(546, 480, 561, 458, 566, 420, 541, 533, 561, 589, 585, 596, 548, 466, 440, 499, 519, 552, 534, 613, 405, 399, 528, 433, 459, 514, 502, 594, 550, 534, 491, 496, 500, 512),
+  sat_cr = c(533, 470, 544, 443, 565, 411, 519, 489, 562, 590, 567, 595, 541, 466, 433, 492, 501, 558, 521, 598, 408, 397, 514, 435, 457, 509, 492, 578, 551, 527, 483, 491, 490, 502),
+  pct_outofstate = c(0.32, 0.3, 0.32, 0.25, 0.52, 0.29, 0.52, 0.28, 0.52, 0.63, 0.51, 0.67, 0.39, 0.48, 0.23, 0.2, 0.27, 0.52, 0.37, 0.65, 0.39, 0.31, 0.29, 0.29, 0.28, 0.27, 0.26, 0.56, 0.57, 0.39, 0.27, 0.29, 0.19, 0.32),
+  pct_nonwhite = c(0.3, 0.58, 0.5, 0.83, 0.24, 0.93, 0.47, 0.87, 0.24, 0.37, 0.3, 0.24, 0.23, 0.34, 0.93, 0.12, 0.53, 0.35, 0.19, 0.29, 0.97, 0.87, 0.42, 0.84, 0.85, 0.38, 0.18, 0.26, 0.32, 0.39, 0.57, 0.21, 0.26, 0.43),
+  pct_aid = c(0.57, 0.71, 0.55, 0.76, 0.63, 0.66, 0.43, 0.69, 0.74, 0.36, 0.4, 0.72, 0.65, 0.29, 0.78, 0.76, 0.59, 0.65, 0.65, 0.61, 0.68, 0.47, 0.62, 0.79, 0.72, 0.64, 0.75, 0.39, 0.74, 0.65, 0.72, 0.75, 0.71, 0.65),
+  med_income = c(95432, 63578, 92581, 38977, 71576, 35308, 67394, 68213, 54750, 104174, 123858, 59824, 69347, 49829, 45081, 50453, 60960, 57902, 88100, 86381, 42661, 32708, 90849, 44065, 50421, 61332, 62372, 134400, 40909, 49877, 63030, 53465, 49335, 70231)
+)
+
+en_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(en_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6)),
+    caption = 'Filter by neighborhood segments'
+  ) %>% 
+  row_spec(c(0, nrow(en_df)), bold = T) %>%
+  row_spec(c(1, 3, 8, 10, 11, 13, 19, 20, 23, 28), background = '#bbcfd7') %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
+```
+
+```{r orders-cluster-hs}
+hs_df <- data.frame(
+  cluster = c(51:79, 'Total'),
+  sat_math = c(462, 489, 471, 376, 489, 536, 434, 592, 499, 523, 485, 474, 440, 606, 515, 498, 526, 541, 390, 595, 400, 528, 451, 654, 514, 600, 595, 473, 594, 514),
+  sat_cr = c(457, 496, 484, 371, 481, 508, 435, 577, 489, 549, 370, 473, 427, 542, 503, 515, 546, 540, 395, 581, 412, 544, 438, 579, 502, 584, 508, 468, 585, 502),
+  pct_outofstate = c(0.14, 0.81, 0.28, 0.33, 0.39, 0.73, 0.29, 0.51, 0.19, 0.23, 0.33, 0.34, 0.28, 0.37, 0.28, 0.37, 0.48, 0.41, 0.36, 0.56, 0.57, 0.35, 0.24, 0.76, 0.31, 0.72, 0.64, 0.48, 0.61, 0.32),
+  pct_nonwhite = c(0.33, 0.99, 0.38, 0.96, 0.46, 0.43, 0.82, 0.27, 0.18, 0.3, 0.89, 0.92, 0.86, 0.89, 0.43, 0.37, 0.41, 0.26, 0.92, 0.33, 0.98, 0.25, 0.89, 0.8, 0.2, 0.5, 0.75, 0.43, 0.26, 0.44),
+  pct_aid = c(0.68, 0.77, 0.62, 0.38, 0.44, 0.49, 0.79, 0.32, 0.74, 0.33, 0.09, 0.67, 0.72, 0.57, 0.65, 0.73, 0.69, 0.62, 0.74, 0.48, 0.8, 0.64, 0.76, 0.46, 0.71, 0.28, 0.39, 0.22, 0.71, 0.65),
+  med_income = c(40918, 64730, 60833, 38146, 71845, 63967, 48301, 104509, 47685, 70175, 61385, 55515, 49238, 81911, 72692, 60272, 71279, 79260, 43391, 105721, 43137, 70018, 48406, 59089, 72850, 90265, 39490, 56703, 65180, 70223)
+)
+
+hs_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(hs_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6)),
+    caption = 'Filter by high school segments'
+  ) %>% 
+  row_spec(c(0, nrow(hs_df)), bold = T) %>%
+  row_spec(c(8, 13:16, 18:20, 23, 25, 29), background = '#bbcfd7') %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
+```
+
 
 Other common combinations of filters were used by research universities in the study to target out-of-state prospects. Some of these orders filtered by graduation class, state, CBSA, segment, SAT or PSAT, and GPA. We "zoom" into orders by The University of Illinois at Urbana-Champaign in order to analyze in-depth patterns in the racial and economic characteristics of prospects that result from this combination of filters.
 

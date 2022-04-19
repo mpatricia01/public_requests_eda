@@ -2390,6 +2390,7 @@ target_poc <- function(order_num,cbsa) {
       lbls_cat5 <- c('zero','1-10','11-40','41-100','100+')
       lbls_cat4 <- c('zero','1-10','11-100','100+')
       lbls_cat3 <- c('zero','1-10','11+')    
+      lbls_cat3v2 <- c('zero','1-5','6+')    
       
   #data frame w/ all hs in metro area
     metro_sch_lev <- ceeb_hs %>% filter(total_12>0, cbsa_1 == cbsa) %>% left_join(n_stu_per_sch, by = c('ceeb' = 'stu_ceeb')) %>%
@@ -2410,6 +2411,7 @@ target_poc <- function(order_num,cbsa) {
           n_stu_cat5 = cut(n_stu, breaks=c(-Inf, 0, 10, 40, 100, +Inf),labels = lbls_cat5),
           n_stu_cat4 = cut(n_stu, breaks=c(-Inf, 0, 10, 100, +Inf),labels = lbls_cat4),
           n_stu_cat3 = cut(n_stu, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
+          n_stu_cat3v2 = cut(n_stu, breaks=c(-Inf, 0, 5, +Inf),labels = lbls_cat3v2),
           n_stu_black_cat3 = cut(n_stu_black, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
           n_stu_hispanic_cat3 = cut(n_stu_hispanic, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
           n_stu_black_hispanic_cat3 = cut(n_stu_black_hispanic, breaks=c(-Inf, 0, 10, +Inf),labels = lbls_cat3),
@@ -2439,7 +2441,7 @@ target_poc <- function(order_num,cbsa) {
         )  %>% print()    
     
       metro_sch_lev %>% filter(school_control == 'public',total_12>0) %>%
-        group_by(n_stu_cat5) %>% summarize(
+        group_by(n_stu_cat3v2) %>% summarize(
               n_obs = sum(n()),
               n_nonmiss_hs_race = sum(is.na(pct_white)==0),
               pct_hs_white = mean(pct_white, na.rm = TRUE),
@@ -2469,7 +2471,7 @@ target_poc <- function(order_num,cbsa) {
         )   %>% print()    
     
       metro_sch_lev %>% filter(school_control == 'private',total_12>0) %>%
-        group_by(n_stu_cat3) %>% summarize(
+        group_by(n_stu_cat3v2) %>% summarize(
               n_obs = sum(n()),
               n_nonmiss_hs_race = sum(is.na(pct_white)==0),
               pct_hs_white = mean(pct_white, na.rm = TRUE),
