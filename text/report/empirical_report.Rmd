@@ -570,11 +570,15 @@ Research question 1 asks, which filter criteria were selected in student lists p
 
 ### Broad Patterns
 
-Figure \@ref(fig:orders-filters) shows how often filters were used by university type. All orders by both research universities (n = 377) [CHECK] and ma/doctoral universities (n = 458) filtered by high school graduation class. Commonly used academic filters across university type include GPA, SAT, and PSAT. Compared to ma/doctoral universities, research universities were somewhat less likely to filter on GPA or SAT score and more likely to filter on PSAT score. Additionally, research universities filtered on high school class rank (12% of orders) and AP score (10% of orders), but few ma/doctoral orders utilzied these filters.
+Figure \@ref(fig:orders-filters) shows how often filters were used by university type. Note that student list purchases typically filter on multiple criteria. Figure X shows the prevalence of individual filters, not how often they are used in combination with other filters.
+
+All orders by both research universities (n = 377) [CHECK] and ma/doctoral universities (n = 458) filtered by high school graduation class. Commonly used academic filters across university type include GPA, SAT, and PSAT. Compared to ma/doctoral universities, research universities were somewhat less likely to filter on GPA or SAT score and more likely to filter on PSAT score. Additionally, research universities filtered on high school class rank (12% of orders) and AP score (10% of orders), but few ma/doctoral orders utilzied these filters.
 
 Orders by ma/doctoral versus research universities differed across geographic filters. Nearly 77% of orders by research universities used a state filter but only 11% of orders by ma/doctoral universities filtered for entire states. 83% of orders by ma/doctoral universities used a zip-code filter. However, it is worth noting that most of these orders came from one doctoral university that recruits out-of-state students extensively. By contrast, Research universities in our sample did not use zip code filters. However, research universities also filtered by geomarket (16%), segment (12%), core based statistical area (4%), and international status (4%), whereas ma/doctoral universities generally did not.
 
 Finally, ma/doctoral universities did not utilize demographic filters. For research universities, about 27% or orders filtered by students' race/ethnicity and 6% of orders filtered on gender.
+
+[WHAT ABOUT FILTERS FOR STUDENT PREFERENCES LIKE INTENDED MAJOR, COLLEGE SIZE/TYPE? WERE THESE JUST RARELY UTILIZED OR WE DIDN'T CODE THE DATA? IF THE LATTER, WE SHOULD STATE THIS]
 
 
 ```{r orders-filters, fig.height = 3, fig.cap = 'Filters used in order purchases'}
@@ -616,9 +620,9 @@ Aside from state, research universities also filtered on other geographic filter
 
 Segment filters come from the College Board’s “Segment Analysis Service,” which categorizes each high school and each neighborhood (census tract) into a type based on its demographic, geographic, academic, historical college-going characteristics [@RN2039]. Universities can then filter on prospects who attend a particular "type" of high school and/or live in a particular "type" of neighborhood. We analyze Segment orders in more detail in Research Question 3, below.
 
-[START HERE WEDS 4/20/2022, GEOGRAPHIC ORDERS FOR MA/DOCTORAL. SAY A LOT OF UNIVERSITIES USED ZIP CODE, BUT WE OFTEN COULDN'T GET THE ZIP CODE FILES]
+The geographic filters most commonly used by ma/doctoral universities in our sample were state and home zip code. 11% of orders by ma/doctoral universities filtered on state. These orders [ALWAYS?] were used to taget in-state prospects. 83% of orders by ma/doctoral universities filtered on home zip code, but orders by research universities did not filter in zip code.
 
-Zip code and state were the most commonly used geographic filters across all orders, although they were each used nearly exclusively by either research or ma/doctoral universities. For example, only ma/doctoral universities selected prospective students by filtering for their home zip codes. Zip code filters were used in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. In the second approach, universities indicated five-digit zip codes (usually in a separate excel or text file) as filters. While we can account for the total number of orders that filtered by zip codes (N=381), some universities did not provide the separate documents listing five-digit zip codes after multiple requests (n=157 orders). Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. [SHOULD WE INCLUDE THE MAP OF THESE OR NOT? REMOVED FOR NOW.]
+Zip code filters were used by ma/doctoral universities in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. XX of XX orders that filtered on zip code filtered on three-digit zip codes. Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. Figure X shows a map of three-digit zip codes filtered by a TX public university [OZAN SAYS INCLUDE]
 
 ```{r orders-zip, fig.height = 4, fig.cap = 'Filter by 3-digit zip code'}
 zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
@@ -628,6 +632,12 @@ leaflet() %>%
   addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
 ```
 
+
+In the second approach, universities specified a list of five-digit zip codes. Usually, five-digit zip codes were specified in a separate spreadsheet or text file that universities provided to College Board. XX (N=381) of XX orders that filtered on zip code filtered on five-digit zip codes. We know the five-digit zip-codes for XXX of these orders. [CAN WE SAY WHETHER THESE TENDED TO BE IN-STATE?]For the remaining XXX orders (n=157 orders), we were unable to obtain the zip-code file despite multiple requests. 
+
+One doctoral university gave us order summaries for XXX (?136?) student lists they purchased from College Board in in XXXX (?2019 and 2020). XXX of these orders specified five-digit zip codes. While we were unable to obtain the zip code files, the names on these orders (e.g., 'Midwest/South II 950-1040 Srs (20)', 'West II Srs (20) AP 3-5') suggests that most of these orders targeted out-of-state five-digit zip codes.
+
+Filtering by geography always raises equality of opportunity concerns for prospects who do not reside in the targeted geography. Filtering by five-digit zip code is particularly concerning because there is no equality of opportunity rationale for targeting students who live in one zip code but not those from a neighboring zip code. Zip codes are highly correlated with income and racial demographics. Therefore, policymakers may be concerned that some universities are systematically excluding low-income communities or communities of color when they filter on five-digit zip code.
 
 
 ```{r orders-state}
@@ -654,17 +664,21 @@ orders_df %>%
 
 ### Demographic Filters
 
-Nearly all orders using demographic filters were made by research universities. Figure X shows the number of orders that used a race/ethnicity filter. Most of the 103 orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 19 orders that filtered by Black, Native American, or Latinx prospects and 19 orders that filtered for Asian, Native Hawaiian/Pacific Islander, and White prospects. Other common race/ethnicity filter combinations include Latinx, Black, Native American, and NativeHawaii/PI (11 orders);  Asian and White (10 orders); and Latinx and Native American (7 orders). Fewer orders filtered for only one race/ethnicity group, including 12 orders filtering for Latinx prospects, 7 orders filtering for Black prospects, and 10 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander). 
+Nearly all orders using demographic filters were made by research universities. Figure X shows the number of orders that used a race/ethnicity filter. Most of the 103 orders using race/ethnicity filters specified multiple race/ethnicity groups. This includes 19 orders that filtered by Black, Native American, or Latinx prospects and 19 orders that filtered for Asian, Native Hawaiian/Pacific Islander, and White prospects. Other common race/ethnicity filter combinations include Latinx, Black, Native American, and NativeHawaii/PI (11 orders);  Asian and White (10 orders); and Latinx and Native American (7 orders). Fewer orders filtered for only one race/ethnicity group, including 12 orders filtering for Latinx prospects, 7 orders filtering for Black prospects, and 10 orders filtering for Native American prospects (American Indian, Alaska Native, and/or Native Hawaiian or Other Pacific Islander) [CLEAN UP SENTENCE NOT ALL OF THESE GROUPS ARE NATIVE AMERICAN. AND NOT CLEAR WHETHER THESE ORDERS FILTERED FOR SPECIFIC GROUP OR FILTERED FOR EITHER]. 
 
 Research universities also made `r (orders_filters1 %>% filter(filters == 'gender'))$V1` orders using gender filters. Across these orders, `r (gender %>% filter(gender == 'Female'))$pct`% filtered for women prospects and `r (gender %>% filter(gender != 'Female'))$pct`% filtered men prospects. 
 
 
 ### Combination of Filters
 
-The ten most commonly used combinations of filters across orders by research (N=377) and ma/doctoral (N=458) universities are presented in Table \@ref(tab:orders-filter-combos). For research universities, the top ten filter combinations account for 71% of all orders.  The most common filter combination used included high school graduation class, state, and PSAT scores (n=47). These filters were also used across the top three combinations. For 41 orders, high school graduation class, state, and PSAT scores were combined with race and gpa filters. Another 39 orders added race, gpa, SAT, and high school rank. The fourth and fifth most common combinations switched PSAT scores for SAT scores. The remaining common filter combinations across orders by research universities used other academic filters (e.g., high school rank, AP scores) and geographical filters (e.g., geomarkets, segment). 
+On average, the (N=XXX) orders in our dataset specified X.X critereia. Table \@ref(tab:orders-filter-combos) shows the ten most commonly used combinations of filters across orders by research (N=377) and ma/doctoral (N=458). [STATE SOMEWHERE THAT SOME FILTER IN THESE COMBINATIONS AREUSED AS **OR** CONDITIONS RATHER THAN **AND** CONDITIONS?]. 
+
+For research universities, the top ten filter combinations account for 71% of all orders.  The most common filter combination used included high school graduation class, state, and PSAT scores (n=47). These filters were also used across the top three combinations. For 41 [NUMBERS SEEM OFF IN PARAGRAH?] orders, high school graduation class, state, and PSAT scores were combined with race and gpa filters. Another 39 orders added race, gpa, SAT, and high school rank. The fourth and fifth most common combinations switched PSAT scores for SAT scores. The remaining common filter combinations across orders by research universities used other academic filters (e.g., high school rank, AP scores) and geographical filters (e.g., geomarkets, segment). 
 
 
 For ma/doctoral universities, the top 10 filter combinations account for 97% of all orders. This is a function of nearly half of all orders using a combination of high school graduation class, zip, SAT scores, and GPA to filter prospect lists. Another 32% of orders used these same filters but used PSAT scores rather than SAT scores. Other orders by ma/doctoral universities used similar patterns of filters by using all three top academic filters together (PSAT, SAT, and GPA) or switching zip codes for a state filter.
+
+The results for Research Question 3 investigates the student characteristics associated with particular combinations of filters.
 
 ```{r orders-filter-combos}
 df_0 %>% 
@@ -684,8 +698,9 @@ df_0 %>%
 <!-- Lastly, `r words((df_0 %>% filter(string == 'grad_class,sat,geomarket'))$n)` orders used graduation class, SAT, and geomarket. These orders filtered for geomarkets within Texas and Louisiana. Louisiana geomarket orders targeted prospects in the Baton Rouge and Shreveport areas. Texas geomarkets filtered for include but are not limited to the Dallas/Ft. Worth areas, Central Gulf Coast, Wharton County, Victoria County, City of San Antonio, Southwest Houston Metropolitan Area, Brazos and Trinity Valley, Austin and Central Texas, Galveston area, East Texas.  -->
 
 
-## Characteristics of Prospects 
+## RQ2: Characteristics of Prospects 
 
+Research Question 2 asks, What are the characteristics of prospects included in student lists purchased by universities in our sample?
 Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by public versus ma/doctoral universities, focusing on domestic students. Research universities in the study purchased nearly four times the number of prospects (N= 2,785,481) than ma/doctoral universities (N=764,334).
 
 Figure \@ref(fig:prospects-count) also shows the number of prospects purchased by in-state versus out-of-state across institutional type.  Research universities purchased many more out-of-state students than ma/doctoral universities. For example, of the nearly `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects purchased by research universities,  `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. In comparison, only only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% of ma/doctoral universities nearly `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects were out-of-state students. 
