@@ -516,7 +516,11 @@ lists_orders_zip_hs_df %>% count(univ_name)
     # how to read this:
       # for census tracts assigned to neighborhood cluster 51, they want students who attend high schools assigned to one of the following high school clusters %in% c(65,68,70,79)
       
-orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()    
+orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% View()
+
+orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% select(order_num,)
+
+orders_df %>% filter(univ_id == '145637', !is.na(segment)) %>% summarise(num_students=sum(num_students)) 
   # state_name [21 segment orders]
     # 13 orders use this state_name:
       # 'Vermont|Rhode Island|Hawaii|Maine|Virginia|Michigan|Idaho|Delaware|Iowa|Maryland|Massachusetts|Arkansas|Utah|Indiana|Minnesota|Arizona|Missouri|Montana|Mississippi|New Hampshire|New Jersey|New Mexico|Alaska|Texas|Alabama|North Carolina|North Dakota|Nebraska|New York|Georgia|Nevada|Tennessee|California|Oklahoma|Ohio|Wyoming|Florida|South Dakota|South Carolina|Connecticut|West Virginia|District of Columbia|Wisconsin|Kentucky|Kansas|Oregon|Louisiana|Washington|Colorado|Pennsylvania'
