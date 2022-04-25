@@ -300,9 +300,9 @@ rq2_race %>%
       `12` = 'Multiracial',
       `1` = 'AI/AN',
       `8` = 'NH/PI',
-      `2` = 'Asian',
       `4` = 'Latinx',
       `3` = 'Black',
+      `2` = 'Asian',
       `9` = 'White'
     ),
     count_type = str_c(univ_type, locale, sep = '_'),
@@ -397,9 +397,9 @@ rq2_race %>%
       `12` = 'Multiracial',
       `1` = 'AI/AN',
       `8` = 'NH/PI',
-      `2` = 'Asian',
       `4` = 'Latinx',
       `3` = 'Black',
+      `2` = 'Asian',
       `9` = 'White'
     ),
     count_type = str_c(univ_type, locale, sep = '_'),

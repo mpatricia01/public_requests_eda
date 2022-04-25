@@ -331,7 +331,7 @@ rq2_locale <- lists_orders_zip_hs_df %>%
     ),
     locale_text = recode_factor(
       locale_group,
-      '6' = 'Unknown',
+      '6' = 'Missing',
       '5' = 'Rural - Remote',
       '4' = 'Rural - Distant',
       '3' = 'Rural - Fringe',
