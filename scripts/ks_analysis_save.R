@@ -11,6 +11,17 @@ source(file = file.path(scripts_dir, 'create_secondary_datasets.R'))
 source(file = file.path(scripts_dir, 'create_combined_order_list_analysis_datasets.R'))
 
 
+acs_income_zip <- read_csv(file.path(data_dir, 'acs_income_zip.csv'), col_types = c('state_fips_code' = 'c', 'zip_code' = 'c'), na = c('-666666666'))
+acs_income_zip$medincome_2564 <- rowMeans(acs_income_zip[, c('medincome_2544', 'medincome_4564')], na.rm = T)
+acs_income_zip$medincome_2564[is.nan(acs_income_zip$medincome_2564)] <- NA
+
+acs_income_metro <- read_csv(file.path(data_dir, 'acs_income_metro.csv'), col_types = c('cbsa_code' = 'c'), na = c('-666666666'))
+acs_income_metro$medincome_2564 <- rowMeans(acs_income_metro[, c('medincome_2544', 'medincome_4564')], na.rm = T)
+acs_income_metro$medincome_2564[is.nan(acs_income_metro$medincome_2564)] <- NA
+
+zip_locale <- read_sas(file.path(data_dir, 'EDGE_ZCTALOCALE_2021_LOCALE.sas7bdat'))
+
+
 # --------------------
 # Prepare univ sample
 # --------------------
@@ -38,13 +49,13 @@ regional_univs <- c(
 )
 
 orders_df <- orders_df %>% 
-  filter(univ_id %in% c(research_univs, regional_univs)) %>% 
+  filter(univ_id %in% c(research_univs, regional_univs), !str_detect(order_title, 'Edit name')) %>% 
   mutate(
     univ_type = if_else(univ_id %in% research_univs, 'research', 'regional'),
     univ_label = recode_factor(
       univ_type,
       'research' = 'Research',
-      'regional' = 'MA/Doctoral'
+      'regional' = 'MA/doctoral'
     )
   ) %>% 
   mutate_if(is.character, list(~na_if(., '')))
@@ -56,14 +67,15 @@ lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>%
     univ_label = recode_factor(
       univ_type,
       'research' = 'Research',
-      'regional' = 'MA/Doctoral'
+      'regional' = 'MA/doctoral'
     ),
-    stu_internat = if_else(stu_in_us == 1, 0, 1),
     stu_nonres = case_when(
       stu_in_us == 0 ~ NA_real_,
       univ_state == stu_state ~ 0,
       univ_state != stu_state ~ 1
     ),
+    region = if_else(stu_in_us == 0, 'international', 'domestic'),
+    locale = if_else(stu_in_us == 0 | stu_nonres == 1, 'outofstate', 'instate'),
     stu_women_dummy = case_when(
       stu_gender %in% c('F', 'Female') ~ 1,
       stu_gender %in% c('M', 'Male') ~ 0,
@@ -73,7 +85,7 @@ lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>%
 
 
 # ----------------------------------------------------------------------
-# Figure 7 - Orders and prospects purchased by research vs. MA/doctoral
+# Figure 7 - Orders and prospects purchased by research vs. ma/doctoral
 # ----------------------------------------------------------------------
 
 orders_prospects_purchased <- orders_df %>% 
@@ -81,11 +93,12 @@ orders_prospects_purchased <- orders_df %>%
   summarise(
     total_orders = n(),
     total_students = sum(num_students, na.rm = T)
-  )
+  ) %>% 
+  ungroup()
 
 
 # -----------------------------------------------------------------------
-# Figure 8 - Filters used in order purchases by research vs. MA/doctoral
+# Figure 8 - Filters used in order purchases by research vs. ma/doctoral
 # -----------------------------------------------------------------------
 
 orders_filters <- orders_df %>% 
@@ -124,7 +137,7 @@ orders_filters <- orders_df %>%
 
 
 # -------------------------------------------------------
-# Figure 9 - GPA filter used by research vs. MA/doctoral
+# Figure 9 - GPA filter used by research vs. ma/doctoral
 # -------------------------------------------------------
 
 orders_gpa <- orders_df %>% 
@@ -141,7 +154,7 @@ orders_gpa <- orders_df %>%
 
 
 # --------------------------------------------------------
-# Figure 10 - SAT filter used by research vs. MA/doctoral
+# Figure 10 - SAT filter used by research vs. ma/doctoral
 # --------------------------------------------------------
 
 test_scores_breaks <- c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620)
@@ -176,18 +189,11 @@ orders_sat <- orders_df %>%
     pct = num / sum(num)
   ) %>% 
   ungroup() %>% 
-  complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0)) %>% 
-  mutate(
-    range_label = recode_factor(
-      test_range,
-      'sat_min' = 'Minimum',
-      'sat_max' = 'Maximum'
-    )
-  )
+  complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0)) 
 
 
 # ---------------------------------------------------------
-# Figure 11 - PSAT filter used by research vs. MA/doctoral
+# Figure 11 - PSAT filter used by research vs. ma/doctoral
 # ---------------------------------------------------------
 
 orders_psat <- orders_df %>% 
@@ -219,14 +225,7 @@ orders_psat <- orders_df %>%
     pct = num / sum(num)
   ) %>% 
   ungroup() %>% 
-  complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0)) %>% 
-  mutate(
-    range_label = recode_factor(
-      test_range,
-      'psat_min' = 'Minimum',
-      'psat_max' = 'Maximum'
-    )
-  )
+  complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0))
 
 
 # ----------------------------------------------------------------------------------
@@ -256,11 +255,13 @@ orders_state_research_num <- orders_df %>%
   mutate(locale = if_else(univ_state == name, 'instate', 'outofstate')) %>% 
   filter(!is.na(abb)) %>% 
   group_by(abb, locale) %>% 
-  summarise(frequency = sum(n))
+  summarise(frequency = sum(n)) %>% 
+  ungroup()
 
 orders_state_research <- us_map(regions = 'states') %>% 
   group_by(fips, abbr, full) %>% 
   count(fips) %>%
+  ungroup() %>% 
   left_join(data.frame(locale = c('instate', 'outofstate')), by = character()) %>% 
   left_join(orders_state_research_num, by = c('abbr' = 'abb', 'locale' = 'locale')) %>% 
   mutate(
@@ -268,8 +269,103 @@ orders_state_research <- us_map(regions = 'states') %>%
   )
 
 
+# --------------------------------------------------------------------------
+# Figure 14 - Number of prospects purchased by university type and location
+# --------------------------------------------------------------------------
+
+rq2_counts <- lists_orders_zip_hs_df %>%
+  count(univ_type, univ_label, region, locale)
+
+
+# ----------------------------------------------------------------------------------
+# Figure 15 - Racial composition of prospects purchased by research universities
+# +
+# Figure 18 - Racial composition of prospects purchased by ma/doctoral universities
+# ----------------------------------------------------------------------------------
+
+rq2_race <- lists_orders_zip_hs_df %>% 
+  group_by(univ_type, univ_label, region, locale, stu_race_cb) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
+
+
+# ---------------------------------------------------------------------------------------
+# Figure 16 - Median household income of prospects purchased by research universities
+# +
+# Figure 19 - Median household income of prospects purchased by ma/doctoral universities
+# ---------------------------------------------------------------------------------------
+
+rq2_income <- lists_orders_zip_hs_df %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  group_by(univ_type, univ_label, region, locale) %>% 
+  summarise(
+    total = n(),
+    count = sum(!is.na(medincome_total)),
+    income = mean(medincome_total, na.rm = T),
+    count_2564 = sum(!is.na(medincome_2564)),
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup()
+
+
+# ----------------------------------------------------------------------
+# Figure 17 - Locale of prospects purchased by research universities
+# +
+# Figure 20 - Locale of prospects purchased by ma/doctoral universities
+# ----------------------------------------------------------------------
+
+rq2_locale <- lists_orders_zip_hs_df %>% 
+  left_join(zip_locale, by = c('stu_zip_code' = 'ZCTA5CE20')) %>% 
+  mutate(
+    locale_group = case_when(
+      str_sub(LOCALE, 1, 1) %in% c('1', '2') ~ str_sub(LOCALE, 1, 1),
+      str_sub(LOCALE, 2, 2) == '1' ~ '3',
+      str_sub(LOCALE, 2, 2) == '2' ~ '4',
+      str_sub(LOCALE, 2, 2) == '3' ~ '5',
+      TRUE ~ '6'
+    ),
+    locale_text = recode_factor(
+      locale_group,
+      '6' = 'Unknown',
+      '5' = 'Rural - Remote',
+      '4' = 'Rural - Distant',
+      '3' = 'Rural - Fringe',
+      '2' = 'Suburban',
+      '1' = 'City'
+    )
+  ) %>% 
+  group_by(univ_type, univ_label, region, locale, locale_text) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
+
+
+# ----------------------------------------------------------------------------------------
+# Figure A1 - School type of prospects purchased by research vs. ma/doctoral universities
+# ----------------------------------------------------------------------------------------
+
+rq2_school <- lists_orders_zip_hs_df %>% 
+  group_by(univ_type, univ_label, region, locale, hs_school_control) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
+
+
 # ----------------------------------------------------------------------------
-# Table 7 - Filter combos used in order purchases by research vs. MA/doctoral
+# Table 7 - Filter combos used in order purchases by research vs. ma/doctoral
 # ----------------------------------------------------------------------------
 
 orders_filters_combo <- orders_df %>% 
@@ -303,4 +399,4 @@ orders_filters_combo <- orders_df %>%
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
