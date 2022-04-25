@@ -223,10 +223,52 @@ library(haven)
           #MI - Detroit-Warren-Dearborn, MI|GA - Athens-Clarke County, GA|WA - Seattle-Tacoma-Bellevue, WA|NJ - Trenton, NJ|AZ - Phoenix-Mesa-Scottsdale, AZ"
       
       # order_num = 483751, order_title = Regional Counselor MSAs
-        #[1] "FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|CA - Santa Rosa, CA|CA - Chico, CA|GA - Macon-Bibb County, GA|FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|TX - Midland, TX|FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|CA - San Diego-Carlsbad, CA|CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|TX - Abilene, TX|GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|NJ - Vineland-Bridgeton, NJ|FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|GA - Augusta-Richmond County, GA-SC|TX - Sherman-Denison, TX|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|CA - Vallejo-Fairfield, CA|TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|CA - Stockton-Lodi, CA|CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|GA - Rome, GA|CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|CA - Santa Cruz-Watsonville, CA|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|NY - New York-Newark-Jersey City, NY-NJ-PA|TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|NJ - Trenton, NJ|TX - Corpus Christi, TX|NJ - Atlantic City-Hammonton, NJ|TX - El Paso, TX|TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|CA - Hanford-Corcoran, CA|CA - Salinas, CA|CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|CA - Los Angeles-Long Beach-Anaheim, CA|TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|CA - Redding, CA|TX - Longview, TX|TX - Austin-Round Rock, TX|CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ"      
+        #[1] "FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|
+          # TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|
+          # FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|CA - Santa Rosa, CA|CA - Chico, CA|GA - Macon-Bibb County, GA|
+          # FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|TX - Midland, TX|
+          # FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|CA - San Diego-Carlsbad, CA|
+          # CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|
+          # FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|
+          # TX - Abilene, TX|GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|
+          # NJ - Vineland-Bridgeton, NJ|FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|GA - Augusta-Richmond County, GA-SC|
+          # TX - Sherman-Denison, TX|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|CA - Vallejo-Fairfield, CA|
+          # TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|CA - Stockton-Lodi, CA|
+          # CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|
+          # GA - Rome, GA|CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|
+          # FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|
+          # CA - Santa Cruz-Watsonville, CA|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|NY - New York-Newark-Jersey City, NY-NJ-PA|
+          # TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|NJ - Trenton, NJ|TX - Corpus Christi, TX|
+          # NJ - Atlantic City-Hammonton, NJ|TX - El Paso, TX|TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|
+          # TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|CA - Hanford-Corcoran, CA|CA - Salinas, CA|
+          # CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|CA - Los Angeles-Long Beach-Anaheim, CA|
+          # TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|CA - Redding, CA|TX - Longview, TX|TX - Austin-Round Rock, TX|
+          # CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ"      
       
       # order_num = c('500590','567376'), order_title = Regional MSAs
-        #[2] "NY - Syracuse, NY|FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|NY - Rochester, NY|CA - Santa Rosa, CA|CA - Chico, CA|GA - Macon-Bibb County, GA|FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|TX - Midland, TX|FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|CA - San Diego-Carlsbad, CA|CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|TX - Abilene, TX|GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|NJ - Vineland-Bridgeton, NJ|FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|NY - Buffalo-Cheektowaga-Niagara Falls, NY|GA - Augusta-Richmond County, GA-SC|TX - Sherman-Denison, TX|NY - Glens Falls, NY|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|CA - Vallejo-Fairfield, CA|TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|CA - Stockton-Lodi, CA|CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|NY - Albany-Schenectady-Troy, NY|CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|GA - Rome, GA|CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|CA - Santa Cruz-Watsonville, CA|NY - Watertown-Fort Drum, NY|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|NY - New York-Newark-Jersey City, NY-NJ-PA|TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|NJ - Trenton, NJ|TX - Corpus Christi, TX|NJ - Atlantic City-Hammonton, NJ|NY - Ithaca, NY|NY - Binghamton, NY|TX - El Paso, TX|TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|CA - Hanford-Corcoran, CA|CA - Salinas, CA|CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|CA - Los Angeles-Long Beach-Anaheim, CA|TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|NY - Elmira, NY|CA - Redding, CA|TX - Longview, TX|TX - Austin-Round Rock, TX|NY - Utica-Rome, NY|CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|NY - Kingston, NY|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ"
+        #[2] "NY - Syracuse, NY|FL - Orlando-Kissimmee-Sanford, FL|FL - Sebring, FL|GA - Warner Robins, GA|GA - Dalton, GA|CA - Bakersfield, CA|
+        # TX - San Angelo, TX|TX - College Station-Bryan, TX|GA - Valdosta, GA|FL - Palm Bay-Melbourne-Titusville, FL|GA - Columbus, GA-AL|
+        # FL - Port St. Lucie, FL|GA - Savannah, GA|CA - Visalia-Porterville, CA|NY - Rochester, NY|CA - Santa Rosa, CA|CA - Chico, CA|
+        # GA - Macon-Bibb County, GA|FL - Tampa-St. Petersburg-Clearwater, FL|GA - Chattanooga, TN-GA|GA - Brunswick, GA|FL - Gainesville, FL|
+        # TX - Midland, TX|FL - Cape Coral-Fort Myers, FL|FL - Crestview-Fort Walton Beach-Destin, FL|FL - Punta Gorda, FL|
+        # CA - San Diego-Carlsbad, CA|CA - Oxnard-Thousand Oaks-Ventura, CA|TX - Beaumont-Port Arthur, TX|GA - Albany, GA|GA - Hinesville, GA|
+        # FL - North Port-Sarasota-Bradenton, FL|FL - Jacksonville, FL|TX - San Antonio-New Braunfels, TX|TX - Killeen-Temple, TX|TX - Abilene, TX|
+        # GA - Atlanta-Sandy Springs-Roswell, GA|NJ - New York-Newark-Jersey City, NY-NJ-PA|FL - Ocala, FL|NJ - Vineland-Bridgeton, NJ|
+        # FL - Deltona-Daytona Beach-Ormond Beach, FL|TX - Waco, TX|NY - Buffalo-Cheektowaga-Niagara Falls, NY|GA - Augusta-Richmond County, GA-SC|
+        # TX - Sherman-Denison, TX|NY - Glens Falls, NY|FL - Lakeland-Winter Haven, FL|CA - San Luis Obispo-Paso Robles-Arroyo Grande, CA|
+        # CA - Vallejo-Fairfield, CA|TX - Texarkana, TX-AR|CA - San Francisco-Oakland-Hayward, CA|TX - Laredo, TX|FL - Homosassa Springs, FL|
+        # CA - Stockton-Lodi, CA|CA - Modesto, CA|TX - Odessa, TX|TX - Lubbock, TX|NY - Albany-Schenectady-Troy, NY|
+        # CA - Riverside-San Bernardino-Ontario, CA|GA - Gainesville, GA|TX - Amarillo, TX|GA - Rome, GA|
+        # CA - Sacramento--Roseville--Arden-Arcade, CA|FL - Tallahassee, FL|FL - Miami-Fort Lauderdale-West Palm Beach, FL|
+        # FL - Naples-Immokalee-Marco Island, FL|NJ - Philadelphia-Camden-Wilmington, PA-NJ-DE-MD|FL - Sebastian-Vero Beach, FL|
+        # CA - Santa Cruz-Watsonville, CA|NY - Watertown-Fort Drum, NY|CA - San Jose-Sunnyvale-Santa Clara, CA|CA - Madera, CA|
+        # NY - New York-Newark-Jersey City, NY-NJ-PA|TX - Brownsville-Harlingen, TX|FL - The Villages, FL|CA - El Centro, CA|
+        # NJ - Trenton, NJ|TX - Corpus Christi, TX|NJ - Atlantic City-Hammonton, NJ|NY - Ithaca, NY|NY - Binghamton, NY|TX - El Paso, TX|
+        # TX - McAllen-Edinburg-Mission, TX|FL - Panama City, FL|TX - Houston-The Woodlands-Sugar Land, TX|CA - Santa Maria-Santa Barbara, CA|
+        # CA - Hanford-Corcoran, CA|CA - Salinas, CA|CA - Yuba City, CA|CA - Fresno, CA|NJ - Ocean City, NJ|FL - Pensacola-Ferry Pass-Brent, FL|
+        # CA - Los Angeles-Long Beach-Anaheim, CA|TX - Dallas-Fort Worth-Arlington, TX|TX - Wichita Falls, TX|NY - Elmira, NY|CA - Redding, CA|
+        # TX - Longview, TX|TX - Austin-Round Rock, TX|NY - Utica-Rome, NY|CA - Napa, CA|TX - Tyler, TX|CA - Merced, CA|TX - Victoria, TX|
+        # NY - Kingston, NY|GA - Athens-Clarke County, GA|NJ - Allentown-Bethlehem-Easton, PA-NJ"
        
     # segment
         c((orders_df %>% filter(order_num %in% c('371629','386335','403340','456737','470283','483751','500590','567376')) %>% count(segment))[1,]) # always the same segments used!
@@ -340,7 +382,7 @@ library(haven)
                     
     
   # Investigate CBSAs w/ greatest number of students
-
+ui_oos_seg %>% count()
         ui_oos_seg %>% mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>% count(zip_cbsa_name_code) %>% arrange(desc(n)) %>% print(n=30)
         
 #   zip_cbsa_name_code                                      n
