@@ -1304,6 +1304,18 @@ library(haven)
      
     ##### COMPARE LA PROSPECTS TO HYPOTHETICAL ZIP CODE LISTS
         
+        lists_asu_la <- lists_asu_la %>% mutate(stu_race_cb = as.character(stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+                                                          stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+        
+        
         
         # prospect home zips == come from 353 unique zip codes in LA
         lists_asu_la %>% count(stu_zip_code) %>% 
@@ -1314,11 +1326,62 @@ library(haven)
         
         #sort by top 20 zips by income
         la_zips_top20 <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=20) 
+    
+        #top 20 zip dummy in student lists
+        lists_asu_la <- lists_asu_la %>% 
+          mutate(top20zip = ifelse(stu_zip_code %in% la_zips_top20$zip_code, "top zip", "not top zip"))
         
-      
-        #top 20 zip dummy in
+        lists_asu_la %>% 
+          count(top20zip)
         
-             
+        #race/ethnicity & income by top 20 zips
+        top20zips_figure <- lists_asu_la %>% group_by(top20zip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        ggplot(top20zips_figure, aes(fill=top20zip, y=V1, x=stu_race_cb)) + 
+          geom_bar(position="dodge", stat="identity")
+        
+        top20zips_figure <- lists_asu_la %>% group_by(top20zip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+
+        ggplot(top20zips_figure, aes(y=median_income, x=top20zip)) + 
+          geom_bar(position="dodge", stat="identity")
+        
+        
+        #sort by top 20% zips by income
+        la_zips_top20pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=76) 
+        
+   
+        #sort by top 20% (76 out of 378) zips by income
+        la_zips_top20pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=76) 
+        
+        #top 20 zip dummy in student lists
+        lists_asu_la <- lists_asu_la %>% 
+          mutate(top20pctzip = ifelse(stu_zip_code %in% la_zips_top20pct$zip_code, "top zip", "not top zip"))
+        
+        lists_asu_la %>% 
+          count(top20pctzip)
+        
+        #race/ethnicity & income by top 20 zips
+        top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        ggplot(top20pctzips_figure, aes(fill=top20pctzip, y=V1, x=stu_race_cb)) + 
+          geom_bar(position="dodge", stat="identity")
+        
+        top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+        
+        ggplot(top20pctzips_figure, aes(y=median_income, x=top20pctzip)) + 
+          geom_bar(position="dodge", stat="identity")
+        
+        
+        
+        
+        
+        
 ################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES-- IN-STATE/ZIP TEXAS A&M Texerkana Example
         
          #### ZOOM INTO TEXAS A&M ZIP CODE ORDERS
