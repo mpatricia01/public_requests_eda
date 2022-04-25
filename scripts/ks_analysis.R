@@ -1203,142 +1203,122 @@ library(haven)
                                  filter_combo = ifelse(filter_hsgrad_class==1 & filter_states_fil==1 & filter_segment==1 & filter_gender==1 & filter_sat==1 & filter_gpa==1, "HS Grad, State, Segment, Gender, SAT, GPA", filter_combo))
     
         
-        # number of orders across common filter combos
-        lists_orders_zip_hs_df %>% 
-          group_by(filter_combo) %>%
-          summarise(n=n_distinct(ord_num)) 
-        
-        lists_orders_zip_hs_df %>% 
-          group_by(filter_combo) %>%
-          count(ord_num) 
-        
         # filter for ASU orders; ASU lists
         orders_asu <-  orders_df %>% filter(univ_id==104151)
         lists_asu <-  lists_orders_zip_hs_df %>% filter(univ_id==104151)
         
-        #top metros by prospects purchased
-        lists_asu %>% count(zip_cbsatitle_1) %>% arrange (-n) #Los Angeles is second metro; NY is first but its across 3 states
-        lists_asu %>% count(zip_cbsa_1) %>% arrange (-n) #Los Angeles is second metro; NY is first but its across 3 states
+        #looks at filters across ASU orders
+        orders_asu %>% count(order_title) %>% print(n=131)
         
-        # filter for ASU orders; ASU lists (IN LOS ANGELES)
+        #orders targeting California
+        orders_asu %>% count(state_name, hs_grad_class)  
+        orders_asu %>% count(state_name, hs_grad_class, geomarket)  #no geomarkets
+        orders_asu %>% filter(state_name=="California") %>% count(order_title,low_ses)  %>% print(n=50)
+        orders_asu %>% filter(state_name=="California") %>% count(order_num, order_title, hs_grad_class, sat_score_min, sat_score_max, low_ses)  %>% print(n=50)
+                
+              # range of PSAT scores used for CA orders without SES filter
+              orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(psat_score_min, psat_score_max)
+      
+              # range of SAT scores used for CA orders without SES filter
+              orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(sat_score_min, sat_score_max)
+              
+        #top metros by prospects purchased
+        lists_asu %>% count(zip_cbsatitle_1, zip_cbsa_1) %>% arrange (-n) #Los Angeles is second metro; NY is first but its across 3 states
+
+        # filter for ASU orders and ASU lists IN LOS ANGELES
         lists_asu <-  lists_asu %>% filter(zip_cbsa_1==31080)
         lists_orders <-  lists_asu %>% count(ord_num)
-        orders_asu %>% count(order_num)
+        lists_asu %>% count(ord_num) %>% arrange(-n) #largest number of LA prospects are coming from order number 366935 (n=14875)
         orders_asu_la  <-   subset(orders_asu, order_num %in% lists_orders$ord_num)
         
-       #filters used across purchases for LOS ANGELES prospects
-        orders_filters <- orders_asu_la %>% 
-          select(univ_id, hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
-                 gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
-                 psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
-                 gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
-          mutate(
-            hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
-            zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
-            states_fil = ifelse(!is.na(state_name), 1, 0), 
-            cbsa = ifelse(!is.na(cbsa_name), 1, 0), 
-            intl = ifelse(!is.na(intl_region), 1, 0), 
-            segment = ifelse(!is.na(segment), 1, 0), 
-            race = ifelse(!is.na(race_ethnicity), 1, 0), 
-            gender = ifelse(!is.na(gender), 1, 0), 
-            sat = ifelse((!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max)), 1, 0), 
-            psat = ifelse((!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max)), 1, 0), 
-            gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
-            rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
-            geomarket = ifelse(!is.na(geomarket), 1, 0), 
-            ap_score = ifelse(!is.na(ap_scores), 1, 0))
+          # top orders by number of prospects; top 10 orders by num of LA prospects using PSAT scores 
+          lists_asu %>% count(ord_num, ord_sat_score_min, ord_sat_score_max) %>% arrange(-n) %>% print(n=25)
+          lists_asu %>% count(ord_num, ord_psat_score_min, ord_psat_score_max) %>% arrange(-n)
+          
         
+        #ORDER TO PICK FROM LA BASED ON THE MOST NUM OF PROSPECT
+        orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, geomarket, low_ses)
+        orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, sat_score_min, sat_score_max)
+        orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, psat_score_min, psat_score_max)
+        orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, psat_score_old_min, psat_score_old_max)
         
+        #FILTER FOR JUST ORDER 366935
+        orders_asu_la <- orders_asu_la %>% filter(order_num=="366935")
+        lists_asu_la <-  lists_asu %>% filter(ord_num=="366935")
         
-        filter_combos_asu <- orders_filters %>% 
-          select(hsgrad_class, zip, states_fil, cbsa, 
-                 intl, segment, race, gender,sat, psat,
-                 gpa, rank, geomarket, ap_score) %>%
-          mutate(filter_sum = hsgrad_class + zip + states_fil + cbsa + 
-                   intl + segment + race + gender + sat + psat +
-                   gpa + rank + geomarket + ap_score)
-        
-        
-        filter_combos_asu <- filter_combos_asu %>% 
-          mutate(
-            hsgrad_class = ifelse(hsgrad_class==1, "grad_class", NA),
-            zip = ifelse(zip==1, "zip", NA), #KSshould this include zip_code_file not missing too?
-            states_fil = ifelse(states_fil==1, "state", NA), 
-            cbsa = ifelse(cbsa==1, "cbsa", NA), 
-            intl = ifelse(intl==1, "intl", NA), 
-            segment = ifelse(segment==1, "segment", NA), 
-            race = ifelse(race==1, "race", NA), 
-            gender = ifelse(gender==1, "gender", NA), 
-            sat = ifelse(sat==1, "sat", NA), 
-            psat = ifelse(psat==1, "psat", NA), 
-            gpa = ifelse(gpa==1, "gpa", NA), 
-            rank = ifelse(rank==1, "rank", NA), 
-            geomarket = ifelse(geomarket==1, "geomarket", NA), 
-            ap_score = ifelse(ap_score==1, "APscores", NA))
-        
-        
-        filter_combos_asu[filter_combos_asu == "NA"] <- NA_character_
-        
-        df0_asu <- group_by(filter_combos_asu, hsgrad_class, zip, states_fil, 
-                                  cbsa, intl, segment, race, gender, 
-                                  sat, psat, gpa, rank, geomarket, ap_score) %>% count()
-        
-        df0_asu %>% arrange(-n)
-        
-        df0_asu <- df0_asu  %>% unite("string", c(hsgrad_class, zip, states_fil, 
-                                                              cbsa, intl, segment, race, gender, 
-                                                              sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
-        sum(df0_asu$n)
-        
+  ##### COMPARE LA PROSPECTS TO THEIR HOME ZIP CODES
       
-        # average racial chars across LA orders
-        lists_asu %>% count(stu_race_cb) %>% 
+         
+        # prospect home zips == come from 353 unique zip codes in LA
+        lists_asu_la %>% count(stu_zip_code) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-         
-    # Get ZIPCODE Characteristics 
+        # average racial chars across LA propects
+        lists_asu_la %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
         
-        #switch zip to character
-        acs_race_zipcodev3 <- acs_race_zipcodev3 %>% mutate(
-          zip_char = as.character(zip_code)
-        )
+        # average racial chars of prospects by zip
+        lists_asu_la_race <- lists_asu_la %>% group_by(stu_zip_code) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
         
-        texasam_zips_order1 <-  dplyr::filter(acs_race_zipcodev3, grepl('^710|^711|^712|^717|^719|^747|^754|^758|^759|^757|^762', zip_char))
-        texasam_zips_order2 <-  dplyr::filter(acs_race_zipcodev3, grepl('^710|^711|^712|^717|^719|^747|^754|^757|^758|^759|^762|^770|^773|^774|^775', zip_char))
-        texasam_zips_order3 <-  dplyr::filter(acs_race_zipcodev3, grepl('^718|^750|^751|^752|^755|^756|^760|^761', zip_char))
-        texasam_zips_order4 <-  dplyr::filter(acs_race_zipcodev3, grepl('^770|^773|^774|^775', zip_char))
-        texasam_zips_orderall <-  dplyr::filter(acs_race_zipcodev3, grepl('^710|^711|^712|^717|^718|^719|^747|^750|^751|^752|^754|^755|^756|^757|^758|^759|^760|^761|^762|^770|^773|^774|^775', zip_char))
-        
-        
-        
-        
-        
-        # create vars for zip codes at 3-digit
-        texasam <- texasam %>% mutate(
-          zip_3digit = str_sub(stu_zip_code, 1, 3)  
-        )
-        
-        texasam_zips_orderall <- texasam_zips_orderall %>% mutate(
-          zip_3digit = str_sub(zip_char, 1, 3)  
-        )
+        lists_asu_la_race <- lists_asu_la_race %>% mutate(stu_race_cb = as.character(stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+                                                  stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
         
         
-        stu_zips_race <- texasam %>% filter(zip_3digit!="060" & zip_3digit!="201" & zip_3digit!="274" & zip_3digit!="301" & zip_3digit!="303" & zip_3digit!="778" & zip_3digit!="780" & zip_3digit!="781" & zip_3digit!="786" & zip_3digit!="800" & zip_3digit!="804" & zip_3digit!="917" & zip_3digit!="953") %>%
-          group_by(zip_3digit) %>%
-          count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) #%>% print(n=50)
+        lists_asu_la_race <- lists_asu_la_race %>% select(stu_zip_code, stu_race_cb, V1) %>% pivot_wider(names_from = stu_race_cb, values_from = V1)
+        lists_asu_la_race$population <- "prospects"
+        lists_asu_la_race[is.na(lists_asu_la_race)] <- 0
         
         
-        stu_zips_race <- as.data.frame(stu_zips_race)
+        # average racial chars of zips
+        asu_zips <- lists_asu_la %>% count(stu_zip_code)
+        
+        la_zips <- subset(acs_race_zipcodev3, zip_code %in% asu_zips$stu_zip_code)
+        la_zips <- la_zips %>% select(zip_code, pop_white_15_19_pct, pop_black_15_19_pct, pop_asian_15_19_pct, pop_hispanic_15_19_pct, pop_amerindian_15_19_pct, pop_nativehawaii_15_19_pct, pop_tworaces_15_19_pct, pop_otherrace_15_19_pct)
+        names(la_zips) <- c('stu_zip_code', 'White', 'Black', 'Asian', 'Latinx', 'AIAN', 
+                               'NHPI','Multiracial' , 'OtherRace')
+        
+        la_zips$population <- "zip_population"
         
         
-        # NEED TO EXPLORE THESE IN JANUARY-- but % is MINIMAL
-        stu_zips_race <- stu_zips_race %>% mutate(stu_race_cb= as.character(unclass(stu_race_cb)))
-        #stu_zips <- stu_zips %>% filter(stu_race_cb>=0) # IDK where the NA came from
+        #merge zip and prospects race chars
+        zip_figure_race <- rbind(lists_asu_la_race, la_zips)
         
+        zip_figure_race <- zip_figure_race %>% 
+          gather(race, pct, -stu_zip_code, -population)
         
+        zip_figure_race <- zip_figure_race %>% group_by(population,race) %>% 
+          summarize(mean(pct, na.rm = TRUE)) 
         
+        ggplot(zip_figure_race, aes(fill=population, y=`mean(pct, na.rm = TRUE)`, x=race)) + 
+          geom_bar(position="dodge", stat="identity")
  
+     
+    ##### COMPARE LA PROSPECTS TO HYPOTHETICAL ZIP CODE LISTS
         
+        
+        # prospect home zips == come from 353 unique zip codes in LA
+        lists_asu_la %>% count(stu_zip_code) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        #get all LA CBSA zips
+        la_zips <- acs_race_zipcodev3 %>% filter(cbsa_1=="31080") #378 zips in LA
+        
+        #sort by top 20 zips by income
+        la_zips_top20 <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=20) 
+        
+      
+        #top 20 zip dummy in
+        
+             
 ################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES-- IN-STATE/ZIP TEXAS A&M Texerkana Example
         
          #### ZOOM INTO TEXAS A&M ZIP CODE ORDERS
