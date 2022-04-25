@@ -1233,7 +1233,7 @@ library(haven)
         
           # top orders by number of prospects; top 10 orders by num of LA prospects using PSAT scores 
           lists_asu %>% count(ord_num, ord_sat_score_min, ord_sat_score_max) %>% arrange(-n) %>% print(n=25)
-          lists_asu %>% count(ord_num, ord_psat_score_min, ord_psat_score_max) %>% arrange(-n)
+          lists_asu %>% count(ord_num, ord_hs_grad_class, ord_psat_score_min, ord_psat_score_max) %>% arrange(-n)
           
         
         #ORDER TO PICK FROM LA BASED ON THE MOST NUM OF PROSPECT
@@ -1242,69 +1242,67 @@ library(haven)
         orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, psat_score_min, psat_score_max)
         orders_asu_la %>% filter(order_num=="366935") %>% count(state_name, hs_grad_class, psat_score_old_min, psat_score_old_max)
         
-        #FILTER FOR JUST ORDER 366935
-        orders_asu_la <- orders_asu_la %>% filter(order_num=="366935")
-        lists_asu_la <-  lists_asu %>% filter(ord_num=="366935")
-        
-  ##### COMPARE LA PROSPECTS TO THEIR HOME ZIP CODES
       
-         
-        # prospect home zips == come from 353 unique zip codes in LA
-        lists_asu_la %>% count(stu_zip_code) %>% 
-          mutate(V1 = n / sum(n) * 100) 
         
-        # average racial chars across LA propects
-        lists_asu_la %>% count(stu_race_cb) %>% 
-          mutate(V1 = n / sum(n) * 100) 
-        
-        # average racial chars of prospects by zip
-        lists_asu_la_race <- lists_asu_la %>% group_by(stu_zip_code) %>% count(stu_race_cb) %>% 
-          mutate(V1 = n / sum(n) * 100) 
-        
-        lists_asu_la_race <- lists_asu_la_race %>% mutate(stu_race_cb = as.character(stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
-                                                  stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
-        
-        
-        lists_asu_la_race <- lists_asu_la_race %>% select(stu_zip_code, stu_race_cb, V1) %>% pivot_wider(names_from = stu_race_cb, values_from = V1)
-        lists_asu_la_race$population <- "prospects"
-        lists_asu_la_race[is.na(lists_asu_la_race)] <- 0
-        
-        
-        # average racial chars of zips
-        asu_zips <- lists_asu_la %>% count(stu_zip_code)
-        
-        la_zips <- subset(acs_race_zipcodev3, zip_code %in% asu_zips$stu_zip_code)
-        la_zips <- la_zips %>% select(zip_code, pop_white_15_19_pct, pop_black_15_19_pct, pop_asian_15_19_pct, pop_hispanic_15_19_pct, pop_amerindian_15_19_pct, pop_nativehawaii_15_19_pct, pop_tworaces_15_19_pct, pop_otherrace_15_19_pct)
-        names(la_zips) <- c('stu_zip_code', 'White', 'Black', 'Asian', 'Latinx', 'AIAN', 
-                               'NHPI','Multiracial' , 'OtherRace')
-        
-        la_zips$population <- "zip_population"
-        
-        
-        #merge zip and prospects race chars
-        zip_figure_race <- rbind(lists_asu_la_race, la_zips)
-        
-        zip_figure_race <- zip_figure_race %>% 
-          gather(race, pct, -stu_zip_code, -population)
-        
-        zip_figure_race <- zip_figure_race %>% group_by(population,race) %>% 
-          summarize(mean(pct, na.rm = TRUE)) 
-        
-        ggplot(zip_figure_race, aes(fill=population, y=`mean(pct, na.rm = TRUE)`, x=race)) + 
-          geom_bar(position="dodge", stat="identity")
- 
-     
+  # ##### COMPARE LA PROSPECTS TO THEIR HOME ZIP CODES
+  #     
+  #        
+  #       # prospect home zips == come from 353 unique zip codes in LA
+  #       lists_asu_la %>% count(stu_zip_code) %>% 
+  #         mutate(V1 = n / sum(n) * 100) 
+  #       
+  #       # average racial chars across LA propects
+  #       lists_asu_la %>% count(stu_race_cb) %>% 
+  #         mutate(V1 = n / sum(n) * 100) 
+  #       
+  #       # average racial chars of prospects by zip
+  #       lists_asu_la_race <- lists_asu_la %>% group_by(stu_zip_code) %>% count(stu_race_cb) %>% 
+  #         mutate(V1 = n / sum(n) * 100) 
+  #       
+  #       lists_asu_la_race <- lists_asu_la_race %>% mutate(stu_race_cb = as.character(stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="3", "Black", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="4", "Latinx", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="8", "NHPI", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="9", "White", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="10", "OtherRace", stu_race_cb),
+  #                                                 stu_race_cb = ifelse(stu_race_cb=="12", "Multiracial", stu_race_cb))
+  #       
+  #       
+  #       lists_asu_la_race <- lists_asu_la_race %>% select(stu_zip_code, stu_race_cb, V1) %>% pivot_wider(names_from = stu_race_cb, values_from = V1)
+  #       lists_asu_la_race$population <- "prospects"
+  #       lists_asu_la_race[is.na(lists_asu_la_race)] <- 0
+  #       
+  #       
+  #       # average racial chars of zips
+  #       asu_zips <- lists_asu_la %>% count(stu_zip_code)
+  #       
+  #       la_zips <- subset(acs_race_zipcodev3, zip_code %in% asu_zips$stu_zip_code)
+  #       la_zips <- la_zips %>% select(zip_code, pop_white_15_19_pct, pop_black_15_19_pct, pop_asian_15_19_pct, pop_hispanic_15_19_pct, pop_amerindian_15_19_pct, pop_nativehawaii_15_19_pct, pop_tworaces_15_19_pct, pop_otherrace_15_19_pct)
+  #       names(la_zips) <- c('stu_zip_code', 'White', 'Black', 'Asian', 'Latinx', 'AIAN', 
+  #                              'NHPI','Multiracial' , 'OtherRace')
+  #       
+  #       la_zips$population <- "zip_population"
+  #       
+  #       
+  #       #merge zip and prospects race chars
+  #       zip_figure_race <- rbind(lists_asu_la_race, la_zips)
+  #       
+  #       zip_figure_race <- zip_figure_race %>% 
+  #         gather(race, pct, -stu_zip_code, -population)
+  #       
+  #       zip_figure_race <- zip_figure_race %>% group_by(population,race) %>% 
+  #         summarize(mean(pct, na.rm = TRUE)) 
+  #       
+  #       ggplot(zip_figure_race, aes(fill=population, y=`mean(pct, na.rm = TRUE)`, x=race)) + 
+  #         geom_bar(position="dodge", stat="identity")
+  # 
+  #    
     ##### COMPARE LA PROSPECTS TO HYPOTHETICAL ZIP CODE LISTS
         
-        lists_asu_la <- lists_asu_la %>% mutate(stu_race_cb = as.character(stu_race_cb),
+        lists_asu <- lists_asu %>% mutate(stu_race_cb = as.character(stu_race_cb),
                                                           stu_race_cb = ifelse(stu_race_cb=="0", "NoResponse", stu_race_cb),
                                                           stu_race_cb = ifelse(stu_race_cb=="1", "AIAN", stu_race_cb),
                                                           stu_race_cb = ifelse(stu_race_cb=="2", "Asian", stu_race_cb),
@@ -1317,36 +1315,90 @@ library(haven)
         
         
         
-        # prospect home zips == come from 353 unique zip codes in LA
+        # ALL LOS ANGELES prospect home zips == come from 355 unique zip codes in LA
         lists_asu_la %>% count(stu_zip_code) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
         #get all LA CBSA zips
         la_zips <- acs_race_zipcodev3 %>% filter(cbsa_1=="31080") #378 zips in LA
         
-        #sort by top 20 zips by income
-        la_zips_top20 <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=20) 
-    
-        #top 20 zip dummy in student lists
-        lists_asu_la <- lists_asu_la %>% 
-          mutate(top20zip = ifelse(stu_zip_code %in% la_zips_top20$zip_code, "top zip", "not top zip"))
+        #get all four-orders we'll be using
+        lists_asu_la_psat_low <-  lists_asu %>% filter(ord_num=="366935") #psat score from 1110-1220
+        lists_asu_la_psat_med <-  lists_asu %>% filter(ord_num=="448420") #psat score from 1190-1260
+        lists_asu_la_psat_high <-  lists_asu %>% filter(ord_num=="448374") #psat score from 1270-1520
+        lists_asu_la_sat_med <-  lists_asu %>% filter(ord_num=="394956") #sat score 1140-1260
         
-        lists_asu_la %>% 
-          count(top20zip)
         
-        #race/ethnicity & income by top 20 zips
-        top20zips_figure <- lists_asu_la %>% group_by(top20zip) %>% count(stu_race_cb) %>% 
+        #sort by top 10% (38 out of 378) zips by income
+        la_zips_top10pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=38) 
+        
+      #top 10%zip dummy in student lists
+        lists_asu_la_psat_low <- lists_asu_la_psat_low %>% 
+          mutate(top10pctzip = ifelse(stu_zip_code %in% la_zips_top10pct$zip_code, "top 10% zip", "not top 10% zip"))
+        
+        lists_asu_la_psat_low %>% 
+          count(top10pctzip)
+        
+        lists_asu_la_psat_med <- lists_asu_la_psat_med %>% 
+          mutate(top10pctzip = ifelse(stu_zip_code %in% la_zips_top10pct$zip_code, "top 10% zip", "not top 10% zip"))
+        
+        lists_asu_la_psat_med %>% 
+          count(top10pctzip)
+        
+        lists_asu_la_psat_high <- lists_asu_la_psat_high %>% 
+          mutate(top10pctzip = ifelse(stu_zip_code %in% la_zips_top10pct$zip_code, "top 10% zip", "not top 10% zip"))
+        
+        lists_asu_la_psat_high %>% 
+          count(top10pctzip)
+        
+        lists_asu_la_sat_med <- lists_asu_la_sat_med %>% 
+          mutate(top10pctzip = ifelse(stu_zip_code %in% la_zips_top10pct$zip_code, "top 10% zip", "not top 10% zip"))
+        
+        lists_asu_la_sat_med %>% 
+          count(top10pctzip)
+        
+        
+        #race/ethnicity by top 10% zips across 4 orders
+        lists_asu_la_psat_low_race <- lists_asu_la_psat_low %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-        ggplot(top20zips_figure, aes(fill=top20zip, y=V1, x=stu_race_cb)) + 
+        lists_asu_la_psat_med_race <- lists_asu_la_psat_med %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        lists_asu_la_psat_high_race <- lists_asu_la_psat_high %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        lists_asu_la_sat_med_race <- lists_asu_la_sat_med %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        #just a plot to check patterns
+        ggplot(lists_asu_la_sat_med_race, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
           geom_bar(position="dodge", stat="identity")
         
-        top20zips_figure <- lists_asu_la %>% group_by(top20zip) %>% 
+        
+        
+        #income by top 10% zips across 4 orders
+        lists_asu_la_psat_low_inc <- lists_asu_la_psat_low %>% group_by(top10pctzip) %>% 
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
-
-        ggplot(top20zips_figure, aes(y=median_income, x=top20zip)) + 
+        
+        lists_asu_la_psat_med_inc <- lists_asu_la_psat_med %>% group_by(top10pctzip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+        
+        lists_asu_la_psat_high_inc <- lists_asu_la_psat_high %>% group_by(top10pctzip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+        
+        lists_asu_la_sat_med_inc <- lists_asu_la_sat_med %>% group_by(top10pctzip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+        
+        ggplot(lists_asu_la_sat_med_inc, aes(y=median_income, x=top10pctzip)) + 
           geom_bar(position="dodge", stat="identity")
+        
+        
+        
         
         
         #sort by top 20% zips by income
@@ -1379,6 +1431,37 @@ library(haven)
         
         
         
+        
+        
+        
+        
+        #sort by top 20% zips by income
+        la_zips_top10pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=38) 
+        
+        
+        #sort by top 20% (76 out of 378) zips by income
+        la_zips_top10pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=38) 
+        
+        #top 20 zip dummy in student lists
+        lists_asu_la <- lists_asu_la %>% 
+          mutate(top10pctzip = ifelse(stu_zip_code %in% la_zips_top10pct$zip_code, "top zip", "not top zip"))
+        
+        lists_asu_la %>% 
+          count(top10pctzip)
+        
+        #race/ethnicity & income by top 20 zips
+        top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
+          mutate(V1 = n / sum(n) * 100) 
+        
+        ggplot(top10pctzips_figure, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
+          geom_bar(position="dodge", stat="identity")
+        
+        top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% 
+          summarize(
+            median_income = mean(zip_median_household_income, na.rm = TRUE)) 
+        
+        ggplot(top10pctzips_figure, aes(y=median_income, x=top10pctzip)) + 
+          geom_bar(position="dodge", stat="identity")
         
         
         
