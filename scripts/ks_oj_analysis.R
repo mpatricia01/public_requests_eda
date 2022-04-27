@@ -2356,11 +2356,11 @@ target_poc <- function(order_num,cbsa) {
       # has a ceeb code; and ceeb code merged to high-school level data
       filter(!is.na(stu_ceeb), na_hs == 0) %>% count() %>% print()
     
-    str_c("\n number of prospects by high school") %>% writeLines()
+    #str_c("\n number of prospects by high school") %>% writeLines()
     #number of prospects by high school
-    lists_orders_zip_hs_df %>%  filter(zip_cbsa_1 == cbsa, ord_num %in% c(order_num)) %>%
+    #lists_orders_zip_hs_df %>%  filter(zip_cbsa_1 == cbsa, ord_num %in% c(order_num)) %>%
       # has a ceeb code; and ceeb code merged to high-school level data
-      filter(!is.na(stu_ceeb), na_hs == 0) %>% count(stu_ceeb) %>% arrange(desc(n)) %>%  print(n=20)
+      #filter(!is.na(stu_ceeb), na_hs == 0) %>% count(stu_ceeb) %>% arrange(desc(n)) %>%  print(n=20)
 
     str_c("\n number of prospects in public vs. private school ") %>% writeLines()
     lists_orders_zip_hs_df %>%  filter(zip_cbsa_1 == cbsa, ord_num %in% c(order_num)) %>%
@@ -2487,7 +2487,7 @@ target_poc <- function(order_num,cbsa) {
 }  
 
   # NUMBER BY MSA
-  lists_orders_zip_hs_df %>% filter(ord_num %in% c('606452')) %>% mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>% count(zip_cbsa_name_code) %>% arrange(desc(n)) %>% print(n=30)
+  lists_orders_zip_hs_df %>% filter(ord_num %in% c('560119')) %>% mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>% count(zip_cbsa_name_code) %>% arrange(desc(n)) %>% print(n=30)
 
 #UC davis, 110644
   #606450 # selected states; native american/alaska native OR native Hawaiian or other pacific islander; AP 3-5 OR SAT 1350-1600; about 10,730 names
@@ -2536,6 +2536,7 @@ target_poc <- function(order_num,cbsa) {
     
     
   #560119 # non-CA; SAT 1200-1380; A+ to B; 2021 HS grad class; native, black, latinx; 5,682 students
+     lists_orders_zip_hs_df %>% filter(ord_num %in% c('560119')) %>% count()
     lists_orders_zip_hs_df %>% filter(ord_num %in% c('560119')) %>% mutate(zip_cbsa_name_code = str_c(zip_cbsatitle_1,zip_cbsa_1, sep='; ')) %>% count(zip_cbsa_name_code) %>% arrange(desc(n)) %>% print(n=30)
         
     target_poc(order_num= '560119', cbsa = '35620')  # 1 New York-Newark-Jersey City, NY-NJ-PA; 35620          949 # much richer, less likely to be black, latinx
