@@ -588,6 +588,9 @@ lists_df <- lists_df %>% mutate(
     # U. Illinois-Urbana
     univ_id == '145637' & is_hispanic_origin == 'Yes' ~ 1,
     univ_id == '145637' & (is_hispanic_origin %in% c('No')| is.na(is_hispanic_origin)==1) ~ 0,
+    # U. Illinois-Springfield
+    univ_id == '148654' & race == 'Latino/Hispanic/Chicano' ~ 1,
+    univ_id == '148654' & !race %in% c('Unknown', 'Prefer Not to Respond') ~ 0,
     # Texarkana and Stephen F. Austin, rules:
     univ_id %in% c('145637','174358','228723')==0 & (cuban == 'Y' | mexican == 'Y' | puerto_rican == 'Y' | other_hispanic == 'Y') ~ 1, # == 1 if at least one of the four categories (cuban, mexican, puerto_rican, other_hispanic) == 'Y'
     univ_id %in% c('145637','174358','228723')==0 & (non_hispanic=='Y' & is.na(cuban)==1 & is.na(mexican)==1 & is.na(puerto_rican)==1 & is.na(other_hispanic)==1) ~ 0,   # == 0 if non_hispanic == 1 and all four categories == NA
@@ -600,6 +603,7 @@ lists_df <- lists_df %>% mutate(
     # note: 10/19/2021: probably need to add code for texas A&M college station
   ))
 
+lists_df %>% filter(univ_id == '148654') %>% select(race, is_hisp_common) %>% distinct()
 
 ###################### CREATE INPUT VARIABLE RACE (FOR URBANA) THAT REMOVES DUPLICATE RACE CATEGORIES (E.G., "ASIAN, ASIAN" BECOMES "ASIAN")
     
@@ -672,6 +676,8 @@ lists_df <- lists_df %>% mutate(
   lists_df <- lists_df %>% mutate(
     american_indian_common = case_when(
       univ_id == '145637'  ~ american_indian_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'American Indian/Alaskan Native', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
       univ_id %in% c('145637','174358','228723')==0 & american_indian =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723')==0 & is.na(american_indian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
@@ -680,6 +686,8 @@ lists_df <- lists_df %>% mutate(
     ),
     asian_common = case_when(
       univ_id == '145637'  ~ asian_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'Asian/Asian American/Pacific Islander', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
       univ_id %in% c('145637','174358','228723')==0 & asian =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723')==0 & is.na(asian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
@@ -688,6 +696,8 @@ lists_df <- lists_df %>% mutate(
     ),
     black_common = case_when(
       univ_id == '145637'  ~ black_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'Black/African American', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
       univ_id %in% c('145637','174358','228723')==0 & black =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723')==0 & is.na(black) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
@@ -696,6 +706,8 @@ lists_df <- lists_df %>% mutate(
     ),
     native_hawaiian_common = case_when(
       univ_id == '145637'  ~ native_hawaiian_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0),
       univ_id %in% c('145637','174358','228723')==0 & native_hawaiian =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723')==0 & is.na(native_hawaiian) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
@@ -704,6 +716,8 @@ lists_df <- lists_df %>% mutate(
     ),
     white_common = case_when(
       univ_id == '145637'  ~ white_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'White/Caucasian', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
       univ_id %in% c('145637','174358','228723')==0 & white =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723')==0 & is.na(white) & is.na(race_no_response) ~ 0,
       # u minnesota moorhead
@@ -712,6 +726,8 @@ lists_df <- lists_df %>% mutate(
     ),
     race_no_response_common = case_when(
       univ_id == '145637'  ~ race_no_response_urbana,
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race %in% c('Unknown', 'Prefer Not to Respond'), 1, 0),
       univ_id %in% c('145637','174358','228723')==0 & race_no_response =='Y' ~ 1,
       univ_id %in% c('228431','224545','110680','174075','110644','145600','104151','228529') & is.na(race_no_response) ~ 0,
     ),
@@ -720,6 +736,8 @@ lists_df <- lists_df %>% mutate(
         # note from xls_sat-esr-data-file-layout-crosswalk-fixed-width.xls:
           # "Note, "other" will be maintained until all students have responded to the new question."
           # note [10/19/2021]: UC-davis (110644) data does not have "other" variable
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'Other', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
       univ_id %in% c('145637','110644')  ~ 0,
       univ_id %in% c('145637','174358','228723','110644')==0 & other =='Y' ~ 1,
       univ_id %in% c('145637','174358','228723','110644')==0 & is.na(other) & is.na(race_no_response) ~ 0,
@@ -742,9 +760,15 @@ lists_df <- lists_df %>% mutate(
     
     # create measure of whether two or more races
       # definition: two or more races [ignore ethnicity for now]
-    multi_race_common = if_else(ct_race_groups_common >=2,1,0, missing = NULL)
+    multi_race_common = case_when(
+      # U. Illinois-Springfield
+      univ_id == '148654' ~ if_else(race == 'Multiracial', 1, if_else(race %in% c('Unknown', 'Prefer Not to Respond'), NA_real_, 0)),
+      TRUE ~ if_else(ct_race_groups_common >=2,1,0, missing = NULL)
+    ) 
   )
 
+  lists_df %>% filter(univ_id == '148654') %>% select(race, ends_with('_common'), -ct_race_groups_common) %>% distinct()
+  
   # checks of ct_race_groups and multi_race variables
     # ct_race_groups_common
       # urbana
@@ -843,6 +867,17 @@ lists_df <- lists_df %>%
       univ_id == '228723' & race == 'UK - Not Reported' ~ 0, # UK - Not Reported                               3782
       univ_id == '228723' & race == 'WO - White' ~ 9, # WO - White                                     49045    
     ),
+    race_cb = case_when(
+      univ_id != '148654' ~ race_cb,
+      univ_id == '148654' & race == 'Asian/Asian American/Pacific Islander' ~ 2,
+      univ_id == '148654' & race == 'Black/African American' ~ 3,
+      univ_id == '148654' & race == 'Latino/Hispanic/Chicano' ~ 4,
+      univ_id == '148654' & race == 'Other' ~ 10,
+      univ_id == '148654' & race == 'American Indian/Alaskan Native' ~ 1,
+      univ_id == '148654' & race == 'Multiracial' ~ 12,
+      univ_id == '148654' & race %in% c('Unknown', 'Prefer Not to Respond') ~ 0,
+      univ_id == '148654' & race == 'White/Caucasian' ~ 9, 
+    )
   ) %>%
   # create value labels for level of urbanization
   set_value_labels(
@@ -859,6 +894,8 @@ lists_df <- lists_df %>%
     )
   ) %>% # set_value_labels
   mutate(urbana = if_else(univ_id == '145637',1,0, missing = NULL))
+
+lists_df %>% filter(univ_id == '148654') %>% select(race, race_cb) %>% distinct()
 
   var_label(lists_df[['race_cb']]) <- 'College Board derived federal race/ethnic categories; NA if hispanic == 0 and all input race variables (including race_no_response) are NA'
 
