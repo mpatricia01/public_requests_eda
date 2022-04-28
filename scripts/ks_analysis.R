@@ -1034,6 +1034,31 @@ library(haven)
     # checking for missingness
         
         lists_orders_zip_hs_df %>% count(hs_school_control)
+  
+        
+    #check missing propspect race for regional-in-state orders
+        
+        lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% mutate(
+          univ_type = ifelse(univ_id=="145637" | univ_id=="145600" | univ_id=="104151" |
+                               univ_id=="110653" | univ_id=="110680" | univ_id=="110644" |
+                               univ_id=="228723" , "research", "regional"))
+        
+              
+        
+        regional_lists <- lists_orders_zip_hs_df %>% filter(univ_type=="regional") 
+        
+        #issue is UIllinois Springfield==148654
+        regional_lists %>% group_by(univ_id) %>%
+          count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=100)
+        
+        
+        raceproblem_lists <- lists_orders_zip_hs_df %>% filter(univ_id=="148654")
+        
+        raceproblem_lists %>% count(stu_race_cb)
+        raceproblem_lists %>% count(stu_white)
+        raceproblem_lists %>% count(stu_black)
+        raceproblem_lists %>% count(stu_asian)
+        raceproblem_lists %>% count(stu_hispanic_01)
         
         
 ################### ANALYSIS & VISUALS FOR RQ3: CHARACTERISTICS ACROSS INDIVIDUAL FILTERS
