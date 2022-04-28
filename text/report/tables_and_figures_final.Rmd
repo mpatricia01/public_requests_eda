@@ -535,3 +535,53 @@ bind_cols(
   row_spec(0, bold = T) %>%
   kable_styling(position = 'center', latex_options = c('hold_position', 'scale_down'))
 ```
+
+
+## Table 8: Prospect characteristics by filter used
+
+```{r}
+rq3 %>% 
+  mutate_if(is.numeric, ~if_else(. < 1, . * 100, .)) %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  mutate_if(is.numeric, ~if_else(row_number() == 18, str_c('$', round(. / 1000), 'K'), prettyNum(., big.mark = ','))) %>% 
+  mutate(
+    row_subj = recode_factor(
+      row_subj,
+      'n' = 'Total count',
+      'pct_instate' = '% In-state',
+      'pct_outofstate' = '% Out-of-state',
+      'pct_white' = '% White',
+      'pct_asian' = '% Asian',
+      'pct_black' = '% Black',
+      'pct_latinx' = '% Latinx',
+      'pct_nhpi' = '% NH/PI',
+      'pct_aian' = '% AI/AN',
+      'pct_multiracial' = '% Multiracial',
+      'pct_raceother' = '% Other',
+      'pct_noresponse' = '% No response',
+      'pct_racemissing' = '% Missing',
+      'pct_male' = '% Male',
+      'pct_female' = '% Female',
+      'pct_genderother' = '% Other ',
+      'pct_gendermissing' = '% Missing ',
+      'med_income' = 'Median household income (mean)',
+      'pct_city' = '% City',
+      'pct_suburban' = '% Suburban',
+      'pct_fringe' = '% Rural - Fringe',
+      'pct_distant' = '% Rural - Distant',
+      'pct_remote' = '% Rural - Remote',
+      'pct_localemissing' = '% Missing  '
+    )
+  ) %>%
+  arrange(row_subj) %>% 
+  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Segment', 'CBSA', 'Race', 'Gender'), align = c('l', rep('r', 12))) %>% 
+  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 4, 'Demographic' = 2), bold = T) %>% 
+  group_rows('Location', 2, 3) %>%
+  group_rows('Race/ethnicity', 4, 13) %>%
+  group_rows('Gender', 14, 17) %>%
+  group_rows('Income', 18, 18) %>%
+  group_rows('Locale', 19, 24) %>%
+  # gsub('NA', ' ', .) %>%
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = c('hold_position', 'scale_down'))
+```

@@ -56,7 +56,21 @@ orders_df <- orders_df %>%
       univ_type,
       'research' = 'Research',
       'regional' = 'MA/doctoral'
-    )
+    ),
+    filter_hsgrad_class = if_else(!is.na(hs_grad_class), 1, 0),
+    filter_zip = if_else(!is.na(zip_code) | !is.na(zip_code_file), 1, 0),
+    filter_states_fil = if_else(!is.na(state_name), 1, 0), 
+    filter_cbsa = if_else(!is.na(cbsa_name), 1, 0), 
+    filter_intl = if_else(!is.na(intl_region), 1, 0), 
+    filter_segment = if_else(!is.na(segment), 1, 0), 
+    filter_race = if_else(!is.na(race_ethnicity), 1, 0), 
+    filter_gender = if_else(!is.na(gender), 1, 0), 
+    filter_sat = if_else(!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max) | !is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max) | !is.na(sat_score_reading_writing_min) | !is.na(sat_score_reading_writing_max) | !is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max) | !is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max), 1, 0), 
+    filter_psat = if_else(!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max), 1, 0), 
+    filter_gpa = if_else(!is.na(gpa_low) | !is.na(gpa_high), 1, 0), 
+    filter_rank = if_else(!is.na(rank_low) | !is.na(rank_high), 1, 0), 
+    filter_geomarket = if_else(!is.na(geomarket), 1, 0), 
+    filter_ap_score = if_else(!is.na(ap_scores), 1, 0)
   ) %>% 
   mutate_if(is.character, list(~na_if(., '')))
 
@@ -81,7 +95,8 @@ lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>%
       stu_gender %in% c('M', 'Male') ~ 0,
       TRUE ~ NA_real_
     )
-  )
+  ) %>% 
+  mutate_if(is.character, list(~na_if(., '')))
 
 
 # ----------------------------------------------------------------------
@@ -102,28 +117,13 @@ orders_prospects_purchased <- orders_df %>%
 # -----------------------------------------------------------------------
 
 orders_filters <- orders_df %>% 
-  mutate(
-    hsgrad_class = if_else(!is.na(hs_grad_class), 1, 0),
-    zip = if_else(!is.na(zip_code) | !is.na(zip_code_file), 1, 0),
-    states_fil = if_else(!is.na(state_name), 1, 0), 
-    cbsa = if_else(!is.na(cbsa_name), 1, 0), 
-    intl = if_else(!is.na(intl_region), 1, 0), 
-    segment = if_else(!is.na(segment), 1, 0), 
-    race = if_else(!is.na(race_ethnicity), 1, 0), 
-    gender = if_else(!is.na(gender), 1, 0), 
-    sat = if_else(!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max) | !is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max) | !is.na(sat_score_reading_writing_min) | !is.na(sat_score_reading_writing_max) | !is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max) | !is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max), 1, 0), 
-    psat = if_else(!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max), 1, 0), 
-    gpa = if_else(!is.na(gpa_low) | !is.na(gpa_high), 1, 0), 
-    rank = if_else(!is.na(rank_low) | !is.na(rank_high), 1, 0), 
-    geomarket = if_else(!is.na(geomarket), 1, 0), 
-    ap_score = if_else(!is.na(ap_scores), 1, 0)
-  ) %>% 
-  select(univ_type, univ_label, hsgrad_class, zip, states_fil, cbsa, intl, segment, race, gender, sat, psat, gpa, rank, geomarket, ap_score) %>% 
+  select(univ_type, univ_label, starts_with('filter_')) %>% 
   group_by(univ_type, univ_label) %>% 
   summarize_if(is.numeric, sum) %>% 
   pivot_longer(
     cols = -c(univ_type, univ_label),
     names_to = 'filters',
+    names_prefix = 'filter_',
     values_to = 'num'
   ) %>% 
   left_join(
@@ -370,20 +370,20 @@ rq2_school <- lists_orders_zip_hs_df %>%
 
 orders_filters_combo <- orders_df %>% 
   mutate(
-    hsgrad_class = if_else(!is.na(hs_grad_class), 'HS grad class', NA_character_),
-    zip = if_else(!is.na(zip_code) | !is.na(zip_code_file), 'Zip code', NA_character_),
-    states_fil = if_else(!is.na(state_name), 'State', NA_character_), 
-    cbsa = if_else(!is.na(cbsa_name), 'CBSA', NA_character_), 
-    intl = if_else(!is.na(intl_region), 'International', NA_character_), 
-    segment = if_else(!is.na(segment), 'Segment', NA_character_), 
-    race = if_else(!is.na(race_ethnicity), 'Race', NA_character_), 
-    gender = if_else(!is.na(gender), 'Gender', NA_character_), 
-    sat = if_else(!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max) | !is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max) | !is.na(sat_score_reading_writing_min) | !is.na(sat_score_reading_writing_max) | !is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max) | !is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max), 'SAT', NA_character_), 
-    psat = if_else(!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max), 'PSAT', NA_character_), 
-    gpa = if_else(!is.na(gpa_low) | !is.na(gpa_high), 'GPA', NA_character_), 
-    rank = if_else(!is.na(rank_low) | !is.na(rank_high), 'Rank', NA_character_), 
-    geomarket = if_else(!is.na(geomarket), 'Geomarket', NA_character_), 
-    ap_score = if_else(!is.na(ap_scores), 'AP score', NA_character_)
+    hsgrad_class = if_else(filter_hsgrad_class == 1, 'HS grad class', NA_character_),
+    zip = if_else(filter_zip == 1, 'Zip code', NA_character_),
+    states_fil = if_else(filter_states_fil == 1, 'State', NA_character_), 
+    cbsa = if_else(filter_cbsa == 1, 'CBSA', NA_character_), 
+    intl = if_else(filter_intl == 1, 'International', NA_character_), 
+    segment = if_else(filter_segment == 1, 'Segment', NA_character_), 
+    race = if_else(filter_race == 1, 'Race', NA_character_), 
+    gender = if_else(filter_gender == 1, 'Gender', NA_character_), 
+    sat = if_else(filter_sat == 1, 'SAT', NA_character_), 
+    psat = if_else(filter_psat == 1, 'PSAT', NA_character_), 
+    gpa = if_else(filter_gpa == 1, 'GPA', NA_character_), 
+    rank = if_else(filter_rank == 1, 'Rank', NA_character_), 
+    geomarket = if_else(filter_geomarket == 1, 'Geomarket', NA_character_), 
+    ap_score = if_else(filter_ap_score == 1, 'AP score', NA_character_)
   ) %>% 
   group_by(univ_type, univ_label, hsgrad_class, gpa, sat, psat, rank, ap_score, states_fil, zip, geomarket, segment, cbsa, intl, race, gender) %>% 
   count() %>% 
@@ -395,8 +395,116 @@ orders_filters_combo <- orders_df %>%
   ungroup()
 
 
+# --------------------------------------------------
+# Table 8 - Prospect characteristics by filter used
+# --------------------------------------------------
+
+rq3_prospects <- lists_orders_zip_hs_df %>% 
+  filter(stu_in_us == 1) %>% 
+  select(univ_id, ord_num, stu_in_us, stu_nonres, stu_race_cb, stu_gender, stu_zip_code) %>% 
+  left_join(orders_df %>% select(order_num, starts_with('filter_')), by = c('ord_num' = 'order_num')) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  left_join(zip_locale, by = c('stu_zip_code' = 'ZCTA5CE20'))
+
+get_rq3_data <- function(filter_var) {
+  rq3_df <- rq3_prospects %>% 
+    filter(get(filter_var) == 1)
+  
+  rq3_counts <- rq3_df %>% 
+    count(stu_nonres) %>% 
+    mutate(
+      row_subj = recode(
+        stu_nonres,
+        `0` = 'pct_instate',
+        `1` = 'pct_outofstate'
+      ),
+      val = n / sum(n)
+    ) %>%
+    select(row_subj, val) %>%
+    add_row(row_subj = 'n', val = nrow(rq3_df), .before = 1)
+  
+  rq3_race <- rq3_df %>% 
+    count(stu_race_cb) %>% 
+    mutate(
+      stu_race_cb = if_else(is.na(stu_race_cb), 999, as.numeric(stu_race_cb)),
+      row_subj = recode(
+        stu_race_cb,
+        `0` = 'pct_noresponse',
+        `1` = 'pct_aian',
+        `2` = 'pct_asian',
+        `3` = 'pct_black',
+        `4` = 'pct_latinx',
+        `8` = 'pct_nhpi',
+        `9` = 'pct_white',
+        `10` = 'pct_raceother',
+        `12` = 'pct_multiracial',
+        `999` = 'pct_racemissing'
+      ),
+      val = n / sum(n)
+    ) %>%
+    select(row_subj, val)
+  
+  rq3_gender <- rq3_df %>% 
+    mutate(
+      row_subj = case_when(
+        stu_gender == 'F' ~ 'pct_female',
+        stu_gender == 'M' ~ 'pct_male',
+        is.na(stu_gender) ~ 'pct_gendermissing',
+        T ~ 'pct_genderother'
+      )
+    ) %>% 
+    count(row_subj) %>% 
+    mutate(
+      val = n / sum(n)
+    ) %>%
+    select(row_subj, val)
+  
+  rq3_income <- rq3_df %>% 
+    summarise(
+      val = mean(medincome_2564, na.rm = T)
+    ) %>% 
+    mutate(
+      row_subj = 'med_income'
+    ) %>%
+    select(row_subj, val)
+  
+  rq3_locale <- rq3_df %>% 
+    mutate(
+      locale_group = case_when(
+        str_sub(LOCALE, 1, 1) %in% c('1', '2') ~ str_sub(LOCALE, 1, 1),
+        str_sub(LOCALE, 2, 2) == '1' ~ '3',
+        str_sub(LOCALE, 2, 2) == '2' ~ '4',
+        str_sub(LOCALE, 2, 2) == '3' ~ '5',
+        TRUE ~ '6'
+      )
+    ) %>% 
+    count(locale_group) %>% 
+    mutate(
+      row_subj = recode(
+        locale_group,
+        '1' = 'pct_city',
+        '2' = 'pct_suburban',
+        '3' = 'pct_fringe',
+        '4' = 'pct_distant',
+        '5' = 'pct_remote',
+        '6' = 'pct_localemissing'
+      ),
+      val = n / sum(n)
+    ) %>%
+    select(row_subj, val)
+  
+  bind_rows(rq3_counts, rq3_race, rq3_gender, rq3_income, rq3_locale) %>% 
+    setNames(c('row_subj', filter_var))
+}
+
+rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 'filter_ap_score', 'filter_zip', 'filter_states_fil', 'filter_segment', 'filter_cbsa', 'filter_race', 'filter_gender') %>% 
+  lapply(get_rq3_data) %>% 
+  reduce(left_join, by = 'row_subj') %>% 
+  mutate_all(~replace(., is.na(.), 0))
+
+
 # --------------
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
