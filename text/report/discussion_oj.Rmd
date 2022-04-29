@@ -1,0 +1,172 @@
+---
+title: "Geodemographics of Student List Purchases by Public Universities: A First Look "
+subtitle: ""
+author: 
+  - Karina Salazar
+  - Ozan Jaquette
+  - Crystal Han
+bibliography: ../bib/student_list_empirics.bib
+citeproc: no
+output: 
+  bookdown::pdf_document2:
+    toc: FALSE
+    pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
+eoutput: pdf_document
+always_allow_html: true
+csl: ../bib/apa.csl
+urlcolor: blue
+fontsize: 12pt
+#header-includes:
+#      - \usepackage{pdflscape}
+#      - \usepackage{geometry}
+header-includes:
+      - \usepackage{floatrow}
+      - \floatsetup{capposition=top}
+      - \usepackage{setspace}\onehalfspacing #\doublespacing
+---
+
+```{r setup, include=FALSE}
+options(knitr.kable.NA = '')
+options(scipen=999)
+knitr::opts_chunk$set(echo = F, message = F, warning = F)
+# webshot::install_phantomjs()
+
+library(knitr)
+library(bookdown)
+library(tidyverse)
+library(gridExtra)
+library(kableExtra)
+library(scales)
+library(leaflet)
+library(rgdal)
+library(english)
+
+data_dir <- file.path('..', '..', 'data')
+
+load(file.path(data_dir, 'tbl_fig_data.RData'))
+zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+
+theme_set(
+  theme(
+    text = element_text(size = 7),
+    panel.background = element_blank(),
+    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    axis.ticks = element_blank(),
+    axis.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold'),
+    legend.key.size = unit(0.3, 'cm')
+  )
+)
+
+color_palette <- c('#ba9a88', '#bbcfd7')
+
+# https://stackoverflow.com/a/65844319/6373540
+linesep <- function(x, y = character()){
+  if(!length(x))
+    return(y)
+  linesep(x[-length(x)], c(rep('', x[length(x)] - 1), '\\addlinespace', y))  
+}
+
+num_univs <- nrow(orders_fig_totals)
+num_orders <- sum(orders_fig_totals$total_orders)
+num_lists <- length(na.omit(lists_df_summary$ord_num))
+num_prospects <- sum(lists_df_summary$n)
+
+psat_min <- orders_df %>% filter(!is.na(psat_minbrks)) %>% count(psat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+psat_max <- orders_df %>% filter(!is.na(psat_maxbrks)) %>% count(psat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_min <- orders_df %>% filter(!is.na(sat_minbrks)) %>% count(sat_minbrks) %>% mutate(pct = round(n / sum(n) * 100))
+sat_max <- orders_df %>% filter(!is.na(sat_maxbrks)) %>% count(sat_maxbrks) %>% mutate(pct = round(n / sum(n) * 100))
+gender <- orders_df %>% filter(!is.na(gender)) %>% count(gender) %>% mutate(pct = round(n / sum(n) * 100))
+race <- orders_df %>%
+  filter(!is.na(race_ethnicity)) %>% 
+  mutate(
+    is_black = str_detect(race_ethnicity, 'Black'),
+    is_latinx = str_detect(race_ethnicity, 'Hispanic or Latino'),
+    is_native = str_detect(race_ethnicity, 'American Indian or Alaska Native'),
+    is_hawaiian = str_detect(race_ethnicity, 'Native Hawaiian or Other Pacific Islander'),
+    is_asian = str_detect(race_ethnicity, 'Asian'),
+    is_white = str_detect(race_ethnicity, 'White'),
+    num_race_filters = str_count(race_ethnicity, '\\|') + 1
+  )
+
+df_0 <- df_0 %>% 
+  mutate(pct = round(n / sum(n) * 100))
+
+df_rq2a_totals <- df_rq2a %>% filter(row_subj == 'Total N')
+df_rq2a_domestic <- df_rq2a %>% select(row_subj, all_domestic) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_instate <- df_rq2a %>% select(row_subj, in_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_outofstate <- df_rq2a %>% select(row_subj, out_of_state) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_instate <- df_rq2a %>% select(row_subj, research_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_research_outofstate <- df_rq2a %>% select(row_subj, research_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_instate <- df_rq2a %>% select(row_subj, regional_univ_instate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq2a_regional_outofstate <- df_rq2a %>% select(row_subj, regional_univ_outofstate) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+
+df_rq3_gpa <- df_rq3 %>% select(row_subj, GPA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_psat <- df_rq3 %>% select(row_subj, PSAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_sat <- df_rq3 %>% select(row_subj, SAT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_hsrank <- df_rq3 %>% select(row_subj, `HS RANK`) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_race <- df_rq3 %>% select(row_subj, RACE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_gender <- df_rq3 %>% select(row_subj, GENDER) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_zip <- df_rq3 %>% select(row_subj, ZIP) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_state <- df_rq3 %>% select(row_subj, STATE) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_segment <- df_rq3 %>% select(row_subj, SEGMENT) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+df_rq3_cbsa <- df_rq3 %>% select(row_subj, CBSA) %>% column_to_rownames('row_subj') %>% t() %>% as.data.frame()
+```
+
+
+<!-- # Executive Summary -->
+
+<!-- TEXT -->
+
+
+# Discussion
+
+Recent research suggests that student lists are surprisingly important for the college access outcomes and the graduation outcomes of millions of students each year [@RN4739; @RN4752]. @list_biz provide a conceptual analysis of the student list business. We argue that the College Board and ACT student list products, which have dominated the market for decades, systematically exclude students in two ways. First, the underlying databases exclude non-test-takers. Test-taking rates differ by race and by class, leading to differences in which prospects are included in student list products and, in turn, differences in who is targeted by universities. Second, the search filters available on student list products enable universities to target certain prospects and exclude others.
+
+Although CB began selling names fifty years ago [@belkin2019-studata], this report is the first empirical analysis of student list purchases. We collected data by issuing public records requests to public universities in four states. This was a challenging and imperfect data collection. At the conclusion of this first set of analyses, we have more questions than answers. Paraphrasing @RN4615[p. 362], we call it a start.
+
+Research question 1 asks, which filter criteria were selected in student lists purchased by universities in our
+sample? The most commonly specified filters were high school graduating class, SAT or PSAT score range, high school GPA, state and zip code. However, each order specified multiple filters. At minimum, most orders specified high school graduating class, one or more academic achievement filters, and one or more geographic filters. Only 10% of orders by research universities filtered on AP score. The orders we analyzed were mostly purchased prior to the Covid Pandemic, which catalyzed the test-optional movement. Universities may respond to the decline in SAT/PSAT test-takers by filtering on AP score, which raises equity concerns due to inequality in which high schools offer robust AP curricula [CITE AWILDA?].
+
+Research question 2 asks, what are the characteristics of prospects included in student lists purchased? The ma/doctoral universities in our sample primarily purchased in-state prospects. Across all ma/doctoral universities, in-state prospects were 46% white, 10% Asian, 26% Latinx, and 8% Black. In-state prospects by research universities were 41% white, 14% Asian, 32% Latinx, and 5% Black. Similar to our analysis of off-campus recruiting visits [@RN4758], research universities in our sample purchased many more out-of-state prospects than in-state prospects. These out-of-state prospects were more affluent than in-state prospects and were more likely to identify as white and Asian in-state prospects, and were somewhat more likely to attend a private school than in-state prospects.
+
+However, data collection challenges yielded a non-random sample -- requiring a case study research design -- limiting the external validity of findings for RQ1 and RQ2, which were substantially driven by universities that purchased many lists and many prospects. We also collected data about student lists purchased from ACT and other vendors (and also data about off-campus recruiting visits), but have lacked the capacity to process and analyze these data.
+
+Policymakers should commission a more systematic data collection of student list purchases -- and other recruiting interventions -- in order to develop externally valid evidence about university recruiting behavior. A basic question is how student list purchases -- number or orders, search filters, volume of names -- differ by more granular typologies of university type. Other important questions include, to what extent do universities filter on five-digit zip codes? Are filtered zip codes highly correlated with race and income? Do test-optional universities continue to filter on SAT/ACT test scores? Have universities responded the decline in test-takers by filtering on AP test scores and What are the equity consequences of filtering by AP score?  To what extent do universities purchase student lists to reach out to prospects not being targeted by other interventions (e.g., off-campus recruiting visits)? Finally, many universities outsource student list purchases to an enrollment management consulting firm (e.g., EAB, Ruffalo Noel Levitz). Do certain firms tend to purchase lists that raise concerns for equality of opportunity? 
+
+Research question 3 asks, what is the relationship between student list filter criteria and the characteristics of
+purchased prospects? This question is about student list products rather than university behavior. Here, we are on firmer ground from an external validity perspective because a particular set of filter criteria yields the same set of prospects regardless of which university places the order.
+
+Analyses for RQ3 centered on "deep dives" of four commonly observed or thematically important order combinations. First, we show that filtering for affluent zip codes causes racial diversity to decline substantially. Second, analyses of the Segment product revealed troubling patterns of racial and socioeconomic exclusion. However, we could not assess the extent to which these patterns were driven by Segment versus other filters utilized (e.g., SAT score). Future research should examine which combinations of Segment neighborhood and school clusters reproduce racial redlining (and reverse-redlining in the case of for-profits) and/or systematic exclusion of rural student. Third, orders that filtered for unerrepresented students of color with relatively high test scores tended to target affluent students, who often attended predominantly white high schools. Finally, our analysis of orders that target females based on AP score suggest that the Women in STEM movement should do some soul searching about its relationship to race and class.
+
+__Cost of efficiency__. Over the past decade, the set of search filters offered by College Board and ACT have become more elaborate (e.g., Encoura [Enrollment Predictor](https://helpcenter.encoura.org/hc/en-us/articles/360035260452-Prospect-Search-Filters-), College Board [Environmental Attributes](https://www.youtube.com/watch?v=VmTU9sb4ZiY). The rationale for new search filters is efficiency, meaning that universities only purchase the names of "best-fit" prospects who are likely to apply and enroll. For example, College Board Student Search promises to "create a real pipeline of best-fit prospects" [[CITE](https://cbsearch.collegeboard.org/solutions)] while ACT Encoura uses the tag-line "find and engage your best-fit students" [[CITE](https://encoura.org/)]. The set of search filters now available in College Board and ACT student list products enable universities to execute fine-grained purchases that target particular prospects with pin-point accuracy, while excluding all others. 
+
+
+
+<!-- where the pdfs of above cites are saved - cuz CB/ACT may change this
+C:\Users\ozanj\Google Drive\student_list_policy\literature\industry\ACT\Encoura - Where Informed Decisions Begin_4_29_2022.pdf
+C:\Users\ozanj\Google Drive\student_list_policy\literature\industry\college_board\Solutions _ CB Search_4_29_2022.pdf
+-->
+
+We also observe this emphasis on efficiency in the marketing materials of enrollment management consulting firms, which purchase student lists on behalf of universities. For example, Ruffalo Noel Levitz states the "[RNL Student Search and Engagement](https://www.ruffalonl.com/enrollment-management-solutions/building-demand/student-search-and-engagement/)" product enables universities to "target the right students in the right markets" by making "the most efficient name purchases using predictive modeling" [@ruffalo_noel_levitz_2021]. Fire Engine Red states that their "[student search modeling](https://www.fire-engine-red.com/data-services/)" product "can save your school money, by helping you purchase only the names of students who are most likely to apply and enroll" [@fire_engine_red_2021, para.3].
+
+<!-- 
+C:\Users\ozanj\Google Drive\student_list_brief\literature\industry\other_em\Data Services _ Search Modeling _ Fire Engine RED.pdf
+
+C:\Users\ozanj\Google Drive\student_list_brief\literature\industry\ruffalo_noel_levitz\College Student Search and Engagement _ RNL.pdf
+-->
+
+The emphasis on efficiency -- in both the design and usage of student list products -- has important consequences for equality of opportunity. We argue that talented prospects are excluded in the name of efficiency. Our analyses show that filtering for affluent zip codes causes racial diversity to plummet. Geodemographic filters like Segment and [Environmental Attributes](https://www.youtube.com/watch?v=VmTU9sb4ZiY) exclude prospects based on the historical college-going behaviors of students from the same neighborhood or school. From an equality of opportunity perspective, what is the justification for student list products that allow universities to target prospects from one zip code and exlude prospects from the zip code across the street? What is the justification for products that allow universities to filter prospects based on the past behavior of their peers?
+
+Universities care about efficient name buys only because the price of names is so high. In 2021, College Board charged \$0.50 per name [@RN0002]. In 2022, College Board followed the example of ACT by transitioning to a subscription pricing model, in which higher tier plans offer more sophisticated filters (e.g., Segment Analysis Service, Interest in My Peers) and services. @list_biz argues that the test-optional movement will end the College Board and ACT student list oligopoly. For-profit vendors (e.g., EAB, PowerSchool) are poised to capture market share ceded by College Board and ACT. However, we suspect that this transition will cause the price of names to increase, because these for-profit vendors have learned to maximize profit by providing names only to universities that pay for expensive consulting and/or subscription services.
+
+The national voter databases created by U.S. political parties offer an interesting counter-example to student lists. The basic input to these databases consists of state and local voter files, which are essentially free public records [@RN4731]. By contrast, the basic inputs for student lists are propietary and they are expensive, which creates the rationale for efficiency. In _Student List Policy_, we propose a "public option" student list product developed by a consortium of states, based on data from statewide longitudinal data systems. The "names" of students who opt in would be provided for free to eligible postsecondary institutions, thereby eliminating the rationale for efficient name buys that target some prospects but not others.
+
+? ADD PARAGRAPH ON OUTSOURCING OR JUST END HERE? PROBABLY END HERE?
+
+# References
+
+<div id="refs"></div>
+
+
+
