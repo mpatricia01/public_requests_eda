@@ -564,7 +564,7 @@ rq3 %>%
       'pct_female' = '% Female',
       'pct_genderother' = '% Other ',
       'pct_gendermissing' = '% Missing ',
-      'med_income' = 'Median household income (mean)',
+      'med_income' = 'Median income',
       'pct_city' = '% City',
       'pct_suburban' = '% Suburban',
       'pct_fringe' = '% Rural - Fringe',
@@ -574,14 +574,13 @@ rq3 %>%
     )
   ) %>%
   arrange(row_subj) %>% 
-  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Segment', 'CBSA', 'Race', 'Gender'), align = c('l', rep('r', 12))) %>% 
-  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 4, 'Demographic' = 2), bold = T) %>% 
+  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Geomarket', 'Segment', 'CBSA', 'Race', 'Gender'), align = c('l', rep('r', 13))) %>% 
+  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 5, 'Demographic' = 2), bold = T) %>% 
   group_rows('Location', 2, 3) %>%
   group_rows('Race/ethnicity', 4, 13) %>%
   group_rows('Gender', 14, 17) %>%
-  group_rows('Income', 18, 18) %>%
+  group_rows('Household income', 18, 18) %>%
   group_rows('Locale', 19, 24) %>%
-  # gsub('NA', ' ', .) %>%
   row_spec(0, bold = T) %>%
   kable_styling(latex_options = c('hold_position', 'scale_down'))
 ```

@@ -497,7 +497,7 @@ get_rq3_data <- function(filter_var) {
     setNames(c('row_subj', filter_var))
 }
 
-rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 'filter_ap_score', 'filter_zip', 'filter_states_fil', 'filter_segment', 'filter_cbsa', 'filter_race', 'filter_gender') %>% 
+rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 'filter_ap_score', 'filter_zip', 'filter_states_fil', 'filter_geomarket', 'filter_segment', 'filter_cbsa', 'filter_race', 'filter_gender') %>% 
   lapply(get_rq3_data) %>% 
   reduce(left_join, by = 'row_subj') %>% 
   mutate_all(~replace(., is.na(.), 0))
