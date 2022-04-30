@@ -183,7 +183,7 @@ library(haven)
 ################### CREATING AND CLEANING OUT_OF_STATE & GENDER VARS NEEDED FOR FUNCTION
     
     # KS CHECKS
-    # # non-res categories based on country + state (check for missingness)
+    # # non-res categories based on country , state (check for missingness)
     # lists_orders_zip_hs_df %>% count(stu_country) %>% print(n=200) #1245 missing countries
     # 
     # 
@@ -235,7 +235,7 @@ library(haven)
     orders_df %>% group_by(univ_type) %>%
       summarise(n=n_distinct(order_num)) 
     
-    # how many orders total + students total; then by research vs regional
+    # how many orders total , students total; then by research vs regional
         orders_df %>% count()
         
         orders_df %>%
@@ -262,8 +262,8 @@ library(haven)
         orders_fig_totals$total_orders_st <- str_c(orders_fig_totals$total_orders, ' orders')
       
         #CURERENTLY FIGURE 7: Orders purchased by carnegie classification
-        ggplot(orders_fig_totals, aes(x=reorder(university, -total_students), y=total_students, fill=univ_type)) +
-            geom_bar(stat = "identity") +
+        ggplot(orders_fig_totals, aes(x=reorder(university, -total_students), y=total_students, fill=univ_type)) ,
+            geom_bar(stat = "identity") ,
             geom_text(aes(label=total_orders_st), vjust=0, size=2.5) 
         
         
@@ -369,11 +369,11 @@ library(haven)
         orders_filters2 <- rbind(orders_filters_research,orders_filters_regional)
         
         #CURRENTLY FIGURE 8: Filters used in order purchases
-        ggplot(orders_filters2, aes(x=reorder(filters, V1), y=V1)) +
-            geom_bar(stat = "identity") +
-          facet_wrap(~type) +
-            ylab("Number of Orders") +
-            geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) +
+        ggplot(orders_filters2, aes(x=reorder(filters, V1), y=V1)) ,
+            geom_bar(stat = "identity") ,
+          facet_wrap(~type) ,
+            ylab("Number of Orders") ,
+            geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) ,
             coord_flip()
         
         
@@ -410,9 +410,9 @@ library(haven)
         
         
         #CURRENTLY TABLE 3: FILTER BY GPA RANGES
-        ggplot(table_gpa, aes(x=gpa_low, y=n_low, fill=type)) +
-          geom_bar(position="dodge", stat="identity") +
-          ylab("Number of Orders") +
+        ggplot(table_gpa, aes(x=gpa_low, y=n_low, fill=type)) ,
+          geom_bar(position="dodge", stat="identity") ,
+          ylab("Number of Orders") ,
           geom_text(aes(label = pct_low), hjust = -0.1, colour = "black", size=2) 
         
         
@@ -428,7 +428,7 @@ library(haven)
         orders_df$brks <- cut(orders_df$psat_score_min, 
                               breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
                               labels=c("<1000", "1000-1100", "1110-1200", 
-                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
+                                       "1210-1300", "1310-1400", "1410-1500", "1500,"))
         
         orders_df %>% group_by(psat_score_min) %>%
           summarise(n_high = n()) %>%
@@ -445,7 +445,7 @@ library(haven)
         orders_df$brks <- cut(orders_df$psat_score_max, 
                               breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
                               labels=c("<1000", "1000-1100", "1110-1200", 
-                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
+                                       "1210-1300", "1310-1400", "1410-1500", "1500,"))
         
         psat_max<- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type,brks) %>%
           summarise(n_high = n()) %>%
@@ -461,7 +461,7 @@ library(haven)
         orders_df$brks <- cut(orders_df$sat_score_min, 
                               breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
                               labels=c("<1000", "1000-1100", "1110-1200", 
-                                       "1210-1300", "1310-1400", "1410-1500", "1500+"))
+                                       "1210-1300", "1310-1400", "1410-1500", "1500,"))
         
         orders_df %>% group_by(sat_score_min) %>%
           summarise(n_high = n()) %>%
@@ -480,7 +480,7 @@ library(haven)
         orders_df$brks <- cut(orders_df$sat_score_max, 
                                       breaks=c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620), 
                                       labels=c("<1000", "1000-1100", "1110-1200", 
-                                               "1210-1300", "1310-1400", "1410-1500", "1500+"))
+                                               "1210-1300", "1310-1400", "1410-1500", "1500,"))
         
         sat_max <- orders_df %>% filter(!is.na(brks)) %>% group_by(univ_type, brks) %>%
           summarise(n_high = n()) %>%
@@ -498,23 +498,23 @@ library(haven)
         
         #NEWFIGURE: PSAT/SAT Filters used in order purchases --min thresholds
         table_scores %>% filter(range=="min") %>%
-        ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) +
-          geom_bar(position="dodge", stat="identity") +
-          facet_wrap(~test) +
-          ylab("Percent of Orders") +
-          ggtitle("Minimum Score Filters") +
-          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) +
+        ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) ,
+          geom_bar(position="dodge", stat="identity") ,
+          facet_wrap(~test) ,
+          ylab("Percent of Orders") ,
+          ggtitle("Minimum Score Filters") ,
+          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) ,
           coord_flip()
         
         
         #NEWFIGURE: PSAT/SAT Filters used in order purchases--max thresholds
         table_scores %>% filter(range=="max") %>%
-          ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) +
-          geom_bar(position="dodge", stat="identity") +
-          facet_wrap(~test) +
-          ylab("Percent of Orders") +
-          ggtitle("Maximum Score Filters") +
-          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) +
+          ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) ,
+          geom_bar(position="dodge", stat="identity") ,
+          facet_wrap(~test) ,
+          ylab("Percent of Orders") ,
+          ggtitle("Maximum Score Filters") ,
+          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) ,
           coord_flip()
         
         
@@ -567,10 +567,10 @@ library(haven)
             summarise(n = n()) %>%
             mutate(pct = round(n / sum(n)*100, digits=1))
         
-        ggplot(table_ap, aes(x=reorder(value, n), y=n)) +
-            geom_bar(stat = "identity") +
-            ylab("Number of Orders") +
-            geom_text(aes(label = pct), hjust = -0.1, colour = "black", size=2) +
+        ggplot(table_ap, aes(x=reorder(value, n), y=n)) ,
+            geom_bar(stat = "identity") ,
+            ylab("Number of Orders") ,
+            geom_text(aes(label = pct), hjust = -0.1, colour = "black", size=2) ,
             coord_flip()
        
         
@@ -649,10 +649,10 @@ library(haven)
             )
             
             # CURRENT NOT IN EMPIRICAL REPORT: STATE FILTER MAPS--Dummy coded
-            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey")+ 
-              theme(panel.background = element_rect(colour = "black")) +
-              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") + 
-              theme(legend.position = "right") +
+            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey"), 
+              theme(panel.background = element_rect(colour = "black")) ,
+              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") , 
+              theme(legend.position = "right") ,
               labs(title = "State Filters for Regional Universities")
         
             # CURRENT NOT IN EMPIRICAL REPORT: STATE FILTER MAPS--Scale by # of Orders using filter
@@ -667,12 +667,12 @@ library(haven)
               frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
             )
             
-            plot_usmap(regions = "states", data=states, values = "frequency",color="grey")+ 
-              theme(panel.background = element_rect(colour = "black")) +
+            plot_usmap(regions = "states", data=states, values = "frequency",color="grey"), 
+              theme(panel.background = element_rect(colour = "black")) ,
               scale_fill_continuous(low = "white", high ="darkgreen", 
                                     name = "filtered_state",label = scales::comma,
-                                    limits = c(0,35)) + 
-              theme(legend.position = "right") +
+                                    limits = c(0,35)) , 
+              theme(legend.position = "right") ,
               labs(title = "State Filters for Regional Universities")
             
             
@@ -759,10 +759,10 @@ library(haven)
             
           
             #NOT CURRENT IN FIGURES: BUT ALL STATES FILTERED BY RESEARCH UNIVS
-            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey")+ 
-              theme(panel.background = element_rect(colour = "black")) +
-              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") + 
-              theme(legend.position = "right") +
+            plot_usmap(regions = "states", data=states, values = "filtered_state",color="grey"), 
+              theme(panel.background = element_rect(colour = "black")) ,
+              scale_fill_manual(values = c(`0` = "white", `1` = "blue"), name = "filtered_state") , 
+              theme(legend.position = "right") ,
               labs(title = "State Filters for research Universities")
             
             
@@ -778,12 +778,12 @@ library(haven)
               frequency = if_else(is.na(frequency), as.double(0), as.double(frequency))
             )
             
-            plot_usmap(regions = "states", data=states, values = "frequency",color="grey")+ 
-              theme(panel.background = element_rect(colour = "black")) +
+            plot_usmap(regions = "states", data=states, values = "frequency",color="grey"), 
+              theme(panel.background = element_rect(colour = "black")) ,
               scale_fill_continuous(low = "blue", high ="green", 
                                     name = "filtered_state",label = scales::comma,
-                                    limits = c(0,120)) + 
-              theme(legend.position = "right") +
+                                    limits = c(0,120)) , 
+              theme(legend.position = "right") ,
               labs(title = "State Filters for Research Universities")
             
             
@@ -811,10 +811,6 @@ library(haven)
         
         
         orders_filters <- orders_df %>% 
-          select(univ_type, hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
-                 gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
-                 psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
-                 gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
           mutate(
             hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
             zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
@@ -829,17 +825,46 @@ library(haven)
             gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
             rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
             geomarket = ifelse(!is.na(geomarket), 1, 0), 
-            ap_score = ifelse(!is.na(ap_scores), 1, 0))
+            ap_score = ifelse(!is.na(ap_scores), 1, 0),
+            county = ifelse(!is.na(county), 1, 0),
+            college_type = ifelse(!is.na(college_type), 1, 0),
+            edu_aspirations = ifelse(!is.na(edu_aspirations), 1, 0),
+            rotc = ifelse(!is.na(rotc_plans), 1, 0),
+            major = ifelse(!is.na(major), 1, 0),
+            citizenship = ifelse(!is.na(citizenship), 1, 0),
+            low_ses = ifelse(!is.na(low_ses), 1, 0),
+            college_size = ifelse(!is.na(college_size), 1, 0),
+            national_recognition_programs = ifelse(!is.na(national_recognition_programs), 1, 0),
+            college_location = ifelse(!is.na(college_location), 1, 0),
+            financial_aid = ifelse(!is.na(financial_aid), 1, 0),
+            college_setting = ifelse(!is.na(college_setting), 1, 0),
+            college_studentbody = ifelse(!is.na(college_student_body), 1, 0),
+            college_living_plans = ifelse(!is.na(college_living_plans), 1, 0),
+            proximity_search = ifelse(!is.na(proximity_search), 1, 0),
+            hs_math = ifelse(!is.na(hs_math), 1, 0),
+            first_gen_parent = ifelse(!is.na(first_gen_parent_edu), 1, 0),
+            sat_math = ifelse((!is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max)), 1, 0), 
+            sat_writing = ifelse((!is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max)), 1, 0), 
+            sat_reading = ifelse((!is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max)), 1, 0), 
+          )
         
         
         
        filter_combos <- orders_filters %>% group_by(univ_type) %>%
             select(hsgrad_class, zip, states_fil, cbsa, 
                    intl, segment, race, gender,sat, psat,
-                   gpa, rank, geomarket, ap_score) %>%
-            mutate(filter_sum = hsgrad_class + zip + states_fil + cbsa + 
-                             intl + segment + race + gender + sat + psat +
-                             gpa + rank + geomarket + ap_score)
+                   gpa, rank, geomarket, ap_score,  county, college_type,
+                   edu_aspirations, rotc, major, citizenship, low_ses, college_size,
+                   national_recognition_programs, college_location, financial_aid,
+                   college_setting, college_studentbody, college_living_plans, proximity_search, hs_math, first_gen_parent,
+                   sat_math, sat_writing, sat_reading, univ_type) %>%
+            mutate(filter_sum = hsgrad_class , zip , states_fil , cbsa , 
+                             intl , segment , race , gender , sat , psat ,
+                             gpa , rank , geomarket , ap_score , county ,  college_type , 
+                   edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
+                   national_recognition_programs ,  college_location ,  financial_aid , 
+                   college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
+                   sat_math ,  sat_writing ,  sat_reading)
       
         
         filter_combos <- filter_combos %>% 
@@ -857,7 +882,27 @@ library(haven)
                 gpa = ifelse(gpa==1, "gpa", NA), 
                 rank = ifelse(rank==1, "rank", NA), 
                 geomarket = ifelse(geomarket==1, "geomarket", NA), 
-                ap_score = ifelse(ap_score==1, "APscores", NA))
+                ap_score = ifelse(ap_score==1, "APscores", NA),
+                county = ifelse(county==1, "County", NA),
+                college_type = ifelse(college_type==1, "College Type", NA), 
+                edu_aspirations = ifelse(edu_aspirations==1, "Edu Aspirations", NA),
+                rotc = ifelse(rotc==1, "ROTC", NA),
+                major = ifelse(major==1, "Major", NA),  
+                citizenship = ifelse(citizenship==1, "Citizenship", NA),
+                low_ses = ifelse(low_ses==1, "Low SES", NA),
+                college_size = ifelse(college_size==1, "College Size", NA), 
+                national_recognition_programs = ifelse(national_recognition_programs==1, "National Recognition Programs", NA),
+                college_location = ifelse(college_location==1, "College Location", NA),
+                financial_aid = ifelse(financial_aid==1, "Financial Aid", NA),
+                college_setting = ifelse(college_setting==1, "College Setting", NA),
+                college_studentbody = ifelse(college_studentbody==1, "College Student Body", NA),
+                college_living_plans = ifelse(college_living_plans==1, "College Living Plans", NA),
+                proximity_search = ifelse(proximity_search==1, "Proximity Search", NA),
+                hs_math = ifelse(hs_math==1, "HS Math", NA),
+                first_gen_parent = ifelse(first_gen_parent==1, "First Gen", NA), 
+                sat_math = ifelse(sat_math==1, "SAT Math", NA),
+                sat_writing = ifelse(sat_writing==1, "SAT Writing", NA),
+                sat_reading = ifelse(sat_reading==1, "SAT Reading", NA))
         
         
         filter_combos[filter_combos == "NA"] <- NA_character_
@@ -866,28 +911,49 @@ library(haven)
         filter_combos_regional <- filter_combos %>% filter(univ_type=="regional")
         
         combos_research <- unique(filter_combos_research[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
-                                         "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+                                         "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score",
+                                         "county" ,  "college_type" , "edu_aspirations" ,  "rotc" ,  "major" ,  "citizenship" ,  "low_ses" ,  "college_size" , 
+                                           "national_recognition_programs" ,  "college_location" ,  "financial_aid" , 
+                                           "college_setting" ,  "college_studentbody" ,  "college_living_plans" ,  "proximity_search" ,  "hs_math" ,  "first_gen_parent" , 
+                                           "sat_math" ,  "sat_writing" ,  "sat_reading")], na.rm = TRUE)
         
         
         combos_regional <- unique(filter_combos_regional[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
-                                                           "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+                                                           "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score",
+                                                           "county" ,  "college_type" , "edu_aspirations" ,  "rotc" ,  "major" ,  "citizenship" ,  "low_ses" ,  "college_size" , 
+                                                           "national_recognition_programs" ,  "college_location" ,  "financial_aid" , 
+                                                           "college_setting" ,  "college_studentbody" ,  "college_living_plans" ,  "proximity_search" ,  "hs_math" ,  "first_gen_parent" , 
+                                                           "sat_math" ,  "sat_writing" ,  "sat_reading")], na.rm = TRUE)
         
         
         combos <- unique(filter_combos[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
-                      "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score")], na.rm = TRUE)
+                                         "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score",
+                                         "county" ,  "college_type" , "edu_aspirations" ,  "rotc" ,  "major" ,  "citizenship" ,  "low_ses" ,  "college_size" , 
+                                         "national_recognition_programs" ,  "college_location" ,  "financial_aid" , 
+                                         "college_setting" ,  "college_studentbody" ,  "college_living_plans" ,  "proximity_search" ,  "hs_math" ,  "first_gen_parent" , 
+                                         "sat_math" ,  "sat_writing" ,  "sat_reading")], na.rm = TRUE)
         
      
        
         #CURRENTLY TABLE 7: UPDATE SHOW RESEARCH VERSUS REGIONAL
             df_0_research <- group_by(filter_combos_research, hsgrad_class, zip, states_fil, 
                           cbsa, intl, segment, race, gender, 
-                          sat, psat, gpa, rank, geomarket, ap_score) %>% count()
+                          sat, psat, gpa, rank, geomarket, ap_score,
+                          county ,  college_type , 
+                            edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
+                            national_recognition_programs ,  college_location ,  financial_aid , 
+                            college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
+                            sat_math ,  sat_writing ,  sat_reading) %>% count()
             
             df_0_research %>% arrange(-n)
 
             df_0_research <- df_0_research  %>% unite("string", c(hsgrad_class, zip, states_fil, 
                                                 cbsa, intl, segment, race, gender, 
-                                                sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
+                                                sat, psat, gpa, rank, geomarket, ap_score, county ,  college_type , 
+                                                edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
+                                                national_recognition_programs ,  college_location ,  financial_aid , 
+                                                college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
+                                                sat_math ,  sat_writing ,  sat_reading), sep=",", remove = TRUE, na.rm = TRUE)
             
             
             df_0_research <- df_0_research %>% arrange(-n)  # %>% head(10)
@@ -898,13 +964,21 @@ library(haven)
             
             df_0_regional <- group_by(filter_combos_regional, hsgrad_class, zip, states_fil, 
                                       cbsa, intl, segment, race, gender, 
-                                      sat, psat, gpa, rank, geomarket, ap_score) %>% count()
+                                      sat, psat, gpa, rank, geomarket, ap_score, county ,  college_type , 
+                                      edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
+                                      national_recognition_programs ,  college_location ,  financial_aid , 
+                                      college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
+                                      sat_math ,  sat_writing ,  sat_reading) %>% count()
             
             df_0_regional %>% arrange(-n)
             
             df_0_regional <- df_0_regional  %>% unite("string", c(hsgrad_class, zip, states_fil, 
                                                                   cbsa, intl, segment, race, gender, 
-                                                                  sat, psat, gpa, rank, geomarket, ap_score), sep=",", remove = TRUE, na.rm = TRUE)
+                                                                  sat, psat, gpa, rank, geomarket, ap_score, county ,  college_type , 
+                                                                  edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
+                                                                  national_recognition_programs ,  college_location ,  financial_aid , 
+                                                                  college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
+                                                                  sat_math ,  sat_writing ,  sat_reading), sep=",", remove = TRUE, na.rm = TRUE)
             
             
             df_0_regional <- df_0_regional %>% arrange(-n)  # %>% head(10)
@@ -934,7 +1008,7 @@ library(haven)
             #loop through columns via filters (ex: all students, in-state, out-state, etc. )
             for (i in columns) {
                 
-                counter = counter+1
+                counter = counter,1
                 
                 if(i=="all_domestic") {
                  filter_string=c("stu_in_us==1")
@@ -1004,7 +1078,7 @@ library(haven)
 
                 
                 #first loop creates the master_df
-                #second + loops appends the master df
+                #second , loops appends the master df
                 if(counter==1){master_df <- as.data.frame(temp_df)}
                 if(counter>1){master_df <- merge(master_df,temp_df, by="row_subj", sort=FALSE)}
 
@@ -1114,7 +1188,7 @@ library(haven)
           #loop through columns via filters (ex: all students, in-state, out-state, etc. )
           for (i in columns) {
             
-            counter = counter+1
+            counter = counter,1
             
             if(i=="all_domestic") {
               filter_string=c("stu_in_us==1")
@@ -1205,7 +1279,7 @@ library(haven)
             
             
             #first loop creates the master_df
-            #second + loops appends the master df
+            #second , loops appends the master df
             if(counter==1){master_df <- as.data.frame(temp_df)}
             if(counter>1){master_df <- merge(master_df,temp_df, by="row_subj", sort=FALSE)}
             
@@ -1342,7 +1416,7 @@ library(haven)
   #       zip_figure_race <- zip_figure_race %>% group_by(population,race) %>% 
   #         summarize(mean(pct, na.rm = TRUE)) 
   #       
-  #       ggplot(zip_figure_race, aes(fill=population, y=`mean(pct, na.rm = TRUE)`, x=race)) + 
+  #       ggplot(zip_figure_race, aes(fill=population, y=`mean(pct, na.rm = TRUE)`, x=race)) , 
   #         geom_bar(position="dodge", stat="identity")
   # 
   #    
@@ -1418,7 +1492,7 @@ library(haven)
           mutate(V1 = n / sum(n) * 100) 
         
         #just a plot to check patterns
-        ggplot(lists_asu_la_sat_med_race, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
+        ggplot(lists_asu_la_sat_med_race, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) , 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1440,7 +1514,7 @@ library(haven)
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(lists_asu_la_sat_med_inc, aes(y=median_income, x=top10pctzip)) + 
+        ggplot(lists_asu_la_sat_med_inc, aes(y=median_income, x=top10pctzip)) , 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1465,14 +1539,14 @@ library(haven)
         top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% count(stu_race_cb) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-        ggplot(top20pctzips_figure, aes(fill=top20pctzip, y=V1, x=stu_race_cb)) + 
+        ggplot(top20pctzips_figure, aes(fill=top20pctzip, y=V1, x=stu_race_cb)) , 
           geom_bar(position="dodge", stat="identity")
         
         top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% 
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(top20pctzips_figure, aes(y=median_income, x=top20pctzip)) + 
+        ggplot(top20pctzips_figure, aes(y=median_income, x=top20pctzip)) , 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1499,14 +1573,14 @@ library(haven)
         top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-        ggplot(top10pctzips_figure, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
+        ggplot(top10pctzips_figure, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) , 
           geom_bar(position="dodge", stat="identity")
         
         top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% 
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(top10pctzips_figure, aes(y=median_income, x=top10pctzip)) + 
+        ggplot(top10pctzips_figure, aes(y=median_income, x=top10pctzip)) , 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1647,8 +1721,8 @@ library(haven)
       table_texasam_zip <- table_texasam_zip %>% arrange(stu_race_cb, ppt_diff_stu_pop)
       
       # NOTE  ZIPS less than 750 are out of state             
-      ggplot(table_texasam_zip, aes(fill=stu_race_cb, y=ppt_diff_stu_pop, x=zip_3digit)) + 
-        geom_bar(position="dodge", stat="identity") + coord_flip()
+      ggplot(table_texasam_zip, aes(fill=stu_race_cb, y=ppt_diff_stu_pop, x=zip_3digit)) , 
+        geom_bar(position="dodge", stat="identity") , coord_flip()
       
       
       
@@ -1765,7 +1839,7 @@ library(haven)
        
      
           
-################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES--  SERGMENT + TEST SCORES UNIV OF ILLINOIS URBANA-CHAMPAIGN Example
+################### ANALYSIS & VISUALS FOR RQ3: ZIP CODE & TEST SCORES--  SERGMENT , TEST SCORES UNIV OF ILLINOIS URBANA-CHAMPAIGN Example
           
           # check filters across orders that use segment; these filter by segment at the state level but not cbsa
           lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_states_fil==1 &  filter_cbsa!=1 &  filter_psat==1) %>% count(ord_num)
@@ -1840,10 +1914,10 @@ library(haven)
                 Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
                 Black = sum(total_black, na.rm = TRUE)/tot_students*100,
                 Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
-                AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+                AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american , alaska native , native hawaiaan , other pacific islander
                 Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
                 #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
-                #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+                #pct_all = pct_white , pct_asian , pct_black , pct_hispanic , pct_native , pct_tworaces , pct_unknown
             )
         
         
@@ -1886,10 +1960,10 @@ library(haven)
             Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
             Black = sum(total_black, na.rm = TRUE)/tot_students*100,
             Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
-            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american , alaska native , native hawaiaan , other pacific islander
             Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
             #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
-            #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+            #pct_all = pct_white , pct_asian , pct_black , pct_hispanic , pct_native , pct_tworaces , pct_unknown
           )
         
         
@@ -1932,10 +2006,10 @@ library(haven)
             Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
             Black = sum(total_black, na.rm = TRUE)/tot_students*100,
             Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
-            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+            AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american , alaska native , native hawaiaan , other pacific islander
             Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
             #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
-            #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+            #pct_all = pct_white , pct_asian , pct_black , pct_hispanic , pct_native , pct_tworaces , pct_unknown
           )  
         
     fig_rq3_segment_race <- rbind(philly_studentlist, philly_metro, ny_studentlist, ny_metro, la_studentlist, la_metro)
@@ -1993,7 +2067,7 @@ library(haven)
           
         # filters used
           
-              # GPA-- all orders used high A+ and low of B (urbana did low of B-)
+              # GPA-- all orders used high A, and low of B (urbana did low of B-)
               orders_gender %>% group_by(instate) %>% count(gpa_high, gpa_low)
               orders_gender_urbana %>% count(gpa_high, gpa_low)
               
@@ -2100,10 +2174,10 @@ library(haven)
                       Asian = sum(total_asian, na.rm = TRUE)/tot_students*100,
                       Black = sum(total_black, na.rm = TRUE)/tot_students*100,
                       Latinx = sum(total_hispanic, na.rm = TRUE)/tot_students*100,
-                      AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american + alaska native + native hawaiaan + other pacific islander
+                      AIAN = sum(total_native, na.rm = TRUE)/tot_students*100, # native american , alaska native , native hawaiaan , other pacific islander
                       Multiracial = sum(total_tworaces, na.rm = TRUE)/tot_students*100,
                       #pct_stu_unknown = sum(total_unknown, na.rm = TRUE)/tot_students*100,
-                      #pct_all = pct_white + pct_asian + pct_black + pct_hispanic + pct_native + pct_tworaces + pct_unknown
+                      #pct_all = pct_white , pct_asian , pct_black , pct_hispanic , pct_native , pct_tworaces , pct_unknown
                     )
                   
                   
@@ -2163,7 +2237,7 @@ library(haven)
       #                                       list_gender_metro %>% count(stu_zip_code) %>% arrange(-n)
       #                                       
       #      
-      #      #aggregate student list data to zipcode-level with total num prospects + prospect race/ethnicity       
+      #      #aggregate student list data to zipcode-level with total num prospects , prospect race/ethnicity       
       #       list_gender_metro <- list_gender_metro %>% select(stu_zip_code, stu_race_noresponse, stu_race_missing,
       #                                                         stu_race_aian, stu_race_asian, stu_race_black,
       #                                                         stu_race_latinx, stu_race_nhpi, stu_race_white,
@@ -2195,7 +2269,7 @@ library(haven)
       #         purchased_zip_dummy = if_else(tot_prospects>=1,1,0),
       #         purchased_zip = if_else(tot_prospects>=1,"1-5","0"),
       #         purchased_zip = if_else(tot_prospects>5,"6-10",purchased_zip),
-      #         purchased_zip = if_else(tot_prospects>10,"10+",purchased_zip),
+      #         purchased_zip = if_else(tot_prospects>10,"10,",purchased_zip),
       #         purchased_zip = as.factor(purchased_zip))
       #       
       #             #look at number of AI students rather than proportion across purchased zips
@@ -2207,7 +2281,7 @@ library(haven)
       #       #purchased versus non purchased zips in metro
       #         metro_topzips %>% group_by(purchased_zip_dummy) %>% count()
       #       
-      #       metro_topzips$purchased_zip <-  factor(metro_topzips$purchased_zip, levels = c("0", "1-5", "6-10", "10+"))
+      #       metro_topzips$purchased_zip <-  factor(metro_topzips$purchased_zip, levels = c("0", "1-5", "6-10", "10,"))
       # 
       #       metro_topzips %>% group_by(purchased_zip) %>% count()
       # 
@@ -2245,10 +2319,10 @@ library(haven)
       #      )
       #      
       #      #compare to population of 15-19 year olds
-      #      ggplot(figure_gender_long, aes(fill=population, y=pct, x=race)) + 
-      #        geom_bar(position="dodge", stat="identity") +
-      #        ggtitle("Texas: Non-Purchased versus Purchased Prospects' Zip Codes") +
-      #        facet_wrap(~purchased_zip_dummy) +
+      #      ggplot(figure_gender_long, aes(fill=population, y=pct, x=race)) , 
+      #        geom_bar(position="dodge", stat="identity") ,
+      #        ggtitle("Texas: Non-Purchased versus Purchased Prospects' Zip Codes") ,
+      #        facet_wrap(~purchased_zip_dummy) ,
       #        xlab("")
       # 
       #      #race/ethnicity of Texas Prospects
@@ -2281,9 +2355,9 @@ library(haven)
       #      
       #      tx <- na.omit(tx)
       #      
-      #      ggplot(tx, aes(fill=population, y=V1, x=race)) + 
-      #        geom_bar(position="dodge", stat="identity") +
-      #        ggtitle("Texas Test Takers Versus Purchased Prospects") +
+      #      ggplot(tx, aes(fill=population, y=V1, x=race)) , 
+      #        geom_bar(position="dodge", stat="identity") ,
+      #        ggtitle("Texas Test Takers Versus Purchased Prospects") ,
       #        ylab("Percent")
            
            # ### filter only schools in Boston Metro for AP test takers
@@ -2363,8 +2437,8 @@ library(haven)
           #NEW FIGURE FOR RQ1 under DEMOGRAPHIC FILTERS
             race_orders_aggregate <- race_orders %>% filter(!is.na(race_filter)) %>% group_by(univ_type) %>% count(race_filter)
             
-            ggplot(race_orders_aggregate, aes(fill=univ_type, y=n, x=race_filter)) + 
-              geom_bar(position="stack", stat="identity") +
+            ggplot(race_orders_aggregate, aes(fill=univ_type, y=n, x=race_filter)) , 
+              geom_bar(position="stack", stat="identity") ,
               coord_flip()
             
             
@@ -2378,7 +2452,7 @@ library(haven)
 
                 orders_num <- race_orders %>% filter(univ_name=="Texas A & M University-College Station") %>%  count(order_num)
                 orderswlists_race  <-   subset(lists_orders_zip_hs_df, ord_num %in% orders_num$order_num)
-                orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists; we don't have orders for Latinx+Black
+                orderswlists_race %>% count(ord_num) # we have 8/10 orders' resulting student lists; we don't have orders for Latinx,Black
 
                     #other filters used with race/ethnicity
                     race_orders_univ <- race_orders %>% filter(univ_name=="Texas A & M University-College Station")
@@ -2452,7 +2526,7 @@ library(haven)
           #                                                   stu_race_white = ifelse(stu_race_cb==9, 1, 0),
           #                                                   stu_race_other = ifelse(stu_race_cb==10, 1, 0),
           #                                                   stu_race_multi = ifelse(stu_race_cb==12, 1, 0),
-          #                                                   stu_ordertype1 = ifelse(ord_title=="IL 1450+ August 2017", 1, 0),
+          #                                                   stu_ordertype1 = ifelse(ord_title=="IL 1450, August 2017", 1, 0),
           #                                                   stu_ordertype2 = ifelse(ord_title=="IL Lower Range August 2017", 1, 0),
           #                                                   stu_ordertype3 = ifelse(ord_title=="IL Middle 50% August 2017 ", 1, 0),
           #                                                   stu_ordertype4 = ifelse(ord_title=="PAP Honors August 2017", 1, 0),
@@ -2460,7 +2534,7 @@ library(haven)
           #                                                   stu_ordertype6 = ifelse(ord_title=="URM Lower Range August 2017", 1, 0))
           # 
           # 
-          #                           #aggregate student list data to school-level with total num students + race/ethnicity
+          #                           #aggregate student list data to school-level with total num students , race/ethnicity
           #                         school_lists_chi <- orderswlists_race_chi %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
           #                                                              stu_race_aian, stu_race_asian, stu_race_black,
           #                                                              stu_race_latinx, stu_race_nhpi, stu_race_white,
@@ -2488,7 +2562,7 @@ library(haven)
           #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, rank_high, rank_low)
           #                                   race_orders %>% filter(univ_name=="University of Illinois at Urbana-Champaign" & hs_grad_class=="2018|2019|2020") %>% count(order_title, ap_scores)
           #                                   
-          #                                   #all six orders use GPA=A+ to B-; RANK= highest tenth to second fifth; No AP score filters
+          #                                   #all six orders use GPA=A, to B-; RANK= highest tenth to second fifth; No AP score filters
           #                                   
           #                                   #total students purchased across different orders
           #                                   orderswlists_race_chi %>%  group_by(ord_title, ord_race_ethnicity) %>% count(stu_race_cb) %>% print(n=40)
@@ -2547,7 +2621,7 @@ library(haven)
                                                 stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))
 
                       
-                        #aggregate student list data to school-level with total num prospects + prospect race/ethnicity       
+                        #aggregate student list data to school-level with total num prospects , prospect race/ethnicity       
                          school_lists_tx <- orderswlists_race_tx %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
                                                            stu_race_aian, stu_race_asian, stu_race_black,
                                                            stu_race_latinx, stu_race_nhpi, stu_race_white,
@@ -2688,7 +2762,7 @@ library(haven)
                                                                                  stu_ordertype8 = ifelse(ord_title=="PSAT NH 1310-1470 MO,IL (H)", 1, 0))
 
 
-                         #aggregate student list data to school-level with total num students + race/ethnicity
+                         #aggregate student list data to school-level with total num students , race/ethnicity
                          school_lists_la <- orderswlists_race_la %>% select(hs_ncessch, stu_race_noresponse, stu_race_missing,
                                                                             stu_race_aian, stu_race_asian, stu_race_black,
                                                                             stu_race_latinx, stu_race_nhpi, stu_race_white,
