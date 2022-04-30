@@ -28,7 +28,8 @@ theme_set(
     axis.title = element_text(face = 'bold'),
     legend.title = element_text(face = 'bold'),
     legend.key.size = unit(0.3, 'cm'),
-    strip.text.x = element_text(size = 7, face = 'bold')
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0.5),
+    strip.background = element_rect(fill = NA, color = NA)
   )
 )
 
@@ -481,7 +482,7 @@ rq2_locale %>%
 
 ## Figure 21: Zip code deep dive by Arizona State University in Los Angeles
 
-```{r, fig.height = 5.5}
+```{r, fig.height = 5.5, eval = F}
 create_asu_la_race_figure <- function(data_df, category, plot_title) {
   data_df %>% 
     filter(ord_type == category) %>% 
@@ -552,11 +553,56 @@ grid.arrange(
   create_asu_la_race_figure(asu_la_race, 'psat_med', 'Medium PSAT order (1190-1260)'),
   create_asu_la_income_figure(asu_la_income, 'psat_high', 'High PSAT order (1270-1520)'),
   create_asu_la_race_figure(asu_la_race, 'psat_high', 'High PSAT order (1270-1520)'),
-  create_asu_la_income_figure(asu_la_income, 'sat_med', 'Medium PSAT order (1140-1260)'),
-  create_asu_la_race_figure(asu_la_race, 'sat_med', 'Medium PSAT order (1140-1260)'),
+  create_asu_la_income_figure(asu_la_income, 'sat_med', 'Medium SAT order (1140-1260)'),
+  create_asu_la_race_figure(asu_la_race, 'sat_med', 'Medium SAT order (1140-1260)'),
   ncol = 2,
   widths = c(2, 3)
 )
+```
+
+```{r, fig.height = 3}
+asu_la_race %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `1` = 'AI/AN',
+      `8` = 'NH/PI',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    ),
+    count_type = recode_factor(
+      in_zip_top10pct,
+      `0` = 'Rest',
+      `1` = 'Top 10%'
+    ),
+    ord_type = recode_factor(
+      ord_type,
+      'psat_low' = 'Low PSAT order (1110-1210)',
+      'psat_med' = 'Medium PSAT order (1190-1260)',
+      'psat_high' = 'High PSAT order (1270-1520)',
+      'sat_med' = 'Medium SAT order (1140-1260)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  facet_wrap(~ ord_type) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
 ```
 
 
