@@ -50,6 +50,7 @@ regional_univs <- c(
 
 orders_df <- orders_df %>% 
   filter(univ_id %in% c(research_univs, regional_univs), !str_detect(order_title, 'Edit name')) %>% 
+  mutate_if(is.character, list(~na_if(., ''))) %>% 
   mutate(
     univ_type = if_else(univ_id %in% research_univs, 'research', 'regional'),
     univ_label = recode_factor(
@@ -71,11 +72,11 @@ orders_df <- orders_df %>%
     filter_rank = if_else(!is.na(rank_low) | !is.na(rank_high), 1, 0), 
     filter_geomarket = if_else(!is.na(geomarket), 1, 0), 
     filter_ap_score = if_else(!is.na(ap_scores), 1, 0)
-  ) %>% 
-  mutate_if(is.character, list(~na_if(., '')))
+  )
 
 lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% 
   filter(univ_id %in% c(research_univs, regional_univs)) %>%
+  mutate_if(is.character, list(~na_if(., ''))) %>% 
   mutate(
     univ_type = if_else(univ_id %in% research_univs, 'research', 'regional'),
     univ_label = recode_factor(
@@ -95,8 +96,7 @@ lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>%
       stu_gender %in% c('M', 'Male') ~ 0,
       TRUE ~ NA_real_
     )
-  ) %>% 
-  mutate_if(is.character, list(~na_if(., '')))
+  )
 
 
 # ----------------------------------------------------------------------
@@ -349,6 +349,56 @@ rq2_locale <- lists_orders_zip_hs_df %>%
   ungroup()
 
 
+# --------------------------------------------------------------------------
+# Figure 21 - Zip code deep dive by Arizona State University in Los Angeles
+# --------------------------------------------------------------------------
+
+la_zips <- acs_race_zipcodev3 %>%  # 378 (total) zip codes in LA
+  filter(cbsa_1 == '31080') %>% 
+  select(zip_code) %>% 
+  left_join(acs_income_zip, by = 'zip_code') %>% 
+  arrange(-medincome_2564)
+
+la_zips %>% count(is.na(medincome_2564))  # 14 zip codes missing income data
+
+la_zips_top10pct <- la_zips %>%  # 38 (top 10% income) zip codes in LA
+  head(n = 38)
+
+asu_la <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '104151', zip_cbsa_1 == '31080', ord_num %in% c('366935', '448420', '448374', '394956')) %>% 
+  mutate(
+    ord_type = recode(
+      ord_num,
+      '366935' = 'psat_low',   # PSAT score from 1110-1210
+      '448420' = 'psat_med',   # PSAT score from 1190-1260
+      '448374' = 'psat_high',  # PSAT score from 1270-1520
+      '394956' = 'sat_med'     # SAT score from 1140-1260
+    ),
+    in_zip_top10pct = if_else(stu_zip_code %in% la_zips_top10pct$zip_code, 1, 0)
+  ) %>% 
+  select(ord_num, ord_type, in_zip_top10pct, stu_race_cb, stu_zip_code) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code'))
+
+asu_la %>% count(is.na(medincome_2564))  # 1 student from zip code w/ missing income data
+
+asu_la_race <- asu_la %>% 
+  group_by(ord_num, ord_type, in_zip_top10pct, stu_race_cb) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
+
+asu_la_income <- asu_la %>% 
+  group_by(ord_num, ord_type, in_zip_top10pct) %>% 
+  summarise(
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup()
+
+
 # ----------------------------------------------------------------------------------------
 # Figure A1 - School type of prospects purchased by research vs. ma/doctoral universities
 # ----------------------------------------------------------------------------------------
@@ -507,4 +557,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_race, asu_la_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
