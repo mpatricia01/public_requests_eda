@@ -288,10 +288,6 @@ library(haven)
         
     # Frequency of Filters Used Across Orders
         orders_filters <- orders_df %>% 
-                        select(univ_type, hs_grad_class, zip_code, zip_code_file, state_name, cbsa_name, intl_region, segment, race_ethnicity,
-                                gender,sat_score_min, sat_score_max, sat_score_old_min, sat_score_old_max,
-                                psat_score_min, psat_score_max, psat_score_old_min, psat_score_old_max,
-                                gpa_low, gpa_high, rank_low, rank_high, geomarket, ap_scores) %>%
             mutate(
                 hsgrad_class = ifelse(!is.na(hs_grad_class), 1, 0),
                 zip = ifelse(!is.na(zip_code) | !is.na(zip_code_file), 1, 0), #KSshould this include zip_code_file not missing too?
@@ -306,13 +302,38 @@ library(haven)
                 gpa = ifelse((!is.na(gpa_low) | !is.na(gpa_high)), 1, 0), 
                 rank = ifelse((!is.na(rank_low) | !is.na(rank_high)), 1, 0), 
                 geomarket = ifelse(!is.na(geomarket), 1, 0), 
-                ap_score = ifelse(!is.na(ap_scores), 1, 0))
+                ap_score = ifelse(!is.na(ap_scores), 1, 0),
+                county = ifelse(!is.na(county), 1, 0),
+                college_type = ifelse(!is.na(college_type), 1, 0),
+                edu_aspirations = ifelse(!is.na(edu_aspirations), 1, 0),
+                rotc = ifelse(!is.na(rotc_plans), 1, 0),
+                major = ifelse(!is.na(major), 1, 0),
+                citizenship = ifelse(!is.na(citizenship), 1, 0),
+                low_ses = ifelse(!is.na(low_ses), 1, 0),
+                college_size = ifelse(!is.na(college_size), 1, 0),
+                national_recognition_programs = ifelse(!is.na(national_recognition_programs), 1, 0),
+                college_location = ifelse(!is.na(college_location), 1, 0),
+                financial_aid = ifelse(!is.na(financial_aid), 1, 0),
+                college_setting = ifelse(!is.na(college_setting), 1, 0),
+                college_studentbody = ifelse(!is.na(college_student_body), 1, 0),
+                college_living_plans = ifelse(!is.na(college_living_plans), 1, 0),
+                proximity_search = ifelse(!is.na(proximity_search), 1, 0),
+                hs_math = ifelse(!is.na(hs_math), 1, 0),
+                first_gen_parent = ifelse(!is.na(first_gen_parent_edu), 1, 0),
+                sat_math = ifelse((!is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max)), 1, 0), 
+                sat_writing = ifelse((!is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max)), 1, 0), 
+                sat_reading = ifelse((!is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max)), 1, 0), 
+            )
         
         
         orders_filters1 <- orders_filters %>% group_by(univ_type) %>%
             select(hsgrad_class, zip, states_fil, cbsa, 
                    intl, segment, race, gender,sat, psat,
-                   gpa, rank, geomarket, ap_score) %>%
+                   gpa, rank, geomarket, ap_score, county, college_type,
+                   edu_aspirations, rotc, major, citizenship, low_ses, college_size,
+                   national_recognition_programs, college_location, financial_aid,
+                   college_setting, college_student_body, college_living_plans, proximity_search, hs_math, first_gen_parent,
+                   sat_math, sat_writing, sat_reading) %>%
             summarize_if(is.numeric, sum, na.rm=TRUE)
         
         
