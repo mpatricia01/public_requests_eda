@@ -269,6 +269,42 @@ orders_state_research <- us_map(regions = 'states') %>%
   )
 
 
+# ---------------------------------------------------------
+# Figure 13 - Race filter used by research vs. ma/doctoral
+# ---------------------------------------------------------
+
+orders_race <- orders_df %>%
+  filter(filter_race == 1) %>% 
+  mutate(
+    race_ethnicity_group = recode(
+      race_ethnicity,
+      'American Indian or Alaska Native' = 'Native American',
+      'American Indian or Alaska Native|\rAsian (including Indian subcontinent and Philippines origin)|Cuban|\rBlack or African American|\rHispanic or Latino (including Spanish origin)|\rMexican|\rPuerto Rican|\rOther Hispanic or Latino|\rNative Hawaiian or Other Pacific Islander' = 'Latinx, Black, Asian, Native American',
+      'American Indian or Alaska Native|Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino' = 'Latinx, Native American',
+      'American Indian or Alaska Native|Native Hawaiian or Other Pacific Islander' = 'Native American, Native Hawaii/PI',
+      'Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)' = 'Asian, White',
+      'Asian (including Indian subcontinent and Philippines origin)|Other|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)|Native Hawaiian or Other Pacific Islander' = 'Asian, White, NativeHawaii/PI',
+      'Asian (including Indian subcontinent and Philippines origin)|White (including Middle Eastern origin)|Other' = 'Asian, White',
+      'Black or African American' = 'Black',
+      'Black or African American|American Indian or Alaska Native|Native Hawaiian or Other Pacific Islander' = 'Black, Native American, NativeHawaii/PI',
+      'Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban' = 'Latinx, Black, Native American',
+      'Black or African American|American Indian or Alaska Native|Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Native Hawaiian or Other Pacific Islander|Cuban' = 'Latinx, Black, Native American, NativeHawaii/PI',
+      'Cuban|Black or African American|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino' = 'Latinx, Black',
+      'Cuban|Hispanic or Latino (including Spanish origin)|Mexican|Puerto Rican|Other Hispanic or Latino' = 'Latinx',
+      'Native Hawaiian or Other Pacific Islander' = 'NativeHawaii/PI',
+      'Other|Asian (including Indian subcontinent and Philippines origin)|I do not wish to respond to race|No, not of Hispanic, Latino, or Spanish origin|White (including Middle Eastern origin)' = 'Asian, White',
+      'Other Hispanic or Latino|Puerto Rican|Mexican|Hispanic or Latino (including Spanish origin)|Cuban' = 'Latinx',
+      .default = NA_character_
+    )
+  ) %>% 
+  filter(!is.na(race_ethnicity_group)) %>% 
+  group_by(univ_type, univ_label, race_ethnicity_group) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  ungroup()
+
+
 # --------------------------------------------------------------------------
 # Figure 14 - Number of prospects purchased by university type and location
 # --------------------------------------------------------------------------
@@ -557,4 +593,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_race, asu_la_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_race, asu_la_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))

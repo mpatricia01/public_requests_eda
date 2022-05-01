@@ -246,10 +246,16 @@ plot_usmap(
 ```
 
 
-## Figure 13: TBD
+## Figure 13: Race filter used by research vs. ma/doctoral
 
-```{r}
-
+```{r, fig.height = 3}
+orders_race %>% 
+  ggplot(aes(fill = univ_label, y = count, x = reorder(race_ethnicity_group, count))) + 
+  geom_bar(position = 'stack', stat = 'identity') +
+  geom_text(aes(label = count), hjust = -0.1, size = 2) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Number of orders') +
+  coord_flip()
 ```
 
 
