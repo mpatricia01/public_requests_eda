@@ -496,6 +496,7 @@ ucsd <- lists_orders_zip_hs_df %>%
       `2` = 'asian',
       `3` = 'black',
       `4` = 'hispanic',
+      `8` = 'nativehawaii',
       `9` = 'white',
       `12` = 'tworaces',
       `999` = 'missing'
@@ -532,6 +533,115 @@ ucsd_income <- ucsd %>%
   ) %>% 
   ungroup() %>% 
   bind_rows(ucsd_metro_income)
+
+
+# ----------------------------------------------------------------------------
+# Figure 23 - Segment deep dive by University of Illinois at Urbana-Champaign
+# ----------------------------------------------------------------------------
+
+uiuc_metros <- c('35620', '31080', '37980', '47900')
+
+uiuc_metro_race <- ccd_membership %>%
+  filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% uiuc_metros) %>% 
+  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_[mf]')) %>%
+  pivot_longer(
+    cols = -c(cbsa_1, cbsatitle_1, ncessch),
+    names_pattern = 'g12_(\\w+)_([mf])',
+    names_to = c('race', 'gender'),
+    values_to = 'count'
+  ) %>%
+  mutate(
+    count = if_else(is.na(count), 0L, count)
+  ) %>% 
+  group_by(cbsa_1, cbsatitle_1, ncessch, race) %>% 
+  summarise(
+    count = sum(count, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  group_by(cbsa_1, cbsatitle_1, ncessch) %>%
+  mutate(
+    pct = count / sum(count, na.rm = T),
+    pct = if_else(is.nan(pct), NA_real_, pct)
+  ) %>%
+  ungroup() %>%
+  group_by(cbsa_1, cbsatitle_1, race) %>%
+  summarise(
+    count = sum(count, na.rm = T), 
+    pct = mean(pct, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    cbsa_code = cbsa_1,
+    cbsa_name = cbsatitle_1
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, race, count, pct)
+
+uiuc_metro_income <- acs_income_metro %>% 
+  filter(cbsa_code %in% uiuc_metros) %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    income_2564 = medincome_2564
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, income_2564)
+
+uiuc_orders <- orders_df %>%
+  filter(univ_id == '145637', filter_segment == 1, filter_gender == 0) %>% 
+  select(order_num, order_title, num_students, hs_grad_class, segment, state_name, cbsa_name, sat_score_min, sat_score_max, psat_score_min, psat_score_max, gpa_low, gpa_high)
+
+uiuc <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '145637', zip_cbsa_1 %in% uiuc_metros, ord_num %in% uiuc_orders$order_num) %>% 
+  mutate(
+    ord_type = 'prospect',
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode(
+      stu_race_cb,
+      `0` = 'noresponse',
+      `1` = 'amerindian',
+      `2` = 'asian',
+      `3` = 'black',
+      `4` = 'hispanic',
+      `8` = 'nativehawaii',
+      `9` = 'white',
+      `12` = 'tworaces',
+      `999` = 'missing'
+    )
+  ) %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, stu_zip_code) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  rename(
+    cbsa_code = zip_cbsa_1,
+    cbsa_name = zip_cbsatitle_1
+  )
+
+uiuc %>% 
+  count(ord_num)
+
+uiuc %>% 
+  count(cbsa_code)
+
+uiuc_race <- uiuc %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(uiuc_metro_race)
+
+uiuc_income <- uiuc %>% 
+  group_by(cbsa_code, cbsa_name, ord_type) %>% 
+  summarise(
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(uiuc_metro_income)
 
 
 # ----------------------------------------------------------------------------------------
@@ -692,4 +802,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))

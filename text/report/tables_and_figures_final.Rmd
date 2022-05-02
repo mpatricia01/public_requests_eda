@@ -550,12 +550,14 @@ ucsd_income_figure <- ucsd_income %>%
   ggplot(aes(y = count_type, x = income_2564)) + 
   geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
   geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 165000)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 163000)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
   facet_wrap(~ cbsa_name, ncol = 1) +
   guides(fill = guide_legend(reverse = T)) +
   theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
     axis.text.x = element_blank(),
     axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
     strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
@@ -598,15 +600,18 @@ ucsd_race_figure <- ucsd_race_figure_data %>%
   geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
   geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', count), '')), size = 2, hjust = -0.2) +
   scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.09)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
   facet_wrap(~ cbsa_name, ncol = 1) +
   guides(fill = guide_legend(reverse = T)) +
   theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
-    strip.text.x = element_text(color = 'white')
+    strip.text.x = element_text(color = 'white', size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, 2), 'pt')
   )
 
 grid.arrange(
@@ -614,6 +619,92 @@ grid.arrange(
   ucsd_race_figure,
   ncol = 2,
   widths = c(2, 3)
+)
+```
+
+
+## Figure 23: Segment deep dive by University of Illinois at Urbana-Champaign
+
+```{r, fig.height = 3.6}
+uiuc_income_figure <- uiuc_income %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 250000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+uiuc_race_figure_data <- uiuc_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'missing' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'amerindian' = 'AI/AN',
+      'nativehawaii' = 'NH/PI',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  )
+
+uiuc_race_figure_totals <- uiuc_race_figure_data %>% 
+  group_by(cbsa_name, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+uiuc_race_figure <- uiuc_race_figure_data %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = uiuc_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', prettyNum(count, big.mark = ',')), '')), size = 2, hjust = -0.15) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -45), 'pt')
+  )
+
+grid.arrange(
+  uiuc_income_figure,
+  uiuc_race_figure,
+  ncol = 2
 )
 ```
 
