@@ -1337,12 +1337,17 @@ library(haven)
         orders_asu %>% filter(state_name=="California") %>% count(order_num, order_title, hs_grad_class, sat_score_min, sat_score_max, low_ses)  %>% print(n=50)
                 
               # range of PSAT scores used for CA orders without SES filter
+              orders_asu %>% count(state_name)
+              orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(hs_grad_class)
+              orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(psat_score_min, sat_score_min)
               orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(psat_score_min, psat_score_max)
       
               # range of SAT scores used for CA orders without SES filter
               orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% count(sat_score_min, sat_score_max)
               
         #top metros by prospects purchased
+        orders_asu %>% filter(state_name=="California" & is.na(low_ses)) %>% summarize(total= sum(num_students))
+              
         lists_asu %>% count(zip_cbsatitle_1, zip_cbsa_1) %>% arrange (-n) #Los Angeles is second metro; NY is first but its across 3 states
 
         # filter for ASU orders and ASU lists IN LOS ANGELES
@@ -1451,6 +1456,7 @@ library(haven)
         
         #sort by top 10% (38 out of 378) zips by income
         la_zips_top10pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% head(n=38) 
+        la_zips_bottom90pct <- la_zips %>% arrange(-median_household_income) %>% select(zip_code,median_household_income) %>% tail(n=340) 
         
       #top 10%zip dummy in student lists
         lists_asu_la_psat_low <- lists_asu_la_psat_low %>% 
