@@ -23,7 +23,7 @@ theme_set(
   theme(
     text = element_text(size = 7),
     panel.background = element_blank(),
-    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    plot.title = element_text(color = '#444444', size = 7, face = 'bold', hjust = 0.5),
     axis.ticks = element_blank(),
     axis.title = element_text(face = 'bold'),
     legend.title = element_text(face = 'bold'),
@@ -488,86 +488,8 @@ rq2_locale %>%
 
 ## Figure 21: Zip code deep dive by Arizona State University in Los Angeles
 
-```{r, fig.height = 5.5, eval = F}
-create_asu_la_race_figure <- function(data_df, category, plot_title) {
-  data_df %>% 
-    filter(ord_type == category) %>% 
-    mutate(
-      stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
-      race = recode_factor(
-        stu_race_cb,
-        `999` = 'Missing',
-        `0` = 'No response',
-        `10` = 'Other',
-        `12` = 'Multiracial',
-        `1` = 'AI/AN',
-        `8` = 'NH/PI',
-        `4` = 'Latinx',
-        `3` = 'Black',
-        `2` = 'Asian',
-        `9` = 'White'
-      ),
-      count_type = recode_factor(
-        in_zip_top10pct,
-        `0` = 'Rest',
-        `1` = 'Top 10%'
-      )
-    ) %>% 
-    ggplot(aes(y = count_type, x = pct, fill = race)) + 
-    geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-    geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-    scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
-    scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
-    xlab('Percent of prospects') + ylab('') +
-    ggtitle(str_c(plot_title, '\n')) +
-    guides(fill = guide_legend(reverse = T)) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
-    )
-}
-
-create_asu_la_income_figure <- function(data_df, category, plot_title) {
-  data_df %>% 
-    filter(ord_type == category) %>% 
-    mutate(
-      count_type = recode_factor(
-        in_zip_top10pct,
-        `0` = 'Rest',
-        `1` = 'Top 10%'
-      )
-    ) %>% 
-    ggplot(aes(y = count_type, x = income_2564)) + 
-    geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
-    geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 191000)) +
-    scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
-    xlab('') + ylab('') +
-    ggtitle(str_c(plot_title, '\n')) +
-    guides(fill = guide_legend(reverse = T)) +
-    theme(
-      axis.text.x = element_blank(),
-      axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
-    )
-}
-
-grid.arrange(
-  create_asu_la_income_figure(asu_la_income, 'psat_low', 'Low PSAT order (1110-1210)'),
-  create_asu_la_race_figure(asu_la_race, 'psat_low', 'Low PSAT order (1110-1210)'),
-  create_asu_la_income_figure(asu_la_income, 'psat_med', 'Medium PSAT order (1190-1260)'),
-  create_asu_la_race_figure(asu_la_race, 'psat_med', 'Medium PSAT order (1190-1260)'),
-  create_asu_la_income_figure(asu_la_income, 'psat_high', 'High PSAT order (1270-1520)'),
-  create_asu_la_race_figure(asu_la_race, 'psat_high', 'High PSAT order (1270-1520)'),
-  create_asu_la_income_figure(asu_la_income, 'sat_med', 'Medium SAT order (1140-1260)'),
-  create_asu_la_race_figure(asu_la_race, 'sat_med', 'Medium SAT order (1140-1260)'),
-  ncol = 2,
-  widths = c(2, 3)
-)
-```
-
 ```{r, fig.height = 3}
-asu_la_race %>% 
+asu_la %>% 
   mutate(
     stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
     race = recode_factor(
@@ -590,9 +512,9 @@ asu_la_race %>%
     ),
     ord_type = recode_factor(
       ord_type,
-      'psat_low' = 'Low PSAT order (1110-1210)',
-      'psat_med' = 'Medium PSAT order (1190-1260)',
       'psat_high' = 'High PSAT order (1270-1520)',
+      'psat_med' = 'Medium PSAT order (1190-1260)',
+      'psat_low' = 'Low PSAT order (1110-1210)',
       'sat_med' = 'Medium SAT order (1140-1260)'
     )
   ) %>% 
@@ -609,6 +531,90 @@ asu_la_race %>%
     axis.text.x = element_blank(),
     axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
   )
+```
+
+
+## Figure 22: Women in STEM deep dive by University of California, San Diego
+
+```{r}
+ucsd_income_figure <- ucsd_income %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'sat' = 'SAT',
+      'ap' = 'AP',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(str_replace(cbsa_name, 'Roswell', 'Alpharetta'), ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 165000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+ucsd_race_figure_data <- ucsd_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'missing' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'amerindian' = 'AI/AN',
+      'nativehawaii' = 'NH/PI',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'sat' = 'SAT',
+      'ap' = 'AP',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  )
+
+ucsd_race_figure_totals <- ucsd_race_figure_data %>% 
+  group_by(cbsa_name, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+ucsd_race_figure <- ucsd_race_figure_data %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', count), '')), size = 2, hjust = -0.2) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.09)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    strip.text.x = element_text(color = 'white')
+  )
+
+grid.arrange(
+  ucsd_income_figure,
+  ucsd_race_figure,
+  ncol = 2,
+  widths = c(2, 3)
+)
 ```
 
 

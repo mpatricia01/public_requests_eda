@@ -21,6 +21,9 @@ acs_income_metro$medincome_2564[is.nan(acs_income_metro$medincome_2564)] <- NA
 
 zip_locale <- read_sas(file.path(data_dir, 'EDGE_ZCTALOCALE_2021_LOCALE.sas7bdat'))
 
+ccd_membership <- readRDS(file.path(data_dir, 'ccd_membership_1718.RDS')) %>% 
+  left_join(zip_cbsa_name_data, by = c('lzip' = 'zip_code'))
+
 
 # --------------------
 # Prepare univ sample
@@ -412,12 +415,6 @@ asu_la <- lists_orders_zip_hs_df %>%
     ),
     in_zip_top10pct = if_else(stu_zip_code %in% la_zips_top10pct$zip_code, 1, 0)
   ) %>% 
-  select(ord_num, ord_type, in_zip_top10pct, stu_race_cb, stu_zip_code) %>% 
-  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code'))
-
-asu_la %>% count(is.na(medincome_2564))  # 1 student from zip code w/ missing income data
-
-asu_la_race <- asu_la %>% 
   group_by(ord_num, ord_type, in_zip_top10pct, stu_race_cb) %>% 
   summarise(
     count = n()
@@ -427,12 +424,114 @@ asu_la_race <- asu_la %>%
   ) %>% 
   ungroup()
 
-asu_la_income <- asu_la %>% 
-  group_by(ord_num, ord_type, in_zip_top10pct) %>% 
+
+# ---------------------------------------------------------------------------
+# Figure 22 - Women in STEM deep dive by University of California, San Diego
+# ---------------------------------------------------------------------------
+
+ccd_membership %>% count(is_virtual, virtual, virtual_text)
+ccd_membership %>% count(updated_status, updated_status_text)
+
+ucsd_metros <- c('16980', '42660', '35620', '12060')
+
+ucsd_metro_race <- ccd_membership %>%
+  filter(g12_f >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% ucsd_metros) %>% 
+  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_f')) %>%
+  pivot_longer(
+    cols = -c(cbsa_1, cbsatitle_1, ncessch),
+    names_pattern = 'g12_(\\w+)_f',
+    names_to = 'race',
+    values_to = 'count'
+  ) %>%
+  mutate(
+    count = if_else(is.na(count), 0L, count)
+  ) %>% 
+  group_by(cbsa_1, cbsatitle_1, ncessch) %>%
+  mutate(
+    pct = count / sum(count, na.rm = T),
+    pct = if_else(is.nan(pct), NA_real_, pct)
+  ) %>%
+  ungroup() %>%
+  group_by(cbsa_1, cbsatitle_1, race) %>%
+  summarise(
+    count = sum(count, na.rm = T), 
+    pct = mean(pct, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    cbsa_code = cbsa_1,
+    cbsa_name = cbsatitle_1
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, race, count, pct)
+
+ucsd_metro_income <- acs_income_metro %>% 
+  filter(cbsa_code %in% ucsd_metros) %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    income_2564 = medincome_2564
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, income_2564)
+
+ucsd_orders <- orders_df %>%
+  filter(gender == 'Female', univ_id == '110680') %>% 
+  select(order_num, order_title, num_students, hs_grad_class, gender, ap_scores, sat_score_min, sat_score_max)
+
+ucsd <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '110680', zip_cbsa_1 %in% ucsd_metros, ord_num %in% ucsd_orders$order_num) %>% 
+  mutate(
+    ord_type = case_when(
+      ord_num %in% (ucsd_orders %>% filter(!is.na(ap_scores)))$order_num ~ 'ap',
+      ord_num %in% (ucsd_orders %>% filter(!is.na(sat_score_min)))$order_num ~ 'sat'
+    ),
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode(
+      stu_race_cb,
+      `0` = 'noresponse',
+      `1` = 'amerindian',
+      `2` = 'asian',
+      `3` = 'black',
+      `4` = 'hispanic',
+      `9` = 'white',
+      `12` = 'tworaces',
+      `999` = 'missing'
+    )
+  ) %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, stu_zip_code) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  rename(
+    cbsa_code = zip_cbsa_1,
+    cbsa_name = zip_cbsatitle_1
+  )
+
+ucsd %>% 
+  count(ord_num, ord_type)
+
+ucsd %>% 
+  count(cbsa_code, ord_type)
+
+ucsd_race <- ucsd %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(ucsd_metro_race)
+
+ucsd_income <- ucsd %>% 
+  group_by(cbsa_code, cbsa_name, ord_type) %>% 
   summarise(
     income_2564 = mean(medincome_2564, na.rm = T)
   ) %>% 
-  ungroup()
+  ungroup() %>% 
+  bind_rows(ucsd_metro_income)
 
 
 # ----------------------------------------------------------------------------------------
@@ -593,4 +692,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_race, asu_la_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))

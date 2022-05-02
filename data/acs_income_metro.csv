@@ -1,4 +1,4 @@
-zip_name,median_household_income,medincome_total,medincome_under25,medincome_2544,medincome_4564,medincome_65plus,cbsa_code
+cbsa_name,median_household_income,medincome_total,medincome_under25,medincome_2544,medincome_4564,medincome_65plus,cbsa_code
 "Big Stone Gap, VA Micro Area",38175,38175,21702,48580,40081,33083,13720
 "Billings, MT Metro Area",61278,61278,35177,68504,71283,42782,13740
 "Binghamton, NY Metro Area",54295,54295,21648,59780,68715,41763,13780
