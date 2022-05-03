@@ -21,8 +21,11 @@ acs_income_metro$medincome_2564[is.nan(acs_income_metro$medincome_2564)] <- NA
 
 zip_locale <- read_sas(file.path(data_dir, 'EDGE_ZCTALOCALE_2021_LOCALE.sas7bdat'))
 
-ccd_membership <- readRDS(file.path(data_dir, 'ccd_membership_1718.RDS')) %>% 
+ccd <- readRDS(file.path(data_dir, 'ccd_membership_1718.RDS')) %>% 
   left_join(zip_cbsa_name_data, by = c('lzip' = 'zip_code'))
+
+pss <- readRDS(file.path(data_dir, 'pss_1718.RDS')) %>% 
+  left_join(zip_cbsa_name_data, by = 'zip_code')
 
 
 # --------------------
@@ -429,12 +432,12 @@ asu_la <- lists_orders_zip_hs_df %>%
 # Figure 22 - Women in STEM deep dive by University of California, San Diego
 # ---------------------------------------------------------------------------
 
-ccd_membership %>% count(is_virtual, virtual, virtual_text)
-ccd_membership %>% count(updated_status, updated_status_text)
+ccd %>% count(is_virtual, virtual, virtual_text)
+ccd %>% count(updated_status, updated_status_text)
 
 ucsd_metros <- c('16980', '42660', '35620', '12060')
 
-ucsd_metro_race <- ccd_membership %>%
+ucsd_metro_race <- ccd %>%
   filter(g12_f >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% ucsd_metros) %>% 
   select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_f')) %>%
   pivot_longer(
@@ -541,7 +544,7 @@ ucsd_income <- ucsd %>%
 
 uiuc_metros <- c('35620', '31080', '37980', '47900')
 
-uiuc_metro_race <- ccd_membership %>%
+uiuc_metro_race <- ccd %>%
   filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% uiuc_metros) %>% 
   select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_[mf]')) %>%
   pivot_longer(
@@ -642,6 +645,55 @@ uiuc_income <- uiuc %>%
   ) %>% 
   ungroup() %>% 
   bind_rows(uiuc_metro_income)
+
+
+# -----------------------------------------------------------
+# Figure 23 - Targeting students of color by race categories
+# -----------------------------------------------------------
+
+poc_order <- '560119'
+poc_metros <- c('35620', '33100', '26420')
+
+poc <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '110680', zip_cbsa_1 %in% poc_metros, ord_num == poc_order) 
+
+poc %>% 
+  count(zip_cbsa_1)
+
+poc %>% 
+  count(zip_cbsa_1, stu_race_cb)
+
+poc_cb <- poc %>% 
+  group_by(zip_cbsa_1, zip_cbsatitle_1, stu_race_cb) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  ungroup() %>% 
+  group_by(zip_cbsa_1, zip_cbsatitle_1) %>% 
+  mutate(
+    pct = count / sum(count, na.rm = T)
+  )
+
+poc_common <- poc %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, stu_white_common, stu_asian_common, stu_black_common, stu_is_hisp_common, stu_american_indian_common, stu_native_hawaiian_common) %>% 
+  pivot_longer(
+    cols = -c(zip_cbsa_1, zip_cbsatitle_1),
+    names_pattern = 'stu_(\\w+)_common',
+    names_to = 'race',
+    values_to = 'count'
+  ) %>% 
+  group_by(zip_cbsa_1, zip_cbsatitle_1, race) %>% 
+  summarise(
+    count = sum(count, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  left_join(
+    poc %>% count(zip_cbsa_1),
+    by = 'zip_cbsa_1'
+  ) %>% 
+  mutate(
+    pct = count / n
+  )
 
 
 # ----------------------------------------------------------------------------------------
@@ -802,4 +854,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, file = file.path(data_dir, 'tbl_fig_data_final.RData'))

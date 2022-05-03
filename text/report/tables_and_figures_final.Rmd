@@ -254,6 +254,7 @@ orders_race %>%
   geom_bar(position = 'stack', stat = 'identity') +
   geom_text(aes(label = count), hjust = -0.1, size = 2) +
   scale_fill_manual(values = color_palette, name = 'University type') +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('Number of orders') +
   coord_flip()
 ```
@@ -305,8 +306,8 @@ rq2_race %>%
       `0` = 'No response',
       `10` = 'Other',
       `12` = 'Multiracial',
-      `1` = 'AI/AN',
       `8` = 'NH/PI',
+      `1` = 'AI/AN',
       `4` = 'Latinx',
       `3` = 'Black',
       `2` = 'Asian',
@@ -402,8 +403,8 @@ rq2_race %>%
       `0` = 'No response',
       `10` = 'Other',
       `12` = 'Multiracial',
-      `1` = 'AI/AN',
       `8` = 'NH/PI',
+      `1` = 'AI/AN',
       `4` = 'Latinx',
       `3` = 'Black',
       `2` = 'Asian',
@@ -498,8 +499,8 @@ asu_la %>%
       `0` = 'No response',
       `10` = 'Other',
       `12` = 'Multiracial',
-      `1` = 'AI/AN',
       `8` = 'NH/PI',
+      `1` = 'AI/AN',
       `4` = 'Latinx',
       `3` = 'Black',
       `2` = 'Asian',
@@ -571,8 +572,8 @@ ucsd_race_figure_data <- ucsd_race %>%
       'noresponse' = 'No response',
       'other' = 'Other',
       'tworaces' = 'Multiracial',
-      'amerindian' = 'AI/AN',
       'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
       'hispanic' = 'Latinx',
       'black' = 'Black',
       'asian' = 'Asian',
@@ -659,8 +660,8 @@ uiuc_race_figure_data <- uiuc_race %>%
       'noresponse' = 'No response',
       'other' = 'Other',
       'tworaces' = 'Multiracial',
-      'amerindian' = 'AI/AN',
       'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
       'hispanic' = 'Latinx',
       'black' = 'Black',
       'asian' = 'Asian',
@@ -704,6 +705,72 @@ uiuc_race_figure <- uiuc_race_figure_data %>%
 grid.arrange(
   uiuc_income_figure,
   uiuc_race_figure,
+  ncol = 2
+)
+```
+
+
+## Figure 24: Targeting students of color by race categories
+
+```{r}
+poc_cb_figure <- poc_cb %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `8` = 'NH/PI',
+      `1` = 'AI/AN',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    )
+  ) %>% 
+  ggplot(aes(x = race, y = pct)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ zip_cbsatitle_1, ncol = 1) +
+  coord_flip() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+poc_common_figure <- poc_common %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'native_hawaiian' = 'NH/PI',
+      'american_indian' = 'AI/AN',
+      'is_hisp' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    )
+  ) %>% 
+  ggplot(aes(x = race, y = pct)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ zip_cbsatitle_1, ncol = 1) +
+  coord_flip() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+grid.arrange(
+  poc_cb_figure,
+  poc_common_figure,
   ncol = 2
 )
 ```
