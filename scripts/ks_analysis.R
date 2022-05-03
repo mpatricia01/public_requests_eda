@@ -2073,21 +2073,28 @@ library(haven)
           
         # filters used
           
+              # All filters
+              orders_gender %>% group_by(instate) %>% count(gender, state_name,sat_score_min, sat_score_max, ap_scores, gpa_high, gpa_low, major) # Urbana had low of 1300/1310/1350; high 1600
+          
               # GPA-- all orders used high A, and low of B (urbana did low of B-)
               orders_gender %>% group_by(instate) %>% count(gpa_high, gpa_low)
-              orders_gender_urbana %>% count(gpa_high, gpa_low)
+              #orders_gender_urbana %>% count(gpa_high, gpa_low)
+              
+              #for scores, they used wither SAT or AP
+              orders_gender %>% group_by(instate) %>% count(sat_score_min, sat_score_max, ap_scores) # Urbana had low of 1300/1310/1350; high 1600
+              
               
               #SAT
-              orders_gender %>% group_by(instate) %>% count(sat_score_min, sat_score_max) # Urbana had low of 1300/1310/1350; high 1600
-              orders_gender_urbana %>% count(sat_score_min, sat_score_max) # Urbana had low of 1300/1310/1350; high 1600
+              orders_gender %>% group_by(instate) %>% count(sat_score_min, sat_score_max, ap_scores) # Urbana had low of 1300/1310/1350; high 1600
+              #orders_gender_urbana %>% count(sat_score_min, sat_score_max) # Urbana had low of 1300/1310/1350; high 1600
               
               #For Field they used EITHER major OR AP scores
               orders_gender %>% group_by(instate) %>% count(major, ap_scores)
               orders_gender %>% count(ap_scores)
               
-              orders_gender_urbana %>%  count(major, ap_scores)
-              orders_gender_urbana %>%  count(segment)
-              orders_gender_urbana %>%  count(major)
+              #orders_gender_urbana %>%  count(major, ap_scores)
+              #orders_gender_urbana %>%  count(segment)
+              #orders_gender_urbana %>%  count(major)
               
               
               # two different types of order filters by AP Scores
@@ -2124,7 +2131,7 @@ library(haven)
               orders_gender_AP <- orders_gender %>% filter(!is.na(ap_scores)) 
               
               #only look at orders using SAT for AP comparison group
-              orders_gender_SAT <- orders_gender %>% filter(!is.na(ap_scores)) 
+              orders_gender_SAT <- orders_gender %>% filter(!is.na(sat_score_max)) 
               
               
         # resulting student lists 
@@ -2161,6 +2168,25 @@ library(haven)
                   
                 #race/ethnicity by cbsa
                   list_gender %>%  filter(zip_cbsa_1=="35620"|zip_cbsa_1=="31080"|zip_cbsa_1=="12060"|zip_cbsa_1=="16980"|zip_cbsa_1=="42660"|zip_cbsa_1=="37980"|zip_cbsa_1=="14460"| zip_cbsa_1=="19820"| zip_cbsa_1=="35620") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  #race/ethnicity by cbsa for SAT orders
+                  list_gender_SAT <- list_gender %>% filter(ord_num %in% orders_gender_SAT$order_num)
+                  list_gender_SAT %>%  filter(zip_cbsa_1=="35620") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  list_gender_SAT %>%  filter(zip_cbsa_1=="12060") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  list_gender_SAT %>%  filter(zip_cbsa_1=="16980") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  #race/ethnicity by cbsa for AP orders
+                  list_gender_AP <- list_gender %>% filter(ord_num %in% orders_gender_AP$order_num)
+                  list_gender_AP %>%  filter(zip_cbsa_1=="35620") %>% group_by(zip_csatitle) %>%
+                    count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                  
+                  list_gender_AP %>%  filter(zip_cbsa_1=="16980") %>% group_by(zip_csatitle) %>%
                     count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
                   
                   philly_lists_ap <- list_gender %>% filter(zip_cbsa_1=="37980")
