@@ -22,6 +22,8 @@ acs_income_metro$medincome_2564[is.nan(acs_income_metro$medincome_2564)] <- NA
 zip_locale <- read_sas(file.path(data_dir, 'EDGE_ZCTALOCALE_2021_LOCALE.sas7bdat'))
 
 ccd <- readRDS(file.path(data_dir, 'ccd_membership_1718.RDS')) %>% 
+  select(-total_students) %>% 
+  left_join(readRDS(file.path(data_dir, 'ccd_1718.RDS')) %>% select(ncessch, matches('g\\d{2}_|total_')), by = 'ncessch') %>% 
   left_join(zip_cbsa_name_data, by = c('lzip' = 'zip_code'))
 
 pss <- readRDS(file.path(data_dir, 'pss_1718.RDS')) %>% 
@@ -546,21 +548,16 @@ uiuc_metros <- c('35620', '31080', '37980', '47900')
 
 uiuc_metro_race <- ccd %>%
   filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% uiuc_metros) %>% 
-  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_[mf]')) %>%
+  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_[a-z]{2,}$')) %>%
   pivot_longer(
     cols = -c(cbsa_1, cbsatitle_1, ncessch),
-    names_pattern = 'g12_(\\w+)_([mf])',
-    names_to = c('race', 'gender'),
+    names_pattern = 'g12_(\\w+)',
+    names_to = 'race',
     values_to = 'count'
   ) %>%
   mutate(
     count = if_else(is.na(count), 0L, count)
   ) %>% 
-  group_by(cbsa_1, cbsatitle_1, ncessch, race) %>% 
-  summarise(
-    count = sum(count, na.rm = T)
-  ) %>% 
-  ungroup() %>% 
   group_by(cbsa_1, cbsatitle_1, ncessch) %>%
   mutate(
     pct = count / sum(count, na.rm = T),
@@ -611,7 +608,7 @@ uiuc <- lists_orders_zip_hs_df %>%
       `8` = 'nativehawaii',
       `9` = 'white',
       `12` = 'tworaces',
-      `999` = 'missing'
+      `999` = 'unknown'
     )
   ) %>% 
   select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, stu_zip_code) %>% 
@@ -647,53 +644,202 @@ uiuc_income <- uiuc %>%
   bind_rows(uiuc_metro_income)
 
 
-# -----------------------------------------------------------
-# Figure 23 - Targeting students of color by race categories
-# -----------------------------------------------------------
+# ---------------------------------------------------------
+# Figure 24 - Targeting students of color, race categories
+# ---------------------------------------------------------
 
 poc_order <- '560119'
 poc_metros <- c('35620', '33100', '26420')
 
 poc <- lists_orders_zip_hs_df %>%
-  filter(univ_id == '110680', zip_cbsa_1 %in% poc_metros, ord_num == poc_order) 
+  filter(univ_id == '110680', zip_cbsa_1 %in% poc_metros, ord_num == poc_order) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  rename(
+    cbsa_code = zip_cbsa_1,
+    cbsa_name = zip_cbsatitle_1,
+    control = hs_school_control
+  )
 
 poc %>% 
-  count(zip_cbsa_1)
+  count(cbsa_code)
 
 poc %>% 
-  count(zip_cbsa_1, stu_race_cb)
+  count(cbsa_code, stu_race_cb)
 
 poc_cb <- poc %>% 
-  group_by(zip_cbsa_1, zip_cbsatitle_1, stu_race_cb) %>% 
+  group_by(cbsa_code, cbsa_name, stu_race_cb) %>% 
   summarise(
     count = n()
   ) %>% 
   ungroup() %>% 
-  group_by(zip_cbsa_1, zip_cbsatitle_1) %>% 
+  group_by(cbsa_code, cbsa_name) %>% 
   mutate(
     pct = count / sum(count, na.rm = T)
   )
 
 poc_common <- poc %>% 
-  select(zip_cbsa_1, zip_cbsatitle_1, stu_white_common, stu_asian_common, stu_black_common, stu_is_hisp_common, stu_american_indian_common, stu_native_hawaiian_common) %>% 
+  select(cbsa_code, cbsa_name, stu_white_common, stu_asian_common, stu_black_common, stu_is_hisp_common, stu_american_indian_common, stu_native_hawaiian_common) %>% 
   pivot_longer(
-    cols = -c(zip_cbsa_1, zip_cbsatitle_1),
+    cols = -c(cbsa_code, cbsa_name),
     names_pattern = 'stu_(\\w+)_common',
     names_to = 'race',
     values_to = 'count'
   ) %>% 
-  group_by(zip_cbsa_1, zip_cbsatitle_1, race) %>% 
+  group_by(cbsa_code, cbsa_name, race) %>% 
   summarise(
     count = sum(count, na.rm = T)
   ) %>% 
   ungroup() %>% 
   left_join(
-    poc %>% count(zip_cbsa_1),
-    by = 'zip_cbsa_1'
+    poc %>% count(cbsa_code),
+    by = 'cbsa_code'
   ) %>% 
   mutate(
     pct = count / n
   )
+
+
+# -------------------------------------------------------------
+# Figure 25 - Targeting students of color, purchased prospects
+# -------------------------------------------------------------
+
+poc_metro_income <- acs_income_metro %>% 
+  filter(cbsa_code %in% poc_metros) %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    income_2564 = medincome_2564
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, income_2564)
+
+poc_metro_pubhs <- ccd %>%
+  filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% poc_metros) %>% 
+  select(cbsa_1, cbsatitle_1, ncessch, total_students, total_white, total_asian, total_black, total_hispanic, total_amerindian, total_nativehawaii, total_tworaces, total_unknown, lzip) %>% 
+  left_join(acs_income_zip, by = c('lzip' = 'zip_code')) %>% 
+  left_join(poc %>% count(hs_ncessch), by = c('ncessch' = 'hs_ncessch')) %>% 
+  mutate(
+    n_cat = case_when(
+      is.na(n) ~ 'zero',
+      n <= 5 ~ '1-5',
+      T ~ '6+'
+    ),
+    control = 'public'
+  ) %>% 
+  select(-lzip)
+
+poc_metro_privhs <- pss %>% 
+  filter(total_12 >= 10, cbsa_1 %in% poc_metros) %>% 
+  select(cbsa_1, cbsatitle_1, ncessch, total_students, total_white, total_asian, total_black, total_hispanic, total_amerindian, total_nativehawaii, total_tworaces, zip_code) %>% 
+  left_join(acs_income_zip, by = 'zip_code') %>% 
+  left_join(poc %>% count(hs_ncessch), by = c('ncessch' = 'hs_ncessch')) %>% 
+  mutate(
+    n_cat = case_when(
+      is.na(n) ~ 'zero',
+      T ~ '1+'
+    ),
+    control = 'private'
+  ) %>% 
+  select(-zip_code)
+
+poc_metro_pubprivhs <- poc_metro_pubhs %>% 
+  bind_rows(poc_metro_privhs) %>% 
+  rename(
+    cbsa_code = cbsa_1,
+    cbsa_name = cbsatitle_1
+  )
+
+poc_metro_hs <- poc_metro_pubprivhs %>% 
+  select(cbsa_code, cbsa_name, control, ncessch, total_students) %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, control) %>% 
+  summarise(
+    count = sum(total_students)
+  ) %>% 
+  mutate(
+    pct = count / sum(count, na.rm = T)
+  ) %>% 
+  ungroup() 
+
+poc_hs <- poc %>% 
+  filter(hs_ncessch %in% poc_metro_pubprivhs$ncessch) %>% 
+  mutate(
+    ord_type = 'prospect'
+  ) %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, control) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  filter(!is.na(control)) %>% 
+  mutate(
+    pct = count / sum(count, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(poc_metro_hs)
+
+poc_race <- poc_metro_pubprivhs %>% 
+  select(cbsa_code, cbsa_name, control, ncessch, n_cat, n, total_white, total_asian, total_black, total_hispanic, total_amerindian, total_nativehawaii, total_tworaces, total_unknown) %>% 
+  mutate(
+    ord_type = str_c(control, n_cat, sep = '_')
+  ) %>% 
+  select(-control, -n_cat) %>% 
+  pivot_longer(
+    cols = starts_with('total_'),
+    names_prefix = 'total_',
+    names_to = 'race',
+    values_to = 'count'
+  ) %>% 
+  mutate(
+    n = if_else(is.na(n), 0L, n),
+    count = if_else(is.na(count), 0L, count)
+  ) %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, ncessch) %>%
+  mutate(
+    pct = count / sum(count, na.rm = T),
+    pct = if_else(is.nan(pct), NA_real_, pct)
+  ) %>%
+  ungroup() %>%
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>%
+  summarise(
+    num_hs = n(),
+    num_prospects = sum(n, na.rm = T),
+    count = sum(count, na.rm = T), 
+    pct = mean(pct, na.rm = T)
+  ) %>% 
+  ungroup()
+
+poc_income_hs <- poc_metro_pubprivhs %>% 
+  select(cbsa_code, cbsa_name, control, ncessch, n_cat, n, medincome_2564) %>% 
+  group_by(cbsa_code, cbsa_name, control, n_cat) %>% 
+  summarise(
+    num_hs = n(),
+    num_prospects = sum(n, na.rm = T),
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    ord_type = str_c(control, n_cat, sep = '_')
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, num_hs, num_prospects, income_2564)
+
+poc_income <- poc %>% 
+  filter(hs_ncessch %in% poc_metro_pubprivhs$ncessch) %>% 
+  mutate(
+    ord_type = 'prospect'
+  ) %>% 
+  group_by(cbsa_code, cbsa_name, ord_type) %>% 
+  summarise(
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(poc_metro_income) %>% 
+  bind_rows(poc_income_hs)
+
+# Check totals for income and race are consistent
+poc_race %>% group_by(cbsa_code, ord_type) %>% summarise(sum(num_hs) / 8, sum(num_prospects / 8))
+poc_income %>% filter(!is.na(num_hs)) %>% group_by(cbsa_code, ord_type) %>% summarise(sum(num_hs), sum(num_prospects))
 
 
 # ----------------------------------------------------------------------------------------
@@ -854,4 +1000,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))

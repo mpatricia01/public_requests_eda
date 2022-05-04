@@ -530,7 +530,7 @@ asu_la %>%
   guides(fill = guide_legend(reverse = T)) +
   theme(
     axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1)
   )
 ```
 
@@ -560,7 +560,7 @@ ucsd_income_figure <- ucsd_income %>%
     # plot.background = element_rect(color = 'gray'),
     # panel.background = element_rect(color = 'red'),
     axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
     strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
   )
 
@@ -648,7 +648,7 @@ uiuc_income_figure <- uiuc_income %>%
     # plot.background = element_rect(color = 'gray'),
     # panel.background = element_rect(color = 'red'),
     axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
     strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
   )
 
@@ -656,7 +656,7 @@ uiuc_race_figure_data <- uiuc_race %>%
   mutate(
     race = recode_factor(
       race,
-      'missing' = 'Missing',
+      'unknown' = 'Missing',
       'noresponse' = 'No response',
       'other' = 'Other',
       'tworaces' = 'Multiracial',
@@ -710,7 +710,7 @@ grid.arrange(
 ```
 
 
-## Figure 24: Targeting students of color by race categories
+## Figure 24: Targeting students of color, race categories
 
 ```{r}
 poc_cb_figure <- poc_cb %>% 
@@ -735,11 +735,11 @@ poc_cb_figure <- poc_cb %>%
   geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ zip_cbsatitle_1, ncol = 1) +
+  facet_wrap(~ cbsa_name, ncol = 1) +
   coord_flip() +
   theme(
     axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
     strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
   )
 
@@ -760,11 +760,11 @@ poc_common_figure <- poc_common %>%
   geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ zip_cbsatitle_1, ncol = 1) +
+  facet_wrap(~ cbsa_name, ncol = 1) +
   coord_flip() +
   theme(
     axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
     strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
   )
 
@@ -774,6 +774,145 @@ grid.arrange(
   ncol = 2
 )
 ```
+
+
+## Figure 25: Targeting students of color, purchased prospects
+
+```{r}
+poc_hs_figure <- poc_hs %>% 
+  mutate(
+    control = recode_factor(
+      control,
+      'public' = 'Public HS',
+      'private' = 'Private HS'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    )
+  ) %>% 
+  filter(control == 'Private HS') %>% 
+  ggplot(aes(y = count_type, x = pct, fill = control)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) + 
+  geom_text(mapping = aes(label = str_c(round(pct * 100), '% ', control)), size = 2, hjust = -0.05) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.5)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -10), 'pt')
+  )
+
+poc_income_figure <- poc_income %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'private', income_2564 = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'private', income_2564 = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'private', income_2564 = 0) %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'private_1+' = '1+',
+      'private_zero' = ' No buys',
+      'private' = ' ',
+      'public_6+' = '6+',
+      'public_1-5' = '1-5',
+      'public_zero' = 'No buys',
+      'public' = '',
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(str_replace(cbsa_name, 'Pompano', 'West Palm'), ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = if_else(income_2564 == 0, '', str_c('$', round(income_2564 / 1000), 'K'))), size = 2, hjust = -0.1) +
+  geom_text(aes(label = if_else(income_2564 != 0, '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 350000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -120), 'pt')
+  )
+
+poc_race_figure <- poc_race %>% 
+  # filter(count != 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'private', race = 'white', pct = 0) %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'unknown' = 'Missing',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'private_1+' = '1+',
+      'private_zero' = ' No buys',
+      'private' = ' ',
+      'public_6+' = '6+',
+      'public_1-5' = '1-5',
+      'public_zero' = 'No buys',
+      'public' = '',
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = if_else(str_detect(count_type, '\\w'), '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
+  geom_text(aes(x = 1, fill = NULL, label = if_else(str_detect(count_type, '\\w'), str_c(' ', num_hs, ' HS', if_else(num_prospects > 0, str_c('\n ', num_prospects, ' prospects'), '')), '')), size = 1, hjust = 0) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    legend.margin = unit(c(0, 0, 0, 0), 'pt'),
+    plot.margin = unit(c(4, 0, 5.5, -100), 'pt')
+  )
+
+grid.arrange(
+  poc_hs_figure,
+  poc_income_figure,
+  poc_race_figure,
+  ncol = 3,
+  widths = c(2, 1, 1)
+)
+```
+
 
 
 ## Figure A1: School type of prospects purchased by research vs. ma/doctoral universities
@@ -812,6 +951,7 @@ rq2_school %>%
 ```
 
 
+\newpage
 ## Table 7: Filter combos used in order purchases by research vs. ma/doctoral
 
 ```{r}
