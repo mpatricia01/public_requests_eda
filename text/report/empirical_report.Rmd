@@ -37,28 +37,29 @@ library(tidyverse)
 library(gridExtra)
 library(kableExtra)
 library(scales)
-library(leaflet)
-library(rgdal)
 library(english)
+library(usmap)
 
 data_dir <- file.path('..', '..', 'data')
 
 load(file.path(data_dir, 'tbl_fig_data.RData'))
-zip_shp <- readOGR(file.path(data_dir, 'cb_2018_us_zcta510_500k', 'cb_2018_us_zcta510_500k.shp'))
+load(file.path(data_dir, 'tbl_fig_data_final.RData'))
 
 theme_set(
   theme(
     text = element_text(size = 7),
     panel.background = element_blank(),
-    plot.title = element_text(color = '#444444', size = 7, hjust = 0.5, face = 'bold'),
+    plot.title = element_text(color = '#444444', size = 7, face = 'bold', hjust = 0.5),
     axis.ticks = element_blank(),
     axis.title = element_text(face = 'bold'),
     legend.title = element_text(face = 'bold'),
-    legend.key.size = unit(0.3, 'cm')
+    legend.key.size = unit(0.3, 'cm'),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0.5),
+    strip.background = element_rect(fill = NA, color = NA)
   )
 )
 
-color_palette <- c('#ba9a88', '#bbcfd7')
+color_palette <- c('#bbcfd7', '#d2c8bc', '#ba9a88')
 
 # https://stackoverflow.com/a/65844319/6373540
 linesep <- function(x, y = character()){
@@ -436,7 +437,7 @@ We received prospect-level student list data for `r num_lists` student list purc
 
 Figure \@ref(fig:purchased-orders-carnegie) shows the number of student lists purchased by Carnegie Classification and state. Figure \@ref(fig:purchased-prospects-carnegie) shows the number of prospects purchased by Carnegie Classification and state.
 
-Figure \@ref(fig:orders-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
+Figure \@ref(fig:orders-prospects-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
 
 The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`).
 
@@ -528,14 +529,14 @@ lists_df_summary %>%
   guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
 ```
 
-```{r orders-purchased, fig.height = 3, fig.cap = 'Orders purchased by carnegie classification'}
-orders_fig_totals %>% 
-  ggplot(aes(x = reorder(university, -total_students), y = total_students, fill = as_factor(carnegie), width = 0.8)) +
+```{r orders-prospects-purchased, fig.height = 3, fig.cap = 'Orders and prospects purchased by research vs. ma/doctoral'}
+orders_prospects_purchased %>% 
+  ggplot(aes(x = reorder(univ_id, -total_students), y = total_students, fill = univ_label)) +
   geom_bar(stat = 'identity', alpha = 0.6) +
-  geom_text(aes(label = str_replace(total_orders_st, '^1 orders', '1 order'), y = total_students + 2000), vjust = 0, size = 2, fontface = 'bold') +
-  xlab('') + ylab('Total students') +
-  scale_y_continuous(labels = label_number(suffix = 'K', scale = 1e-3)) +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Carnegie classification') +
+  geom_text(aes(label = str_c(total_orders, if_else(total_orders == 1, ' order', ' orders')), y = total_students + 2000), vjust = 0, size = 1.8) +
+  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Number of prospects') +
   theme(
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank()
@@ -582,13 +583,43 @@ Finally, ma/doctoral universities did not utilize demographic filters. For resea
 [WHAT ABOUT FILTERS FOR STUDENT PREFERENCES LIKE INTENDED MAJOR, COLLEGE SIZE/TYPE? WERE THESE JUST RARELY UTILIZED OR WE DIDN'T CODE THE DATA? IF THE LATTER, WE SHOULD STATE THIS]
 
 
-```{r orders-filters, fig.height = 3, fig.cap = 'Filters used in order purchases'}
-orders_filters1 %>% 
-  ggplot(aes(x = reorder(filters, V1), y = V1)) +
-  geom_bar(stat = 'identity', fill = '#d2c8bc') +
-  geom_text(aes(label = percent), hjust = -0.1, colour = 'black', size = 2, fontface = 'bold') +
-  xlab('') + ylab('Number of orders') +
+```{r orders-filters, fig.height = 4, fig.cap = 'Filters used in order purchases by research vs. ma/doctoral'}
+orders_filters %>% 
+  add_row(univ_label = 'Research', filters = 'academic', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'academic', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'geographic', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'geographic', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'demographic', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'demographic', num = 0) %>% 
+  mutate(
+    filters_label = recode_factor(
+      filters,
+      'gender' = 'Gender',
+      'race' = 'Race',
+      'demographic' = '  ',
+      'intl' = 'International',
+      'cbsa' = 'CBSA',
+      'segment' = 'Segment',
+      'geomarket' = 'Geomarket',
+      'zip' = 'Zip code',
+      'states_fil' = 'State',
+      'geographic' = ' ',
+      'ap_score' = 'AP score',
+      'rank' = 'Rank',
+      'psat' = 'PSAT',
+      'sat' = 'SAT',
+      'gpa' = 'GPA',
+      'academic' = '',
+      'hsgrad_class' = 'HS grad class'
+    )
+  ) %>% 
+  ggplot(aes(x = filters_label, y = num)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = if_else(filters %in% c('academic', 'geographic', 'demographic') & univ_label == 'Research', str_c(str_to_title(filters), ' filters'), ''), y = 0), hjust = 0, vjust = 1, size = 2, fontface = 'bold') +
+  geom_text(aes(label = if_else(!filters %in% c('academic', 'geographic', 'demographic'), str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('Number of orders') +
+  facet_wrap(~ factor(univ_label, levels = c('Research', 'MA/doctoral'))) +
   coord_flip()
 ```
 
@@ -599,15 +630,92 @@ The three most commonly used academic filters (GPA, PSAT, SAT) were used by spec
 
 Figure X shows minimum and maximum thresholds used in SAT score filters and figure X shows thresholds for PSAT score. Although substantial overlap exists across university type, research universities tended to specify higher minimum score thresholds and higher maximum score threshoulds compared to ma/doctoral universities. In Figure X, for example, X% of orders by research universities specified a minimum SAT score of 1110 compared to X% of orders by ma/doctoral. X% of orders by research universities specified a maximum SAT score of 1310 or higher compared to X% of orders by ma/doctoral.  Interestingly,  7% of ma/doctoral universities' SAT filter orders indicated a minimum SAT score threshold of 1500+, whereas research universities made zero orders at that minimum threshold. These 21 orders were made by two different ma/doctoral universities targeting prospects for specific scholarship programs.
 
-```{r orders-gpa}
-table_gpa %>% 
-  mutate(
-    pct_low = str_c(sprintf('%.1f', pct_low), '%'),
-    pct_high = if_else(is.na(pct_high), '', str_c(sprintf('%.1f', pct_high), '%'))
+```{r orders-gpa, fig.height = 3, fig.cap = 'GPA filter used by research vs. ma/doctoral'}
+orders_gpa_total <- orders_gpa %>% 
+  group_by(univ_type) %>% 
+  summarise(
+    num_orders = sum(n_low)
   ) %>% 
-  kable(booktabs = T, col.names = c('GPA', '# low', '% low', '# high', '% high'), align = c('l', rep('c', 4)), caption = 'Filter by GPA') %>% 
-  row_spec(0, bold = T) %>%
-  kable_styling(position = 'center')
+  pull(num_orders, univ_type)
+
+orders_gpa %>% 
+  mutate(
+    univ_label = recode_factor(
+      univ_type,
+      'research' = str_c('Research (N=', orders_gpa_total[['research']], ')'),
+      'regional' = str_c('MA/doctoral (N=', orders_gpa_total[['regional']], ')')
+    )
+  ) %>% 
+  ggplot(aes(x = factor(gpa_low, levels = c('A+', 'A', 'A-', 'B+', 'B', 'B-', 'C+', 'C', 'C-')), y = pct_low, fill = univ_label)) +
+  geom_bar(position = 'dodge', stat = 'identity') +
+  geom_text(aes(label = n_low), hjust = 0.5, vjust = 0, size = 2, position = position_dodge(0.9)) +
+  scale_y_continuous(labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('% of orders in university type')
+```
+
+```{r orders-sat, fig.height = 4, fig.cap = 'SAT filter used by research vs. ma/doctoral'}
+orders_sat_total <- orders_sat %>% 
+  filter(test_range == 'sat_min') %>% 
+  group_by(univ_type) %>% 
+  summarise(
+    num_orders = sum(num)
+  ) %>% 
+  pull(num_orders, univ_type)
+
+orders_sat %>% 
+  mutate(
+    range_label = recode_factor(
+      test_range,
+      'sat_min' = 'Minimum',
+      'sat_max' = 'Maximum'
+    ),
+    univ_label = recode_factor(
+      univ_type,
+      'research' = str_c('Research (N=', orders_sat_total[['research']], ')'),
+      'regional' = str_c('MA/doctoral (N=', orders_sat_total[['regional']], ')')
+    )
+  ) %>% 
+  ggplot(aes(x = brks, y = pct, fill = univ_label)) +
+  geom_bar(position = position_dodge2(reverse = T, padding = 0), stat = 'identity') +
+  geom_text(aes(label = num), hjust = -0.1, size = 2, position = position_dodge2(0.9, reverse = T, padding = 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)), labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('% of orders in university type') +
+  facet_wrap(~ range_label) +
+  coord_flip()
+```
+
+```{r orders-psat, fig.height = 4, fig.cap = 'PSAT filter used by research vs. ma/doctoral'}
+orders_psat_total <- orders_psat %>% 
+  filter(test_range == 'psat_min') %>% 
+  group_by(univ_type) %>% 
+  summarise(
+    num_orders = sum(num)
+  ) %>% 
+  pull(num_orders, univ_type)
+
+orders_psat %>% 
+  mutate(
+    range_label = recode_factor(
+      test_range,
+      'psat_min' = 'Minimum',
+      'psat_max' = 'Maximum'
+    ),
+    univ_label = recode_factor(
+      univ_type,
+      'research' = str_c('Research (N=', orders_psat_total[['research']], ')'),
+      'regional' = str_c('MA/doctoral (N=', orders_psat_total[['regional']], ')')
+    )
+  ) %>% 
+  ggplot(aes(x = brks, y = pct, fill = univ_label)) +
+  geom_bar(position = position_dodge2(reverse = T, padding = 0), stat = 'identity') +
+  geom_text(aes(label = num), hjust = -0.1, size = 2, position = position_dodge2(0.9, reverse = T, padding = 0)) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)), labels = label_percent(accuracy = 1)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('% of orders in university type') +
+  facet_wrap(~ range_label) +
+  coord_flip()
 ```
 
 
@@ -625,14 +733,6 @@ The geographic filters most commonly used by ma/doctoral universities in our sam
 
 Zip code filters were used by ma/doctoral universities in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. XX of XX orders that filtered on zip code filtered on three-digit zip codes. Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. Figure X shows a map of three-digit zip codes filtered by a TX public university [OZAN SAYS INCLUDE]
 
-```{r orders-zip, fig.height = 4, fig.cap = 'Filter by 3-digit zip code'}
-zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
-
-leaflet() %>%
-  addProviderTiles(providers$CartoDB.Positron) %>% 
-  addPolygons(data = zip_shp_purchased, stroke = F, fillOpacity = 0.8, smoothFactor = 0.2, color = 'gray')
-```
-
 
 In the second approach, universities specified a list of five-digit zip codes. Usually, five-digit zip codes were specified in a separate spreadsheet or text file that universities provided to College Board. XX (N=381) of XX orders that filtered on zip code filtered on five-digit zip codes. We know the five-digit zip-codes for XXX of these orders. [CAN WE SAY WHETHER THESE TENDED TO BE IN-STATE?]For the remaining XXX orders (n=157 orders), we were unable to obtain the zip-code file despite multiple requests. 
 
@@ -641,24 +741,52 @@ One doctoral university gave us order summaries for XXX (?136?) student lists th
 Filtering by geography always raises equality of opportunity concerns for prospects who do not reside in the targeted geography. Filtering by five-digit zip code is particularly concerning because there is no equality of opportunity rationale for targeting students who live in one zip code but not those from a neighboring zip code. Zip codes are highly correlated with income and racial demographics. Therefore, policymakers may be concerned that some universities are systematically excluding low-income communities or communities of color when they filter on five-digit zip code.
 
 
-```{r orders-state}
-orders_df %>%
-  filter(nchar(state_name) > 0) %>% 
-  mutate(
-    state_name = case_when(
-      str_detect(state_name, '\\|') ~ 'Multi-state', 
-      state_name == 'California' ~ 'CA', 
-      state_name == 'Texas' ~ 'TX', 
-      state_name == 'Illinois' ~ 'IL', 
-      T ~ state_name
-    )
-  ) %>% 
-  group_by(univ_state, state_name) %>% 
-  summarise(count = n()) %>% 
-  arrange(desc(count)) %>% 
-  kable(booktabs = T, col.names = c('University state', 'Purchased state(s)', 'Count'), align = rep('c', 3), caption = 'Filter by state') %>% 
-  row_spec(0, bold = T) %>%
-  kable_styling(position = 'center')
+```{r orders-state-research-outofstate, fig.height = 2.8, fig.cap = 'State filter used by research universities, out-of-state'}
+# Out-of-state
+plot_usmap(
+  regions = 'states',
+  data = orders_state_research %>% filter(locale == 'outofstate'),
+  values = 'frequency'
+) +
+  scale_fill_gradient2(
+    low = 'gray',
+    mid = 'lightgray',
+    high = 'cyan', 
+    midpoint = 35,
+    name = 'Number of orders',
+    label = label_number(accuracy = 1),
+    limits = c(0, 120)
+  ) + 
+  labs(title = 'State filter used by research universities (out-of-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
+```
+
+```{r orders-state-research-instate, fig.height = 2.8, fig.cap = 'State filter used by research universities, in-state'}
+# In-state
+plot_usmap(
+  regions = 'states',
+  data = orders_state_research %>% filter(locale == 'instate'),
+  values = 'frequency'
+) +
+  scale_fill_continuous(
+    low = 'lightgray',
+    high = 'cyan', 
+    name = 'Number of orders',
+    label = label_number(accuracy = 1),
+    limits = c(0, 10)
+  ) + 
+  labs(title = 'State filter used by research universities (in-state)') +
+  theme(
+    text = element_text(size = 7), 
+    plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
+    legend.title = element_text(face = 'bold'),
+    legend.position = 'right'
+  )
 ```
 
 
@@ -669,10 +797,21 @@ Nearly all orders using demographic filters were made by research universities. 
 
 Research universities also made `r (orders_filters1 %>% filter(filters == 'gender'))$V1` orders using gender filters. Across these orders, `r (gender %>% filter(gender == 'Female'))$pct`% filtered for women prospects and `r (gender %>% filter(gender != 'Female'))$pct`% filtered men prospects. 
 
+```{r orders-race, fig.height = 3, fig.cap = 'Race filter used by research vs. ma/doctoral'}
+orders_race %>% 
+  ggplot(aes(fill = univ_label, y = count, x = reorder(race_ethnicity_group, count))) + 
+  geom_bar(position = 'stack', stat = 'identity') +
+  geom_text(aes(label = count), hjust = -0.1, size = 2) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('Number of orders') +
+  coord_flip()
+```
+
 
 ### Combination of Filters
 
-On average, the (N=XXX) orders in our dataset specified X.X critereia. Table \@ref(tab:orders-filter-combos) shows the ten most commonly used combinations of filters across orders by research (N=377) and ma/doctoral (N=458). [STATE SOMEWHERE THAT SOME FILTER IN THESE COMBINATIONS AREUSED AS **OR** CONDITIONS RATHER THAN **AND** CONDITIONS?]. 
+On average, the (N=XXX) orders in our dataset specified X.X critereia. Table \@ref(tab:orders-filters-combo) shows the ten most commonly used combinations of filters across orders by research (N=377) and ma/doctoral (N=458). [STATE SOMEWHERE THAT SOME FILTER IN THESE COMBINATIONS AREUSED AS **OR** CONDITIONS RATHER THAN **AND** CONDITIONS?]. 
 
 For research universities, the top ten filter combinations account for 71% of all orders.  The most common filter combination used included high school graduation class, state, and PSAT scores (n=47). These filters were also used across the top three combinations. For 41 [NUMBERS SEEM OFF IN PARAGRAH?] orders, high school graduation class, state, and PSAT scores were combined with race and gpa filters. Another 39 orders added race, gpa, SAT, and high school rank. The fourth and fifth most common combinations switched PSAT scores for SAT scores. The remaining common filter combinations across orders by research universities used other academic filters (e.g., high school rank, AP scores) and geographical filters (e.g., geomarkets, segment). 
 
@@ -681,13 +820,28 @@ For ma/doctoral universities, the top 10 filter combinations account for 97% of 
 
 The results for Research Question 3 investigates the student characteristics associated with particular combinations of filters.
 
-```{r orders-filter-combos}
-df_0 %>% 
-  head(10) %>%
-  mutate(pct = str_c(pct, '%')) %>% 
-  kable(booktabs = T, col.names = c('Filters', 'Count', 'Percent'), align = c('l', 'c', 'c'), caption = 'Filter combos used in order purchases') %>% 
+```{r orders-filters-combo}
+bind_cols(
+  orders_filters_combo %>% 
+    filter(univ_type == 'research') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%')),
+  orders_filters_combo %>% 
+    filter(univ_type == 'regional') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%'))
+) %>% 
+  kable(
+    booktabs = T, 
+    col.names = rep(c('Filters', 'Count', 'Percent'), 2), 
+    align = rep(c('l', 'c', 'c'), 2),
+    caption = 'Filter combos used in order purchases by research vs. ma/doctoral'
+  ) %>%
+  add_header_above(c('Research' = 3, 'MA/doctoral' = 3), bold = T) %>% 
   row_spec(0, bold = T) %>%
-  kable_styling(position = 'center')
+  kable_styling(position = 'center', latex_options = c('hold_position', 'scale_down'))
 ```
 
 <!-- About `r (df_0 %>% filter(string == 'grad_class,state,race,sat,psat,gpa,rank'))$pct`% of orders (`r (df_0 %>% filter(string == 'grad_class,state,race,sat,psat,gpa,rank'))$n` of `r num_orders`) used high school graduation class, state, sat, psat, gpa, and class rank filters while specifying for the race/ethnicity of prospects. The second most commonly used filter combination that specified the race/ethnicity of prospects includes `r (df_0 %>% filter(string == 'grad_class,state,race,psat,gpa'))$n` orders that used it in combination with graduation class, state, PSAT, and GPA filters.  -->
@@ -701,9 +855,9 @@ df_0 %>%
 
 ## RQ2: Characteristics of Prospects 
 
-Research Question 2 asks, What are the characteristics of prospects included in student lists purchased by universities in our sample? Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:prospects-count) shows the total number of prospects by public versus ma/doctoral universities, focusing on domestic students. Research universities in the study purchased nearly four times the number of prospects (N= 2,785,481) than ma/doctoral universities (N=764,334).
+Research Question 2 asks, What are the characteristics of prospects included in student lists purchased by universities in our sample? Our analysis on the characteristics of prospects purchased by universities includes `r num_lists` orders resulting in `r prettyNum(num_prospects, ',')` prospects. Figure \@ref(fig:rq2-counts) shows the total number of prospects by public versus ma/doctoral universities, focusing on domestic students. Research universities in the study purchased nearly four times the number of prospects (N= 2,785,481) than ma/doctoral universities (N=764,334).
 
-Figure \@ref(fig:prospects-count) shows the number of prospects purchased by in-state versus out-of-state across institutional type.  Research universities purchased many more out-of-state students than ma/doctoral universities. For example, of the nearly `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects purchased by research universities,  `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. For ma/doctoral universities, only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% of the nearly `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects were out-of-state students. 
+Figure \@ref(fig:rq2-counts) shows the number of prospects purchased by in-state versus out-of-state across institutional type.  Research universities purchased many more out-of-state students than ma/doctoral universities. For example, of the nearly `r round(df_rq2a_totals$research_univ / 1e6, 1)` Million prospects purchased by research universities,  `r round(df_rq2a_totals$research_univ_outofstate / df_rq2a_totals$research_univ * 100)`% were out-of-state. For ma/doctoral universities, only `r round(df_rq2a_totals$regional_univ_outofstate / df_rq2a_totals$regional_univ * 100)`% of the nearly `r prettyNum(round(df_rq2a_totals$regional_univ / 1000) * 1000, ',')` prospects were out-of-state students. 
 
 Below we describe the racial, economic, and geographical characteristics of prospect lists purchased by research and ma/doctoral universities. 
 
@@ -713,117 +867,270 @@ __Reporting ethnicity and race__. College Board's voluntary demographic question
 C:\Users\ozanj\Google Drive\student_list_policy\literature\industry\college_board\ap-guide-to-race-ethnicity-reporting-schools-districts-2016.pdf
 -->
 
-```{r prospects-count, fig.height = 2.5, fig.cap = 'Number of prospects purchased'}
-df_rq2a_counts <- df_rq2a %>% 
-  filter(row_subj == 'Total N') %>% 
-  select(all_domestic, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
-  t()
-
-df_rq2a_counts <- data.frame(df_rq2a_counts, row.names = rownames(df_rq2a_counts)) %>% 
-  rownames_to_column(var = 'count_type') %>% 
-  dplyr::rename(count = df_rq2a_counts) %>% 
-  mutate(loc_type = 'Domestic') %>% 
-  rbind(c('all_domestic', df_int2$n[[2]], 'International')) %>% 
-  arrange(count_type, loc_type)
-
-df_rq2a_counts$count <- as.numeric(df_rq2a_counts$count)
-df_rq2a_counts$count_type <- factor(df_rq2a_counts$count_type, levels = rev(c('all_domestic', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
-df_rq2a_counts$loc_type <- factor(df_rq2a_counts$loc_type, levels = rev(c('Domestic', 'International')))
-
-df_rq2a_counts %>% 
-  ggplot(aes(x = count_type, y = count, fill = loc_type, width = 0.6)) +
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
-  geom_text(aes(y = if_else(count_type != 'regional_univ_outofstate', count, count * 7), label = prettyNum(count, ',')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
-  xlab('') + ylab('') +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 2500000)) +
-  scale_fill_brewer(palette = 'YlGnBu', name = 'Locale') +
-  theme(
-    axis.text.x = element_blank(),
-    legend.position = 'top'
-  ) +
+```{r rq2-counts, fig.height = 3, fig.cap = 'Number of prospects purchased by university type and location'}
+rq2_counts %>% 
+  mutate(
+    region = recode_factor(
+      region,
+      'international' = 'International',
+      'domestic' = 'Domesetic'
+    ),
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'regional_outofstate' = 'MA/doctoral (out-of-state)',
+      'regional_instate' = 'MA/doctoral (in-state)',
+      'research_outofstate' = 'Research (out-of-state)',
+      'research_instate' = 'Research (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = n, fill = region)) + 
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(univ_type == 'regional' & locale == 'outofstate', '', if_else(n < 1000000, str_c(round(n / 1000), 'K'), str_c(round(n / 1000000, 1), 'M')))), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(mapping = aes(label = if_else(univ_type == 'regional' & region == 'Domesetic' & locale == 'outofstate', str_c(round(n / 1000), 'K (300 international)'), ''), x = 30e3), hjust = 0, size = 2) +
+  scale_fill_manual(values = color_palette, name = '') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
+  xlab('Number of prospects') + ylab('') +
   guides(fill = guide_legend(reverse = T)) +
-  coord_flip()
-```
-
-```{r}
-create_rq2a_figure <- function(categories, legend_title) {
-  df_rq2a_fig <- df_rq2a %>% 
-    filter(row_subj %in% categories) %>% 
-    select(row_subj, all_domestic, research_univ_instate, regional_univ_instate, research_univ_outofstate, regional_univ_outofstate) %>% 
-    pivot_longer(-row_subj, names_to = 'pct_type', values_to = 'pct')
-  
-  df_rq2a_fig$pct_type <- factor(df_rq2a_fig$pct_type, levels = rev(c('all_domestic', 'research_univ_instate', 'regional_univ_instate', 'research_univ_outofstate', 'regional_univ_outofstate')))
-  df_rq2a_fig$row_subj <- factor(df_rq2a_fig$row_subj, levels = rev(categories))
-  
-  df_rq2a_fig %>% 
-    ggplot(aes(x = pct, y = pct_type, fill = row_subj, width = 0.6)) +
-    geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
-    geom_text(aes(x = pct, label = ifelse(pct > 1, round(pct, 0), '')), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
-    xlab('') + ylab('') +
-    scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 101)) +
-    scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = legend_title) +
-    theme(
-      axis.text.x = element_blank()
-    ) +
-    guides(fill = guide_legend(reverse = T))
-}
+  theme(
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
 ```
 
 
 ### Public Research Universities
 
-Figure \@ref(fig:prospects-race) presents the racial characteristics of prospects from lists purchased by research university across in-state versus out-of-state status. Out-of-state prospects in lists purchased by research universities had a larger proportion of White and Asian students and lower proportions of Black, Latinx, and Native American students than lists for in-state prospects. Across all research universities, out-of-state prospects were `r round(df_rq2a_outofstate[['Pct White']])`% white students, `r round(df_rq2a_outofstate[['Pct Asian']])`% Asian students, `r round(df_rq2a_outofstate[['Pct Latinx']])`% Latinx students, `r round(df_rq2a_outofstate[['Pct Black']])`% Black, `r round(df_rq2a_outofstate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_outofstate[['Pct Race-No Response']])`% no response. By contrast, in-state prospects were `r round(df_rq2a_instate[['Pct White']])`% white students, `r round(df_rq2a_instate[['Pct Asian']])`% Asian, `r round(df_rq2a_instate[['Pct Latinx']])`% Latinx, `r round(df_rq2a_instate[['Pct Black']])`% Black, `r round(df_rq2a_instate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_instate[['Pct Race-No Response']])`% of students that did not report their race/ethnicity.
+Figure \@ref(fig:rq2-race-research) presents the racial characteristics of prospects from lists purchased by research university across in-state versus out-of-state status. Out-of-state prospects in lists purchased by research universities had a larger proportion of White and Asian students and lower proportions of Black, Latinx, and Native American students than lists for in-state prospects. Across all research universities, out-of-state prospects were `r round(df_rq2a_outofstate[['Pct White']])`% white students, `r round(df_rq2a_outofstate[['Pct Asian']])`% Asian students, `r round(df_rq2a_outofstate[['Pct Latinx']])`% Latinx students, `r round(df_rq2a_outofstate[['Pct Black']])`% Black, `r round(df_rq2a_outofstate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_outofstate[['Pct Race-No Response']])`% no response. By contrast, in-state prospects were `r round(df_rq2a_instate[['Pct White']])`% white students, `r round(df_rq2a_instate[['Pct Asian']])`% Asian, `r round(df_rq2a_instate[['Pct Latinx']])`% Latinx, `r round(df_rq2a_instate[['Pct Black']])`% Black, `r round(df_rq2a_instate[['Pct Multiracial']])`% multiracial, and `r round(df_rq2a_instate[['Pct Race-No Response']])`% of students that did not report their race/ethnicity.
 
-Figure \@ref(fig:prospects-income) presents the average median income of the zip code where in-state versus out-of-state prospects live, indicating that out-of-state prospects tend to be more affluent than in-state prospects. Across all research universities, out-of-state prospects lived in zip-codes where the average median household income was \$`r prettyNum(round(df_rq2a_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')`. In-state prospects lived in zip-codes where the average median household income was \$`r prettyNum(round(df_rq2a_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')`.  
+Figure \@ref(fig:rq2-income-research) presents the average median income of the zip code where in-state versus out-of-state prospects live, indicating that out-of-state prospects tend to be more affluent than in-state prospects. Across all research universities, out-of-state prospects lived in zip-codes where the average median household income was \$`r prettyNum(round(df_rq2a_outofstate[['Median Household Income (mean)']] / 1000) * 1000, ',')`. In-state prospects lived in zip-codes where the average median household income was \$`r prettyNum(round(df_rq2a_instate[['Median Household Income (mean)']] / 1000) * 1000, ',')`.  
 
 <!-- While out-of-state prospect lists included a larger proportion of White and Asian students, these orders also include a critical mass of nearly 8,000 Native American students that can be glossed over when only looking at overall proportions.  Check above number -->
 
 <!-- The differences in the racial characteristics of in-state versus out-of-state prospects are likely also a function of purchases made by research versus master's universities. While research universities made more out-of-state than in-state prospect purchases, the differences in the racial characteristics of both groups were relatively small in comparison to purchases by master's universities. For example, White students made up `r round(df_rq2a_research_outofstate[['Pct White']])`% and `r round(df_rq2a_research_instate[['Pct White']])`% of out-of-state and in-state prospect lists purchased by research universities, respectively. In comparison, White students made up `r round(df_rq2a_regional_outofstate[['Pct White']])`% of out-of-state prospect lists and only `r round(df_rq2a_regional_instate[['Pct White']])`% of in-state prospect lists purchased by master's universities. However, purchases by master's universities also included a much larger proportion of students that did not report their race/ethnicity.  -->
 
-```{r prospects-race, fig.height = 2.3, fig.cap = 'Prospects purchased by race'}
-create_rq2a_figure(c('Pct White', 'Pct Black', 'Pct Latinx', 'Pct Asian', 'Pct NH/PI', 'Pct AI/AN', 'Pct Multiracial', 'Pct Race-No Response', 'Pct Race-Missing'), 'Race/ethnicity')
+```{r rq2-race-research, fig.height = 2, fig.cap = 'Racial composition of prospects purchased by research universities'}
+rq2_race %>% 
+  filter(univ_type == 'research', region != 'international') %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `8` = 'NH/PI',
+      `1` = 'AI/AN',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    ),
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_outofstate' = 'Research (out-of-state)',
+      'research_instate' = 'Research (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
 ```
 
-Figure X examines the extend to which in-state and out-of-state prospects purchased by research universities tend to reside in urban, suburban, or rural zip codes, as defined by the NCES/Census "locale" variable [[CITE](https://nces.ed.gov/programs/edge/docs/EDGE_NCES_LOCALE_FILEDOC.pdf)]. 34% of in-state prospects lived in urban areas and 39% lived in suburban areas. By comparison, out-of-state prospects were less likely to live in urban areas (25%) and more likely to live in suburbs (47%). The percentage of prospects living in rural areas was about the same for in-state and out-of-state prospects. The majority of rural prospects purchased lived in "rural-fringe" areas (less than 5 miles from an Urbanized Area or less than 2.5 from an Urban Cluster) rather than "rural-distant" or "rural-remote." Future research should analyze name buys in rural areas more thoroughly.
+```{r rq2-income-research, fig.height = 1.5, fig.cap = 'Median household income of prospects purchased by research universities'}
+rq2_income %>% 
+  filter(univ_type == 'research', region != 'international') %>% 
+  mutate(
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_outofstate' = 'Research (out-of-state)',
+      'research_instate' = 'Research (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 115000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
+```
 
-Finally Appendix X, shows that the percentage of out-of-state prospects attending private high schools (12%) was higher than the percentage of in-state prospects attending private schools (8%).
+```{r rq2-locale-research, fig.height = 2, fig.cap = 'Locale of prospects purchased by research universities'}
+rq2_locale %>% 
+  filter(univ_type == 'research', region != 'international') %>% 
+  mutate(
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_outofstate' = 'Research (out-of-state)',
+      'research_instate' = 'Research (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = locale_text)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
+```
+
+Figure \@ref(fig:rq2-locale-research) examines the extend to which in-state and out-of-state prospects purchased by research universities tend to reside in urban, suburban, or rural zip codes, as defined by the NCES/Census "locale" variable [[CITE](https://nces.ed.gov/programs/edge/docs/EDGE_NCES_LOCALE_FILEDOC.pdf)]. 34% of in-state prospects lived in urban areas and 39% lived in suburban areas. By comparison, out-of-state prospects were less likely to live in urban areas (25%) and more likely to live in suburbs (47%). The percentage of prospects living in rural areas was about the same for in-state and out-of-state prospects. The majority of rural prospects purchased lived in "rural-fringe" areas (less than 5 miles from an Urbanized Area or less than 2.5 from an Urban Cluster) rather than "rural-distant" or "rural-remote." Future research should analyze name buys in rural areas more thoroughly.
+
+Finally Appendix \@ref(fig:rq2-school), shows that the percentage of out-of-state prospects attending private high schools (12%) was higher than the percentage of in-state prospects attending private schools (8%).
+
+```{r rq2-school, fig.height = 2.5, fig.cap = 'School type of prospects purchased by research vs. ma/doctoral universities'}
+rq2_school %>% 
+  filter(univ_type == 'research' | locale == 'instate', region != 'international') %>% 
+  mutate(
+    control = if_else(is.na(hs_school_control), 'unknown', hs_school_control),
+    control = recode_factor(
+      control,
+      'unknown' = 'Missing',
+      'private' = 'Private HS',
+      'public' = 'Public HS'
+    ),
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'regional_instate' = 'MA/doctoral (in-state)',
+      'research_outofstate' = 'Research (out-of-state)',
+      'research_instate' = 'Research (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = control)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'PuBuGn', direction = 1, name = 'School type') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
+```
 
 ### Public ma/doctoral Universities 
 
 Analyses of prospects purchased by ma/doctoral universities focus on in-state prospects because the ma/doctoral universities in our sample purchased few out-of-state prospects, except for one university which provided us data about order summaries but not the associated prospect-level data.
 
 
-Figure \@ref(fig:prospects-race) compares the racial characteristics of in-state prospects purchased by ma/doctoral universities to the racial characteristics of in-state prospects purchased by research universities. [KARINA - CREATE TEXT FOR THIS PARAGRAPH ONCE WE FIGURE OUT DEAL W/ NO-RESPONSE FOR MA/DOCTORAL]
+Figure \@ref(fig:rq2-race-regional) compares the racial characteristics of in-state prospects purchased by ma/doctoral universities to the racial characteristics of in-state prospects purchased by research universities. [KARINA - CREATE TEXT FOR THIS PARAGRAPH ONCE WE FIGURE OUT DEAL W/ NO-RESPONSE FOR MA/DOCTORAL]
 
-Figure \@ref(fig:prospects-income) compares the household income of in-state prospects purchased by ma/doctoral universities to that of in-state prospects purchased by research universities. For ma/doctoral universities, in-state prospects lived in zip codes where the average of median household income was XXX. By contrast, the in-state prospects purchased by research universities were slightly more affluent, living in zip codes where the average of median household income was XXX.
+Figure \@ref(fig:rq2-income-regional) compares the household income of in-state prospects purchased by ma/doctoral universities to that of in-state prospects purchased by research universities. For ma/doctoral universities, in-state prospects lived in zip codes where the average of median household income was XXX. By contrast, the in-state prospects purchased by research universities were slightly more affluent, living in zip codes where the average of median household income was XXX.
 
-
-```{r prospects-income, fig.height = 2.5, fig.cap = 'Prospects purchased by income'}
-df_rq2a_income <- df_rq2a %>% 
-  filter(row_subj == 'Median Household Income (mean)') %>% 
-  select(all_domestic, in_state, out_of_state, research_univ_instate, research_univ_outofstate, regional_univ_instate, regional_univ_outofstate) %>% 
-  t()
-
-df_rq2a_income <- data.frame(df_rq2a_income, row.names = rownames(df_rq2a_income)) %>% 
-  rownames_to_column(var = 'count_type') %>% 
-  dplyr::rename(count = df_rq2a_income)
-
-df_rq2a_income$count_type <- factor(df_rq2a_income$count_type, levels = rev(c('all_domestic', 'in_state', 'out_of_state', 'research_univ_instate', 'research_univ_outofstate', 'regional_univ_instate', 'regional_univ_outofstate')))
-
-df_rq2a_income %>% 
-  ggplot(aes(x = count, y = count_type, width = 0.6)) +
-  geom_bar(stat = 'identity', fill = '#7FCDBB', alpha = 0.6) +
-  geom_text(aes(x = count + 800, label = str_c('$', round(count / 1000, 0), 'K')), color = '#555555', size = 2, hjust = 0) +
-  xlab('') + ylab('') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 110000)) +
+```{r rq2-race-regional, fig.height = 2, fig.cap = 'Racial composition of prospects purchased by ma/doctoral universities'}
+rq2_race %>% 
+  filter(locale == 'instate', region != 'international') %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `8` = 'NH/PI',
+      `1` = 'AI/AN',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    ),
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_instate' = 'Research (in-state)',
+      'regional_instate' = 'MA/doctoral (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
   theme(
     axis.text.x = element_blank(),
-    legend.position = 'top'
-  ) +
-  guides(fill = guide_legend(reverse = T))
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
 ```
 
-Figure XXX examines the locale (city, suburban, rural) of in-state prospects. Compared to research universities, ma/doctoral universities purchased a slightly higher percentage of prospects living in suburban areas (43% compared to 39%) and a slightly lower percentage of prospects living in cities (29% compared to 34%). The share of prospects residing in rural areas was nearly identical across university type.
+```{r rq2-income-regional, fig.height = 2, fig.cap = 'Median household income of prospects purchased by ma/doctoral universities'}
+rq2_income %>% 
+  filter(locale == 'instate', region != 'international') %>% 
+  mutate(
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_instate' = 'Research (in-state)',
+      'regional_instate' = 'MA/doctoral (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 105000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
+```
+
+```{r rq2-locale-regional, fig.height = 2, fig.cap = 'Locale of prospects purchased by ma/doctoral universities'}
+rq2_locale %>% 
+  filter(locale == 'instate', region != 'international') %>% 
+  mutate(
+    count_type = str_c(univ_type, locale, sep = '_'),
+    count_type = recode_factor(
+      count_type,
+      'research_instate' = 'Research (in-state)',
+      'regional_instate' = 'MA/doctoral (in-state)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = locale_text)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 7, face = 'bold', hjust = 1)
+  )
+```
+
+Figure \@ref(fig:rq2-locale-regional) examines the locale (city, suburban, rural) of in-state prospects. Compared to research universities, ma/doctoral universities purchased a slightly higher percentage of prospects living in suburban areas (43% compared to 39%) and a slightly lower percentage of prospects living in cities (29% compared to 34%). The share of prospects residing in rural areas was nearly identical across university type.
 
 <!-- ### High Schools Attended -->
 
@@ -858,29 +1165,116 @@ We analyze the relationship between filter criteria and the characteristics of p
 
 ### Prospect Characteristics Across Individual Filters
 
-Table \@ref(tab:prospects-filters) presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of `r prettyNum(num_prospects, ',')` prospects]
+Table \@ref(tab:rq3) presents the characteristics of prospects by individual filters. For each column, averages are reported across all prospects that were purchased via orders using the specified column filter, which includes orders that used the specified filter in combination with other filters. ^[Given we present all prospects across individual filters that are used in combination with others, total number of prospects summed across columns will exceed our grand total of `r prettyNum(num_prospects, ',')` prospects]
 
 Focusing on the racial characteristics of prospects, student lists with the largest percentages of White and Asian prospects result when orders use PSAT, gender, segment, or CBSA filters. For example, orders that specify a gender filter result in prospect lists that are less than 10% Black, Latinx, and/or Native American. <!-- Check: df_rq3_gender[['Pct Black']] + df_rq3_gender[['Pct Latinx']] + df_rq3_gender[['Pct AI/AN']] --> This pattern is consistent in prospect lists that use segment or CBSA filters, although the disparity is not as large for orders using a PSAT filter (`r round(df_rq3_psat[['Pct Black']] + df_rq3_psat[['Pct Latinx']] + df_rq3_psat[['Pct AI/AN']])`% Black, Latinx, Native America).  On the other hand, orders that filter by specifying particular race/ethnicity groups result in lists that have fewer White and Asian prospects and greater proportions of Black, Latinx, Native American, and multiracial prospects. <!-- Check: round(df_rq3_race[['Pct White']] + df_rq3_race[['Pct Asian']]) vs. round(df_rq3_race[['Pct Black']] + df_rq3_race[['Pct Latinx']] + df_rq3_race[['Pct AI/AN']] + df_rq3_race[['Pct Multiracial']]) --> This coincides with descriptive findings above that suggest more than half of all orders using a race/ethnicity filter specified Black, Native American, and/or Latinx prospects.
 
-```{r prospects-filters}
-df_rq3 %>% 
+```{r rq3}
+rq3 %>% 
+  mutate_if(is.numeric, ~if_else(. < 1, . * 100, .)) %>% 
   mutate_if(is.numeric, round, 0) %>% 
-  mutate_each(funs(prettyNum(., big.mark = ','))) %>% 
-  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'Race', 'Gender', 'Zip code', 'State', 'Segment', 'CBSA'), align = c('l', rep('c', 11)), caption = 'Characteristics of prospects by filters') %>% 
+  mutate_if(is.numeric, ~if_else(row_number() == 18, str_c('$', round(. / 1000), 'K'), prettyNum(., big.mark = ','))) %>% 
+  mutate(
+    row_subj = recode_factor(
+      row_subj,
+      'n' = 'Total count',
+      'pct_instate' = '% In-state',
+      'pct_outofstate' = '% Out-of-state',
+      'pct_white' = '% White',
+      'pct_asian' = '% Asian',
+      'pct_black' = '% Black',
+      'pct_latinx' = '% Latinx',
+      'pct_nhpi' = '% NH/PI',
+      'pct_aian' = '% AI/AN',
+      'pct_multiracial' = '% Multiracial',
+      'pct_raceother' = '% Other',
+      'pct_noresponse' = '% No response',
+      'pct_racemissing' = '% Missing',
+      'pct_male' = '% Male',
+      'pct_female' = '% Female',
+      'pct_genderother' = '% Other ',
+      'pct_gendermissing' = '% Missing ',
+      'med_income' = 'Median income',
+      'pct_city' = '% City',
+      'pct_suburban' = '% Suburban',
+      'pct_fringe' = '% Rural - Fringe',
+      'pct_distant' = '% Rural - Distant',
+      'pct_remote' = '% Rural - Remote',
+      'pct_localemissing' = '% Missing  '
+    )
+  ) %>%
+  arrange(row_subj) %>% 
+  kable(
+    booktabs = T, 
+    col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Geomarket', 'Segment', 'CBSA', 'Race', 'Gender'), 
+    align = c('l', rep('r', 13)),
+    caption = 'Prospect characteristics by filter used'
+    ) %>% 
+  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 5, 'Demographic' = 2), bold = T) %>% 
+  group_rows('Location', 2, 3) %>%
+  group_rows('Race/ethnicity', 4, 13) %>%
+  group_rows('Gender', 14, 17) %>%
+  group_rows('Household income', 18, 18) %>%
+  group_rows('Locale', 19, 24) %>%
   row_spec(0, bold = T) %>%
-  kable_styling(latex_options = 'scale_down')
+  kable_styling(latex_options = c('hold_position', 'scale_down'))
 ```
 
 Similar disparities are evident across the economic characteristics of prospect lists by filters used. Orders using PSAT, gender, segment, or CBSA filters result in prospect lists with the largest average median household incomes. Orders using a CBSA filter showcase the upper extreme of this pattern, resulting in lists where the average prospect lived in a zipcode where the median household income \$`r prettyNum(round(df_rq3_cbsa[['Median Household Income (mean)']] / 1000) * 1000, ',')`. Similarly, orders using race/ethnicity filters showcased the lower extreme. When universities purchased orders that filtered for specific race/ethnicity groups, the resulting lists included prospects that lived in zip codes where the average median household income was less than $`r prettyNum(round(df_rq3_race[['Median Household Income (mean)']] / 1000) * 1000, ',')`. 
 
 Not surprisingly, orders using geographic filters result in specific patterns of in-state versus out-of-state prospects. However, analyzing the residency status of prospect lists across filters can help us develop insights into how specific filters are used to target prospects geographically. For example, orders using segment and CBSA filters are likely used for targeting out-of-state students, as the use of these filters result in prospect lists made up of `r round(df_rq3_segment[['Pct Out-of-State']])`% and `r round(df_rq3_cbsa[['Pct Out-of-State']])`% out-of-state prospects, respectively. However, orders filtering for prospects within specific state(s) result in list that are nearly equal proportions of out-of-state and in-state students. Coinciding with descriptive statistics detailed above and data limitations (i.e., we only received zip codes used to filter order lists by two master's universities in our sample), nearly `r round(df_rq3_zip[['Pct In-State']])`% of prospects resulting from orders using a zip code filter were in-state students. Similar to disparities in racial and economic characteristics of prospects, orders using a gender filter also resulted in geographical disparities (`r round(df_rq3_gender[['Pct Out-of-State']])`% out-of-state versus `r round(df_rq3_gender[['Pct In-State']])`% in-state).  
 
-Lastly, Table \@ref(tab:prospects-filters) shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average `r round(df_rq3_cbsa[['Pct Private']])`% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use zip code filter result in students lists with the minimum proportion of prospects attending private schools (`r round(df_rq3_zip[['Pct Private']])`%).
+Lastly, Table \@ref(tab:rq3) shows the difference in proportions of prospects that attend public versus private schools does not change significantly across filters used. For example, orders that specify a CBSA result in student lists where on average `r round(df_rq3_cbsa[['Pct Private']])`% of prospects attend private schools, which is the maximum proportion across all filters. In comparison, orders that use zip code filter result in students lists with the minimum proportion of prospects attending private schools (`r round(df_rq3_zip[['Pct Private']])`%).
 
 
 ### Prospect Characteristics Across Combinations of Filters
 
 ### Zip Code & Test Score Filters
+
+```{r asu-la-deep-dive, fig.height = 3, fig.cap = 'Zip code deep dive'}
+asu_la %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `8` = 'NH/PI',
+      `1` = 'AI/AN',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    ),
+    count_type = recode_factor(
+      in_zip_top10pct,
+      `0` = 'Rest',
+      `1` = 'Top 10%'
+    ),
+    ord_type = recode_factor(
+      ord_type,
+      'psat_high' = 'High PSAT order (1270-1520)',
+      'psat_med' = 'Medium PSAT order (1190-1260)',
+      'psat_low' = 'Low PSAT order (1110-1210)',
+      'sat_med' = 'Medium SAT order (1140-1260)'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('Percent of prospects') + ylab('') +
+  facet_wrap(~ ord_type) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1)
+  )
+```
 
 One common combination of filters used across orders were zip codes and test score ranges. Zip code filters were used primarily by indicating a list of five-digit zip codes, usually stored as a text or excel file provided to the College Board, from which orders then filtered prospects by. While we were able to obtain order summaries from several universities that indicated filtering by five-digit zip code, we were unsuccessful in acquiring the student list data and the additional files listing five-digit zip code filters for these orders after many attempts. In the process of requesting the additional data and files, some universities using zip code filters revealed that they were not in possession of the files. Rather, universities stated that student list purchases were made through a third-party enrollment management consulting firm on their behalf and that the firm possessed the files. 
 
@@ -1061,42 +1455,179 @@ Figure \@ref(fig:metro-income) presents the average median household income of p
 -->
 
 
-
-```{r metro-race, fig.height = 5, fig.cap = 'Metro area purchases by race'}
-fig_rq3_segment_race_inc %>% 
-  select(-income, -tot_students) %>% 
-  pivot_longer(c(-metro, -population), names_to = 'race', values_to = 'pct') %>% 
-  ggplot(aes(x = race, y = pct, fill = population, width = 0.6)) + 
-  geom_bar(position = position_dodge2(width = 0.7, reverse = T), stat = 'identity') +
-  scale_fill_manual(values = color_palette, name = 'Population') +
-  scale_y_continuous(labels = function(x) paste0(x, '%')) +
-  xlab('') + ylab('') +
-  theme(
-    strip.background = element_blank(),
-    strip.text = element_text(face = 'bold')
-  ) +
-  guides(fill = guide_legend(reverse = T)) +
-  facet_wrap(~ metro, ncol = 1)
-```
-
-
-
-```{r metro-income, fig.height = 2.5, fig.cap = 'Metro area purchases by income'}
-fig_rq3_segment_race_inc %>% 
+```{r uiuc-deep-dive, fig.height = 3.6, fig.cap = 'Segment deep dive'}
+uiuc_income_figure <- uiuc_income %>% 
   mutate(
-    population = recode_factor(population, 'Prospects Purchased' = 'Prospects purchased', 'Public HS Students' = 'All Metro Households')) %>%
-  select(metro, population, income) %>% 
-  ggplot(aes(x = income, y = metro, fill = population, width = 0.6)) + 
-  geom_bar(position = position_dodge(width = 0.7), stat = 'identity') +
-  scale_fill_manual(values = color_palette, name = 'Population') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 131000), labels = label_number(suffix = 'K', scale = 1e-3)) +
-  xlab('Income ($)') + ylab('Metro area') +
-  guides(fill = guide_legend(reverse = T))
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 250000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+uiuc_race_figure_data <- uiuc_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'unknown' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  )
+
+uiuc_race_figure_totals <- uiuc_race_figure_data %>% 
+  group_by(cbsa_name, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+uiuc_race_figure <- uiuc_race_figure_data %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = uiuc_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', prettyNum(count, big.mark = ',')), '')), size = 2, hjust = -0.15) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -45), 'pt')
+  )
+
+grid.arrange(
+  uiuc_income_figure,
+  uiuc_race_figure,
+  ncol = 2
+)
 ```
+
 
 
 
 ### Women in STEM
+
+```{r ucsd-deep-dive, fig.cap = 'Women in STEM deep dive'}
+ucsd_income_figure <- ucsd_income %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'sat' = 'SAT',
+      'ap' = 'AP',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(str_replace(cbsa_name, 'Roswell', 'Alpharetta'), ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 163000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+ucsd_race_figure_data <- ucsd_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'missing' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'sat' = 'SAT',
+      'ap' = 'AP',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  )
+
+ucsd_race_figure_totals <- ucsd_race_figure_data %>% 
+  group_by(cbsa_name, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+ucsd_race_figure <- ucsd_race_figure_data %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', count), '')), size = 2, hjust = -0.2) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    strip.text.x = element_text(color = 'white', size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, 2), 'pt')
+  )
+
+grid.arrange(
+  ucsd_income_figure,
+  ucsd_race_figure,
+  ncol = 2,
+  widths = c(2, 3)
+)
+```
 
 Two research universities in the study made orders targeting prospects who are women interested in science, technology, engineering, and math (STEM). Orders by one university targeted women interested in STEM via two different filter patterns. The first pattern used SAT scores, GPA (ranging from a low of B and high of A+), a state filter (in-state versus out-of-state), and prospects' self-reported intended major. SAT score filters for these orders ranged from 1200 to 1600 for in-state prospects and 1300 to 1600 for out-of-state prospects. The second pattern also used the same GPA and state filters, but STEM interest was proxied via AP test scores. Orders for in-state prospects filtered for scores ranging from 3 to 5 on AP STEM tests. ^[AP STEM Tests included Biology, Chemistry, Computer Science (A & P), Environmental Science, Calculus (AB & BC), Physics (1, 2, B, C: Electricity and Magnetism, & C: Mechanics) and Statistics] Orders for out-of-state prospects filtered for scores ranging from 4 to 5 on AP STEM tests. ^[Orders by the second university also generally followed these patterns, although SAT and AP score ranges differed slightly. The second university also targeted women interested in engineering majors through the use of segment filters at the high school and neighborhood levels in combination with some achievement filter (e.g., PSAT, SAT, GPA).] 
 
@@ -1138,6 +1669,204 @@ Similar patterns in racial/ethnic composition of Women in STEM prospects are als
 <!-- ``` -->
 
 ### Targeting URM Students
+
+```{r poc-race-deep-dive, fig.cap = 'Targeting students of color, race categories'}
+poc_cb_figure <- poc_cb %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode_factor(
+      stu_race_cb,
+      `999` = 'Missing',
+      `0` = 'No response',
+      `10` = 'Other',
+      `12` = 'Multiracial',
+      `8` = 'NH/PI',
+      `1` = 'AI/AN',
+      `4` = 'Latinx',
+      `3` = 'Black',
+      `2` = 'Asian',
+      `9` = 'White'
+    )
+  ) %>% 
+  ggplot(aes(x = race, y = pct)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  coord_flip() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+poc_common_figure <- poc_common %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'native_hawaiian' = 'NH/PI',
+      'american_indian' = 'AI/AN',
+      'is_hisp' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    )
+  ) %>% 
+  ggplot(aes(x = race, y = pct)) +
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  coord_flip() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+grid.arrange(
+  poc_cb_figure,
+  poc_common_figure,
+  ncol = 2
+)
+```
+
+```{r poc-prospects-deep-dive, fig.cap = 'Targeting students of color, purchased prospects'}
+poc_hs_figure <- poc_hs %>% 
+  mutate(
+    control = recode_factor(
+      control,
+      'public' = 'Public HS',
+      'private' = 'Private HS'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    )
+  ) %>% 
+  filter(control == 'Private HS') %>% 
+  ggplot(aes(y = count_type, x = pct, fill = control)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) + 
+  geom_text(mapping = aes(label = str_c(round(pct * 100), '% ', control)), size = 2, hjust = -0.05) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.5)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -10), 'pt')
+  )
+
+poc_income_figure <- poc_income %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'private', income_2564 = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'private', income_2564 = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'public', income_2564 = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'private', income_2564 = 0) %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'private_1+' = '1+',
+      'private_zero' = ' No buys',
+      'private' = ' ',
+      'public_6+' = '6+',
+      'public_1-5' = '1-5',
+      'public_zero' = 'No buys',
+      'public' = '',
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(str_replace(cbsa_name, 'Pompano', 'West Palm'), ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_text(mapping = aes(label = if_else(income_2564 == 0, '', str_c('$', round(income_2564 / 1000), 'K'))), size = 2, hjust = -0.1) +
+  geom_text(aes(label = if_else(income_2564 != 0, '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 350000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -120), 'pt')
+  )
+
+poc_race_figure <- poc_race %>% 
+  # filter(count != 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'public', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'private', race = 'white', pct = 0) %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'unknown' = 'Missing',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'private_1+' = '1+',
+      'private_zero' = ' No buys',
+      'private' = ' ',
+      'public_6+' = '6+',
+      'public_1-5' = '1-5',
+      'public_zero' = 'No buys',
+      'public' = '',
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(aes(label = if_else(str_detect(count_type, '\\w'), '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
+  geom_text(aes(x = 1, fill = NULL, label = if_else(str_detect(count_type, '\\w'), str_c(' ', num_hs, ' HS', if_else(num_prospects > 0, str_c('\n ', num_prospects, ' prospects'), '')), '')), size = 1, hjust = 0) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ cbsa_name, ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    legend.margin = unit(c(0, 0, 0, 0), 'pt'),
+    plot.margin = unit(c(4, 0, 5.5, -100), 'pt')
+  )
+
+grid.arrange(
+  poc_hs_figure,
+  poc_income_figure,
+  poc_race_figure,
+  ncol = 3,
+  widths = c(2, 1, 1)
+)
+```
 
 College Board and ACT student list products enable universities to target prospects who identify with particular ethnic and racial groups. In our sample, race ethnicity filters were utilized almost exclusively by research universities. As shown in Figure X, commonly observed filters were Latinx/Black/AIAN (N=19 purchases) and Asian/White/NHPI (N=19). A smaller number of purchases filtered for particular racial groups (e.g., NHPI) or particular ethnicities (e.g., Latinx). Filtering on race/ethnicity when purchasing student list may be a means of promoting racial diversity in college access, particularly given the trend away from race-conscious admissions policies. 
 
