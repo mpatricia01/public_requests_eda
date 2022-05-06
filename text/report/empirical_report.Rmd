@@ -129,7 +129,88 @@ orders_df_110680 %>% filter(order_num %in% c('560003','560079','560099','560102'
 orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==1) %>% View()
 -->
 
-Presumably, the university purchases lists of prospective women completing STEM AP exams or SAT exams with STEM major aspirations in order to overcome the under-representation of women in STEM degree programs, which has been a nationwide policy concern for decades [CITE]. However, an analysis of the purchased prospects for orders targeting women in STEM suggests that efforts to solve inequities in one problem may lead to other problematic inequities. For example, Figure X shows the average racial and economic characteristics of the 12,938 prospects whose contact information was purchased across 11 total orders made by the university targeting women in STEM. These prospects live in zip codes where the average median household income is \$95,000. Figure X also shows very few prospects whose information was purchased were purchased are Hispanic (6%), Black (2%), Multiracial (5%), or Native American students (0.1%); whereas White (52%) and Asian (32%) students make up more than 8 of every 10 women in STEM prospects.
+Presumably, the university purchases lists of prospective women completing STEM AP exams or SAT exams with STEM major aspirations in order to overcome the under-representation of women in STEM degree programs, which has been a nationwide policy concern for decades [CITE]. However, an analysis of the purchased prospects for orders targeting women in STEM suggests that efforts to solve inequities in one problem may lead to other problematic inequities. For example, Figure \@ref(fig:women-in-stem) shows the average racial and economic characteristics of the 12,938 prospects whose contact information was purchased across 11 total orders made by the university targeting women in STEM. These prospects live in zip codes where the average median household income is \$109,000. Figure \@ref(fig:women-in-stem) also shows very few prospects whose information were purchased are Hispanic (6%), Black (2%), Multiracial (5%), or Native American students (0.1%); whereas White (52%) and Asian (32%) students make up more than 8 of every 10 women in STEM prospects.
+
+```{r women-in-stem, fig.height = 1.5, fig.cap = 'Women in STEM overview'}
+ucsd_income_figure <- ucsd_all %>% 
+  summarise(
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  mutate(
+    count_type = 'all'
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = color_palette[[2]], width = 0.5) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 130000)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank()
+  )
+
+ucsd_race_figure_data <- ucsd_all %>% 
+  group_by(race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'missing' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = 'all'
+  )
+
+ucsd_race_figure_totals <- ucsd_race_figure_data %>% 
+  group_by(count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+ucsd_race_figure <- ucsd_race_figure_data %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4, width = 0.5) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = str_c('N=', prettyNum(count, big.mark = ','))), size = 2, hjust = -0.1) +
+  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    plot.margin = unit(c(5.5, 0, 5.5, 2), 'pt')
+  )
+
+grid.arrange(
+  ucsd_income_figure,
+  ucsd_race_figure,
+  ncol = 2,
+  widths = c(2, 3)
+)
+```
 
 Given prior research suggests that student lists have a surprisingly large effect on college access [@RN4739; @RN4752; @RN4740], attempting to reduce the under-representation of Women in STEM degrees via student list purchases is concerning in two ways. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Students excluded from the database is a reflection of socioeconomic and racial disparities in access to AP coursework [CITE] and SAT completion [@RN0006]. ^[FOOTNOTE; ACT NRCCUA]. Low-income students and Students of Color are less likely to attend high schools that offer AP curricula [CITE] and complete the SAT at considerably lower rates than White and affluent students [CITE]. 
 

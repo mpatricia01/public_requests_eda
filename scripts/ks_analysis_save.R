@@ -486,6 +486,26 @@ ucsd_orders <- orders_df %>%
   filter(gender == 'Female', univ_id == '110680') %>% 
   select(order_num, order_title, num_students, hs_grad_class, gender, ap_scores, sat_score_min, sat_score_max)
 
+ucsd_all <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '110680', ord_num %in% ucsd_orders$order_num) %>% 
+  mutate(
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode(
+      stu_race_cb,
+      `0` = 'noresponse',
+      `1` = 'amerindian',
+      `2` = 'asian',
+      `3` = 'black',
+      `4` = 'hispanic',
+      `8` = 'nativehawaii',
+      `9` = 'white',
+      `12` = 'tworaces',
+      `999` = 'missing'
+    )
+  ) %>% 
+  select(ord_num, stu_race_cb, race, stu_zip_code) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code'))
+
 ucsd <- lists_orders_zip_hs_df %>%
   filter(univ_id == '110680', zip_cbsa_1 %in% ucsd_metros, ord_num %in% ucsd_orders$order_num) %>% 
   mutate(
@@ -1000,4 +1020,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_all, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
