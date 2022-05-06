@@ -2053,6 +2053,10 @@ library(haven)
     #check orders that used female
     orders_df %>% filter(gender=="Female") %>% count(univ_name,univ_id)
     
+
+    
+    
+    
       # Focus on UC San Diego Orders
       orders_gender <- orders_df %>% filter(gender=="Female" & univ_id==110680)
       
@@ -2157,6 +2161,24 @@ library(haven)
             list_gender %>% count(zip_cbsa_1, zip_cbsatitle_1) %>% arrange(-n) %>% print(n=30)
             list_gender %>% count(zip_csatitle,zip_cbsa_1) %>% arrange(-n) %>% print(n=40)
             
+            # INTRO FIGURE-- PROSPECT CHARS ACROSS WOMEN IN STEM ORDERS FOR BOTH URBANA AND UC SANDIEGO
+                
+                    #unique orders
+                    list_gender %>% group_by(ord_num, univ_id) %>% count()
+                    list_gender %>% count()
+                    #income
+                    intro_womeninstem_inc <- list_gender %>% select(zip_median_household_income) %>%
+                      summarise(across(
+                        .cols = where(is.numeric), 
+                        .fns = list(Mean = mean), na.rm = TRUE, 
+                        .names = "{col}_{fn}"
+                      )) %>% arrange(-zip_median_household_income_Mean) %>% print(n=100)
+                   
+                    # race
+                    intro_womeninstem_race <- list_gender  %>%
+                      count(stu_race_cb) %>% mutate(V1 = n / sum(n) * 100) %>% print(n=150)
+                    
+                    
                   #mean income by CBSA
                   list_gender %>% group_by(zip_cbsatitle_1) %>% select(zip_median_household_income) %>%
                     summarise(across(
