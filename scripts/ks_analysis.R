@@ -369,11 +369,11 @@ library(haven)
         orders_filters2 <- rbind(orders_filters_research,orders_filters_regional)
         
         #CURRENTLY FIGURE 8: Filters used in order purchases
-        ggplot(orders_filters2, aes(x=reorder(filters, V1), y=V1)) ,
-            geom_bar(stat = "identity") ,
-          facet_wrap(~type) ,
-            ylab("Number of Orders") ,
-            geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) ,
+        ggplot(orders_filters2, aes(x=reorder(filters, V1), y=V1)) +
+            geom_bar(stat = "identity") +
+          facet_wrap(~type) +
+            ylab("Number of Orders") +
+            geom_text(aes(label = percent), hjust = -0.1, colour = "black", size=2) +
             coord_flip()
         
         
@@ -498,12 +498,12 @@ library(haven)
         
         #NEWFIGURE: PSAT/SAT Filters used in order purchases --min thresholds
         table_scores %>% filter(range=="min") %>%
-        ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) ,
-          geom_bar(position="dodge", stat="identity") ,
-          facet_wrap(~test) ,
-          ylab("Percent of Orders") ,
-          ggtitle("Minimum Score Filters") ,
-          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) ,
+        ggplot(aes(x=brks, y=pct_high, fill=c(univ_type))) +
+          geom_bar(position="dodge", stat="identity") +
+          facet_wrap(~test) +
+          ylab("Percent of Orders") +
+          ggtitle("Minimum Score Filters") +
+          geom_text(aes(label = n_high), hjust = -0.1, colour = "black", size=2) +
           coord_flip()
         
         
@@ -577,13 +577,18 @@ library(haven)
   # GEOGRAPHIC FILTERS
         
         #zip code filters
-        orders_df %>% count(zip_code)
+        orders_df %>% count(zip_code) #all three digit
+        orders_df %>% count(!is.na(zip_code)) #all three digit
         orders_df %>% count(zip_code_file)
+        orders_df %>% count(!is.na(zip_code_file)) #all three digit
         
           #KS NOTES: all 3-digits: https://en.wikipedia.org/wiki/List_of_ZIP_Code_prefixes
         
             #check NAU
               nau <- orders_df %>% filter(univ_id=="105330")
+              nau %>% count(order_num)
+              nau %>% count(date_start)
+              nau %>% filter(!is.na(zip_code_file)) %>% count(order_num, zip_code_file) %>% print(n=90)
         
         #ZIP CODES
         orders_df %>% filter(!is.na(zip_code) | !is.na(zip_code_file) ) %>% count(univ_type)
@@ -803,6 +808,12 @@ library(haven)
         orders_df %>% count(univ_type, gender) %>% print(n=40)
         
         
+        #check other demographic filters
+        orders_df %>% count(univ_name,first_gen_parent_edu) %>% print(n=40)
+        orders_df %>% count(univ_name,low_ses) %>% print(n=40)
+        orders_df %>% filter(!is.na(financial_aid)) %>% count(univ_name,financial_aid) %>% pull(financial_aid) 
+        
+        
         #SEE END OF R-SCRIPT FOR NEW RACE FILTER: FIGURE UNDER TARGETING SOC DEEP DIVE
         
         
@@ -858,15 +869,20 @@ library(haven)
                    national_recognition_programs, college_location, financial_aid,
                    college_setting, college_studentbody, college_living_plans, proximity_search, hs_math, first_gen_parent,
                    sat_math, sat_writing, sat_reading, univ_type) %>%
-            mutate(filter_sum = hsgrad_class , zip , states_fil , cbsa , 
-                             intl , segment , race , gender , sat , psat ,
-                             gpa , rank , geomarket , ap_score , county ,  college_type , 
-                   edu_aspirations ,  rotc ,  major ,  citizenship ,  low_ses ,  college_size , 
-                   national_recognition_programs ,  college_location ,  financial_aid , 
-                   college_setting ,  college_studentbody ,  college_living_plans ,  proximity_search ,  hs_math ,  first_gen_parent , 
-                   sat_math ,  sat_writing ,  sat_reading)
+            mutate(filter_sum = hsgrad_class + zip + states_fil + cbsa + 
+                             intl + segment + race + gender + sat + psat +
+                             gpa + rank + geomarket + ap_score + county +  college_type + 
+                   edu_aspirations +  rotc +  major +  citizenship +  low_ses +  college_size + 
+                   national_recognition_programs +  college_location +  financial_aid + 
+                   college_setting +  college_studentbody +  college_living_plans +  proximity_search +  hs_math +  first_gen_parent + 
+                   sat_math +  sat_writing +  sat_reading)
       
         
+       #get averages
+       filter_combos %>% summarise(mean_criteria = mean(filter_sum, na.rm = TRUE))
+       
+       
+       
         filter_combos <- filter_combos %>% 
             mutate(
                 hsgrad_class = ifelse(hsgrad_class==1, "grad_class", NA),
@@ -907,8 +923,14 @@ library(haven)
         
         filter_combos[filter_combos == "NA"] <- NA_character_
         
+                  
+        
         filter_combos_research <- filter_combos %>% filter(univ_type=="research")
         filter_combos_regional <- filter_combos %>% filter(univ_type=="regional")
+        
+        
+              #get averages
+              filter_combos %>% summarise(mean_criteria = mean(filter_sum, na.rm = TRUE))
         
         combos_research <- unique(filter_combos_research[c("hsgrad_class", "zip", "states_fil", "cbsa", "intl", "segment", "race",
                                          "gender","sat", "psat","gpa", "rank" , "geomarket", "ap_score",
@@ -956,12 +978,15 @@ library(haven)
                                                 sat_math ,  sat_writing ,  sat_reading), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0_research <- df_0_research %>% arrange(-n)  # %>% head(10)
+            df_0_research <- df_0_research %>% arrange(-n)  %>% head(10)
             
             sum(df_0_research$n)
             
-            
-            
+                  #asu skews combos
+                  orders_df %>% filter(univ_id=="104151") %>% count(order_num) #131
+                  x<-orders_df %>% group_by(univ_id,order_num) %>% count() 
+                  x<- x %>% group_by(univ_id) %>% summarise(sum= sum(n, na.rm = T))
+                  
             df_0_regional <- group_by(filter_combos_regional, hsgrad_class, zip, states_fil, 
                                       cbsa, intl, segment, race, gender, 
                                       sat, psat, gpa, rank, geomarket, ap_score, county ,  college_type , 
@@ -981,7 +1006,7 @@ library(haven)
                                                                   sat_math ,  sat_writing ,  sat_reading), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0_regional <- df_0_regional %>% arrange(-n)  # %>% head(10)
+            df_0_regional <- df_0_regional %>% arrange(-n)   %>% head(10)
             
             sum(df_0_regional$n)
           
