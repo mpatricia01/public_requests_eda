@@ -978,7 +978,7 @@ library(haven)
                                                 sat_math ,  sat_writing ,  sat_reading), sep=",", remove = TRUE, na.rm = TRUE)
             
             
-            df_0_research <- df_0_research %>% arrange(-n)  %>% head(10)
+            df_0_research <- df_0_research %>% arrange(-n)  #%>% head(10)
             
             sum(df_0_research$n)
             
@@ -1033,7 +1033,7 @@ library(haven)
             #loop through columns via filters (ex: all students, in-state, out-state, etc. )
             for (i in columns) {
                 
-                counter = counter,1
+                counter = counter+1
                 
                 if(i=="all_domestic") {
                  filter_string=c("stu_in_us==1")
@@ -1132,7 +1132,7 @@ library(haven)
         
         df_rq2a_out_of_state_research <- df_rq2a %>% select(row_subj, research_univ_outofstate, research_univ_instate)
         df_rq2a_out_of_state_regional <- df_rq2a %>% select(row_subj, regional_univ_instate, regional_univ_outofstate)
-        
+
       # international students
         
         df_int <- lists_orders_zip_hs_df %>% 
@@ -1213,7 +1213,7 @@ library(haven)
           #loop through columns via filters (ex: all students, in-state, out-state, etc. )
           for (i in columns) {
             
-            counter = counter,1
+            counter = counter+1
             
             if(i=="all_domestic") {
               filter_string=c("stu_in_us==1")
@@ -1523,7 +1523,7 @@ library(haven)
           mutate(V1 = n / sum(n) * 100) 
         
         #just a plot to check patterns
-        ggplot(lists_asu_la_sat_med_race, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) , 
+        ggplot(lists_asu_la_sat_med_race, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1545,7 +1545,7 @@ library(haven)
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(lists_asu_la_sat_med_inc, aes(y=median_income, x=top10pctzip)) , 
+        ggplot(lists_asu_la_sat_med_inc, aes(y=median_income, x=top10pctzip)) + 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1570,14 +1570,14 @@ library(haven)
         top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% count(stu_race_cb) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-        ggplot(top20pctzips_figure, aes(fill=top20pctzip, y=V1, x=stu_race_cb)) , 
+        ggplot(top20pctzips_figure, aes(fill=top20pctzip, y=V1, x=stu_race_cb)) +
           geom_bar(position="dodge", stat="identity")
         
         top20pctzips_figure <- lists_asu_la %>% group_by(top20pctzip) %>% 
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(top20pctzips_figure, aes(y=median_income, x=top20pctzip)) , 
+        ggplot(top20pctzips_figure, aes(y=median_income, x=top20pctzip)) + 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1604,14 +1604,14 @@ library(haven)
         top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% count(stu_race_cb) %>% 
           mutate(V1 = n / sum(n) * 100) 
         
-        ggplot(top10pctzips_figure, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) , 
+        ggplot(top10pctzips_figure, aes(fill=top10pctzip, y=V1, x=stu_race_cb)) + 
           geom_bar(position="dodge", stat="identity")
         
         top10pctzips_figure <- lists_asu_la %>% group_by(top10pctzip) %>% 
           summarize(
             median_income = mean(zip_median_household_income, na.rm = TRUE)) 
         
-        ggplot(top10pctzips_figure, aes(y=median_income, x=top10pctzip)) , 
+        ggplot(top10pctzips_figure, aes(y=median_income, x=top10pctzip)) + 
           geom_bar(position="dodge", stat="identity")
         
         
@@ -1752,8 +1752,8 @@ library(haven)
       table_texasam_zip <- table_texasam_zip %>% arrange(stu_race_cb, ppt_diff_stu_pop)
       
       # NOTE  ZIPS less than 750 are out of state             
-      ggplot(table_texasam_zip, aes(fill=stu_race_cb, y=ppt_diff_stu_pop, x=zip_3digit)) , 
-        geom_bar(position="dodge", stat="identity") , coord_flip()
+      ggplot(table_texasam_zip, aes(fill=stu_race_cb, y=ppt_diff_stu_pop, x=zip_3digit)) + 
+        geom_bar(position="dodge", stat="identity") + coord_flip()
       
       
       
@@ -1881,7 +1881,8 @@ library(haven)
           lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% count(ord_num)
           x1 <- lists_orders_zip_hs_df %>% filter(univ_id == '145637' & filter_segment==1 & filter_cbsa==1 &  filter_psat==1) %>% select(ord_num|ord_cbsa_name|starts_with("filter_"))
           x1 <- distinct(x1, ord_num, .keep_all = TRUE)
-              
+            
+            segment <- orders_df %>% filter(order_num %in% x1$ord_num)
               # see full list of cbsa across three groupings
               c(x1[1,2])
               c(x1[5,2])
