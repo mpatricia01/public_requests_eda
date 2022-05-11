@@ -74,12 +74,33 @@ orders_df <- orders_df %>%
     filter_segment = if_else(!is.na(segment), 1, 0), 
     filter_race = if_else(!is.na(race_ethnicity), 1, 0), 
     filter_gender = if_else(!is.na(gender), 1, 0), 
-    filter_sat = if_else(!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max) | !is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max) | !is.na(sat_score_reading_writing_min) | !is.na(sat_score_reading_writing_max) | !is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max) | !is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max), 1, 0), 
+    filter_sat = if_else(!is.na(sat_score_min) | !is.na(sat_score_max) | !is.na(sat_score_old_min) | !is.na(sat_score_old_max), 1, 0), 
     filter_psat = if_else(!is.na(psat_score_min) | !is.na(psat_score_max) | !is.na(psat_score_old_min) | !is.na(psat_score_old_max), 1, 0), 
     filter_gpa = if_else(!is.na(gpa_low) | !is.na(gpa_high), 1, 0), 
     filter_rank = if_else(!is.na(rank_low) | !is.na(rank_high), 1, 0), 
     filter_geomarket = if_else(!is.na(geomarket), 1, 0), 
-    filter_ap_score = if_else(!is.na(ap_scores), 1, 0)
+    filter_ap_score = if_else(!is.na(ap_scores), 1, 0),
+    filter_county = if_else(!is.na(county), 1, 0),
+    filter_college_type = if_else(!is.na(college_type), 1, 0),
+    filter_edu_aspirations = if_else(!is.na(edu_aspirations), 1, 0),
+    filter_rotc = if_else(!is.na(rotc_plans), 1, 0),
+    filter_major = if_else(!is.na(major), 1, 0),
+    filter_citizenship = if_else(!is.na(citizenship), 1, 0),
+    filter_low_ses = if_else(!is.na(low_ses), 1, 0),
+    filter_college_size = if_else(!is.na(college_size), 1, 0),
+    filter_national_recognition_programs = if_else(!is.na(national_recognition_programs), 1, 0),
+    filter_college_location = if_else(!is.na(college_location), 1, 0),
+    filter_financial_aid = if_else(!is.na(financial_aid), 1, 0),
+    filter_college_setting = if_else(!is.na(college_setting), 1, 0),
+    filter_college_studentbody = if_else(!is.na(college_student_body), 1, 0),
+    filter_college_living_plans = if_else(!is.na(college_living_plans), 1, 0),
+    filter_proximity_search = if_else(!is.na(proximity_search), 1, 0),
+    filter_hs_math = if_else(!is.na(hs_math), 1, 0),
+    filter_first_gen_parent = if_else(!is.na(first_gen_parent_edu), 1, 0),
+    filter_sat_math = if_else(!is.na(sat_score_math_min) | !is.na(sat_score_math_max) | !is.na(sat_score_math_old_min) | !is.na(sat_score_math_old_max), 1, 0), 
+    filter_sat_writing = if_else(!is.na(sat_score_writing_min) | !is.na(sat_score_writing_max) | !is.na(sat_score_writing_old_min) | !is.na(sat_score_writing_old_max), 1, 0), 
+    filter_sat_reading = if_else(!is.na(sat_score_reading_min) | !is.na(sat_score_reading_max) | !is.na(sat_score_reading_old_min) | !is.na(sat_score_reading_old_max), 1, 0),
+    filter_sat_reading_writing = if_else(!is.na(sat_score_reading_writing_min) | !is.na(sat_score_reading_writing_max), 1, 0)
   )
 
 lists_orders_zip_hs_df <- lists_orders_zip_hs_df %>% 
@@ -896,11 +917,32 @@ orders_filters_combo <- orders_df %>%
     gpa = if_else(filter_gpa == 1, 'GPA', NA_character_), 
     rank = if_else(filter_rank == 1, 'Rank', NA_character_), 
     geomarket = if_else(filter_geomarket == 1, 'Geomarket', NA_character_), 
-    ap_score = if_else(filter_ap_score == 1, 'AP score', NA_character_)
+    ap_score = if_else(filter_ap_score == 1, 'AP score', NA_character_),
+    county = if_else(filter_county == 1, 'County', NA_character_),
+    college_type = if_else(filter_college_type == 1, 'College type', NA_character_),
+    edu_aspirations = if_else(filter_edu_aspirations == 1, 'Edu aspiration', NA_character_),
+    rotc = if_else(filter_rotc == 1, 'ROTC', NA_character_),
+    major = if_else(filter_major == 1, 'Major', NA_character_),
+    citizenship = if_else(filter_citizenship == 1, 'Citizenship', NA_character_),
+    low_ses = if_else(filter_low_ses == 1, 'Low SES', NA_character_),
+    college_size = if_else(filter_college_size == 1, 'College size', NA_character_),
+    national_recognition_programs = if_else(filter_national_recognition_programs == 1, 'NRP', NA_character_),
+    college_location = if_else(filter_college_location == 1, 'College location', NA_character_),
+    financial_aid = if_else(filter_financial_aid == 1, 'Financial aid', NA_character_),
+    college_setting = if_else(filter_college_setting == 1, 'College setting', NA_character_),
+    college_studentbody = if_else(filter_college_studentbody == 1, 'College student body', NA_character_),
+    college_living_plans = if_else(filter_college_living_plans == 1, 'College living plans', NA_character_),
+    proximity_search = if_else(filter_proximity_search == 1, 'Proximity search', NA_character_),
+    hs_math = if_else(filter_hs_math == 1, 'HS math', NA_character_),
+    first_gen_parent = if_else(filter_first_gen_parent == 1, 'First gen', NA_character_),
+    sat_math = if_else(filter_sat_math == 1, 'SAT math', NA_character_), 
+    sat_writing = if_else(filter_sat_writing == 1, 'SAT writing', NA_character_), 
+    sat_reading = if_else(filter_sat_reading == 1, 'SAT reading', NA_character_),
+    sat_reading_writing = if_else(filter_sat_reading_writing == 1, 'SAT reading/writing', NA_character_)
   ) %>% 
-  group_by(univ_type, univ_label, hsgrad_class, gpa, sat, psat, rank, ap_score, states_fil, zip, geomarket, segment, cbsa, intl, race, gender) %>% 
+  group_by(univ_type, univ_label, hsgrad_class, gpa, sat, psat, rank, ap_score, sat_math, sat_writing, sat_reading, sat_reading_writing, hs_math, states_fil, zip, geomarket, segment, cbsa, intl, county, proximity_search, race, gender, low_ses, first_gen_parent, college_type, college_size, college_location, college_setting, college_studentbody, college_living_plans, major, financial_aid, edu_aspirations, rotc, citizenship, national_recognition_programs) %>% 
   count() %>% 
-  unite('filter_combos', c(hsgrad_class, gpa, sat, psat, rank, ap_score, states_fil, zip, geomarket, segment, cbsa, intl, race, gender), sep = ', ', remove = T, na.rm = T) %>% 
+  unite('filter_combos', c(hsgrad_class, gpa, sat, psat, rank, ap_score, sat_math, sat_writing, sat_reading, sat_reading_writing, hs_math, states_fil, zip, geomarket, segment, cbsa, intl, county, proximity_search, race, gender, low_ses, first_gen_parent, college_type, college_size, college_location, college_setting, college_studentbody, college_living_plans, major, financial_aid, edu_aspirations, rotc, citizenship, national_recognition_programs), sep = ', ', remove = T, na.rm = T) %>% 
   arrange(univ_type, -n) %>% 
   mutate(
     pct = n / sum(n)

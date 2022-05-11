@@ -56,7 +56,7 @@ orders_prospects_purchased %>%
 
 ## Figure 8: Filters used in order purchases by research vs. ma/doctoral
 
-```{r, fig.height = 4}
+```{r, fig.height = 5}
 orders_filters %>% 
   add_row(univ_label = 'Research', filters = 'academic', num = 0) %>% 
   add_row(univ_label = 'MA/doctoral', filters = 'academic', num = 0) %>% 
@@ -64,12 +64,31 @@ orders_filters %>%
   add_row(univ_label = 'MA/doctoral', filters = 'geographic', num = 0) %>% 
   add_row(univ_label = 'Research', filters = 'demographic', num = 0) %>% 
   add_row(univ_label = 'MA/doctoral', filters = 'demographic', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'student preferences', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'student preferences', num = 0) %>% 
   mutate(
     filters_label = recode_factor(
       filters,
+      'citizenship' = 'Citizenship',
+      'rotc' = 'ROTC',
+      'financial_aid' = 'Financial aid',
+      'national_recognition_programs' = 'NRP',
+      'edu_aspirations' = 'Education aspirations',
+      'college_setting' = 'College setting',
+      'college_studentbody' = 'College student body',
+      'college_living_plans' = 'College living plans',
+      'college_location' = 'College location',
+      'college_type' = 'College type',
+      'major' = 'Major',
+      'college_size' = 'College size',
+      'student preferences' = '   ',
+      'first_gen_parent' = 'First generation',
+      'low_ses' = 'Low SES',
       'gender' = 'Gender',
       'race' = 'Race',
       'demographic' = '  ',
+      'proximity_search' = 'Proximity search',
+      'county' = 'County',
       'intl' = 'International',
       'cbsa' = 'CBSA',
       'segment' = 'Segment',
@@ -77,6 +96,11 @@ orders_filters %>%
       'zip' = 'Zip code',
       'states_fil' = 'State',
       'geographic' = ' ',
+      'hs_math' = 'HS math',
+      'sat_reading_writing' = 'SAT reading/writing',
+      'sat_reading' = 'SAT reading',
+      'sat_writing' = 'SAT writing',
+      'sat_math' = 'SAT math',
       'ap_score' = 'AP score',
       'rank' = 'Rank',
       'psat' = 'PSAT',
@@ -86,10 +110,11 @@ orders_filters %>%
       'hsgrad_class' = 'HS grad class'
     )
   ) %>% 
+  filter(!filters %in% c('hs_math', 'proximity_search', 'rotc', 'citizenship')) %>% 
   ggplot(aes(x = filters_label, y = num)) +
   geom_bar(stat = 'identity', fill = color_palette[[2]]) +
-  geom_text(aes(label = if_else(filters %in% c('academic', 'geographic', 'demographic') & univ_label == 'Research', str_c(str_to_title(filters), ' filters'), ''), y = 0), hjust = 0, vjust = 1, size = 2, fontface = 'bold') +
-  geom_text(aes(label = if_else(!filters %in% c('academic', 'geographic', 'demographic'), str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
+  geom_text(aes(label = if_else(filters %in% c('academic', 'geographic', 'demographic', 'student preferences') & univ_label == 'Research', str_c(str_to_sentence(filters), ' filters'), ''), y = 0), hjust = 0, vjust = 0.8, size = 2, fontface = 'bold') +
+  geom_text(aes(label = if_else(!filters %in% c('academic', 'geographic', 'demographic', 'student preferences'), str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('Number of orders') +
   facet_wrap(~ factor(univ_label, levels = c('Research', 'MA/doctoral'))) +
