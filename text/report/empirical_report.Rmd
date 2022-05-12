@@ -257,7 +257,7 @@ Second, student list products exclude students by creating filters that enable u
 -->
 
 
-[ADD BRIEF PARAGRAPHY LAYING OUT REPORT OUTLINE?]
+In the sections below, we provide relevant [background][Background] about student lists, describe [data collection and research design][Data Collection and Research Design], present [results][Results] for each research question, and [discuss][Discussion] implications and future research.
 
 # Background
 
@@ -385,15 +385,17 @@ _Note: AI/AN = American Indian or Alaska Native. HI/PI = Hawaiian or Pacific Isl
 
 # Data Collection and Research Design
 
-This section first details the data collection for the broader student lists project from which this report draws from. Then we describe the research methods for analyses of student list purchases from College Board. 
+This section first describes the data collection for the broader student lists project from which this report draws from. Next, we describe the research methods for analyses of student list purchases from College Board, which are the focus of this report. 
 
 ## Data Collection
 
-In 2019 we received funding from the Joyce Foundation and the Kresge Foundation for a research project that would utilize public records requests via The Freedom of Information Act to collect data about recruiting practices, including student lists, from all public universities in five states, California, Illinois, Minnesota, and Texas.^[We also requested data about off-campus recruiting visits] 
+In 2019 we received funding from the Joyce Foundation and the Kresge Foundation for a project that would utilize public records requests via The Freedom of Information Act to collect data about recruiting practices, including student lists, from all public universities in four states, California, Illinois, Minnesota, and Texas.^[We also requested data about off-campus recruiting visits] 
 
-__Public records requests__. We began issuing public records requests to public universities in February 2020 for data on their purchased student lists. We issued one records request letter to each public university in our data collection sample (described below). An example records request letter can be found [here](https://docs.google.com/document/d/1uVLwxmc9GnhOZOfsjSxQ_pVxKA0ASDRC/edit#). In subsequent communication we narrowed our request to student lists purchased from College Board, ACT, and the National Research Center for College and University Admissions (NRCCUA), the three largest student list vendors at the time.^[NRCCUA PURCHASED BY ACT AND IN YEAR X ACT RELEASED ENCOURA PRODUCT THAT INTEGRATED NAMES COLLECTED FROM NRCCUA MYCOLLEGE OPTIONS PRODUCT]
+__Public records requests__. in February 2020, we began issuing public records requests to public universities. We issued one records request letter to each public university in our data collection sample (described below). An example records request letter can be found [here](https://docs.google.com/document/d/1uVLwxmc9GnhOZOfsjSxQ_pVxKA0ASDRC/edit#). In subsequent communication we narrowed our request to student lists purchased from College Board, ACT, and the National Research Center for College and University Admissions (NRCCUA), the three largest student list vendors at the time.^[NRCCUA PURCHASED BY ACT AND IN YEAR X ACT RELEASED ENCOURA PRODUCT THAT INTEGRATED NAMES COLLECTED FROM NRCCUA MYCOLLEGE OPTIONS PRODUCT]
 
-For each student list purchased for the purpose of undergraduate recruiting from 2016 through 2020, we requested two related pieces of data: (1) the order summary, which specifies search criteria for the student list purchase; and (2) the de-identified prospect-level list produced from the search criteria. Figure \@ref(fig:example-order) shows an example of a College Board order summary. In Figure \@ref(fig:example-order), the university purchased the contact information of prospects who CRYSTAL ADD TEXT. [This](https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZqUE/view) shows partial data from the de-identified student list associated with this order. College Board student lists have one observation per prospect and contain variables for contact information (email and physical address), high school code, high school graduating class, demographic information, and selected information about college preferences (e.g., intended major).
+For each student list purchased for the purpose of undergraduate recruiting from 2016 through 2020, we requested two related pieces of data: (1) the order summary, which specifies search criteria for the student list purchase; and (2) the de-identified prospect-level list produced from the search criteria. 
+
+Figure \@ref(fig:example-order) shows an example of a College Board order summary. In Figure \@ref(fig:example-order), the university purchased the contact information of prospects who CRYSTAL ADD TEXT. With respect to de-identified prospect-level lists,  [this link](https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZqUE/view) shows partial data from the student list associated with this order. College Board student lists have one observation per prospect and contain variables for contact information (email and physical address), high school code, high school graduating class, demographic information, and selected information about college preferences (e.g., intended major).
 
 <!--
 CB order example: https://drive.google.com/file/d/1gPZ-WWw0gdFT7VtzBN3hKLnj2DzoaqnY/view
@@ -402,11 +404,11 @@ CB list example: https://drive.google.com/file/d/1Qvc_QRi9izEF1W78Lh4nNi5NsXjCZq
 
 
 
-__Data collection sample__. The data collection sample consists public universities in IL, MN, CA, and TX. The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In MN, there are 5 universities in the University of Minnesota system and 7 in the Minnesota State University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. We also collected data from Arizona State University and Northern Arizona University.
+__Data collection sample__. The data collection sample for the broader project consists of all public universities in IL, MN, CA, and TX. Additionally, we collected data from two universities in a western state. Although the data we collected are public records, this report does not name individual universities in order to focus attention on student list products rather than the behavior of individual universities.
+
+The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In MN, there are 5 universities in the University of Minnesota system and 7 in the Minnesota State University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. 
 
 Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample. A majority of the universities are master's or doctoral universities and located in urban areas. 
-
-The Appendix discusses data collection challenges, successes, and lessons learned for future data collection efforts. Appendix Figure X-X reports the status of data collection for each university in the data collection sample.
 
 
 
@@ -531,28 +533,34 @@ univ_df %>%
 ```
 
 
-__Secondary data__. Analyses incorporate several secondary data sources. Integrated Postsecondary Education Data System (IPEDS) data provides characteristics of universities in the analysis sample. NCES Common Core of Data (CCD) and Private School Universe Survey (PSS), respectively, provides data about U.S. public and private high schools. The Census American Community Survey (ACS) provide data about community characteristics. We use zip-code level data from ACS 5-year estimates.
+<!--
+The Appendix discusses data collection challenges, successes, and lessons learned for future data collection efforts. Appendix Figure X-X reports the status of data collection for each university in the data collection sample.
+-->
 
-QUESTION OJ 4/26/2022 - SHOULD WE DEFINE ANY VARABLES HERE? IT IS NECESSARY TO EXPLAIN RACE/ETHNICITY VARIABLES AT LEAST. FOR NOW, I PUT A PARAGRAPH ABOUT RACE/ETHNICITY VARS AT BEGINNING OF RQ2 RESULTS, BUT IT IS SORT OF AWKWARD THERE. WE COULD SAY SOMETHING LIKE "WE DEFINE RACE/ETHNICITY VARIABLES HERE BUT OTHER VARIABLES CAN BE DESCRIBED LATER CUZ THEY DO NOT REQUIRE A SUBSTANTIAL EXPLANATION]. OR WE COULD JUST INCLUDE DESCRIPTION OF RACE/ETHNICITY VARIABLES IN AN APPENDIX.
+
+Collecting quantitative data via public records requests is a painstaking process. Initially, most universities ignored or denied our requests. We later obtained pro bono representation from four law firms, although we were unable obtain representation for Texas. Firm representation substantially increased the success of data collection. 
+
+Nevertheless, data collection remained difficult. Some universities provided records that were not usable for quantitative analyses (e.g., obtained summary statistics across multiple orders, or data did not contain important fields). Some universities did not provide records based on legitimate grounds (e.g., data not in university possession; not required to create records that do not currently exist). Many universities outsourced student list purchases to a third-party consulting firm and we were rarely able to obtain usable data from these universities. Some universities denied requests based on questionable legal rationale, but we lacked the resources to pursue litigation. 
+
+__Secondary data__. Analyses incorporate several secondary data sources. Integrated Postsecondary Education Data System (IPEDS) data provides characteristics of universities in the analysis sample. NCES Common Core of Data (CCD) and Private School Universe Survey (PSS), respectively, provides data about U.S. public and private high schools. The Census American Community Survey (ACS) provide data about community characteristics. We use zip-code level data from ACS 5-year estimates. [CRYSTAL - ADD WHICH YEAR(S) OF DATA USED FOR EACH OF THESE SOURCES]
 
 ## Research Design
 
-Decisions about research design and research questions depended substantially on the results of our data collection.
+Decisions about research design and research questions were constrained by the results of our data collection efforts. 
 
 <!-- CUT TEXT
 Each student list purchased from College Board is associated with (1) an "order summary" of the search filters specified in the purchase (e.g., high school graduating class, test score range) and (2) the prospect-level student list produced by these search filters. 
 -->
-__Analysis sample__. This report analyzes student lists purchased from College Board. Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL/KARINA - ARE THESE NUMBERS RIGHT?]. The results presented below are based on data received from `r num_univs` universities that provided usable order summary data and usable student list data.
+__Analysis sample__. This report analyzes student lists purchased from College Board. We excluded purchases by MN public universities from the analysis sample because Minnesota is predominantly an "ACT state" and the majority of MN (regional) public universities primarily purchased lists form ACT rather than College Board.
 
-Table \@ref(tab:purchased-data) summarizes the number of order summaries received and the number of prospects purchased across the `r num_univs` universities. We received order summaries for `r num_orders` student list purchases, including XXXX purchases where we also received the associated prospect-level student list data and XXXX purchases where we did not receive the associated prospect-level list data. 
+Table \@ref(tab:received-data) shows the number of public universities in our data collection sample that provided usable data about (1) student list order summaries and (2) de-identified student lists purchased from College Board. [CRYSTAL/KARINA - ARE THESE NUMBERS RIGHT?]. The results presented below are based on data received from `r num_univs` universities that provided usable order summary data and usable student list data.
 
-We received prospect-level student list data for `r num_lists` student list purchases, including XXXXX purchases where we also received the associated order summary and XXXXX purchases where we did not receive the order summary. There were XXXX prospects in these `r num_lists` student list purchases, including XXXX prospects from purchases where we also received the associated order summary and XXXX prospects from the purchases where we did not receive the associated order summary. [CRYSTAL/KARINA - FILL IN NUMBERS IN TEXT IN THS PARAGRAPH AND ABOVE; ALSO NUMBERS DON'T MATCH BETWEEN TEXT AND TABLE]
+Table \@ref(tab:purchased-data) summarizes the number of order summaries received and the number of prospects purchased across the `r num_univs` [14?] universities.
 
-Figure \@ref(fig:purchased-orders-carnegie) shows the number of student lists purchased by Carnegie Classification and state. Figure \@ref(fig:purchased-prospects-carnegie) shows the number of prospects purchased by Carnegie Classification and state.
+- We received order summaries for `r num_orders` student list purchases, including XXXX purchases where we also received the associated prospect-level student list data and XXXX purchases where we did not receive the associated prospect-level list data.
+- We received prospect-level student list data for `r num_lists` student list purchases, including XXXXX purchases where we also received the associated order summary and XXXXX purchases where we did not receive the order summary. There were XXXX prospects in these `r num_lists` student list purchases, including XXXX prospects from purchases where we also received the associated order summary and XXXX prospects from the purchases where we did not receive the associated order summary. [CRYSTAL - FILL IN NUMBERS IN TEXT AND CHECK MATCH BETWEEN NUMBERS IN TEXT AND TABLES/FIGURES]
 
-Figure \@ref(fig:orders-prospects-purchased) presents the `r num_orders` total orders analyzed in this report by university type and total students purchased. The `r num_orders` orders were purchased across `r num_univs` universities. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the study made the majority of order purchases (N=`r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)`), while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders and the only baccalaureate university in the study made one order. 
-
-The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`).
+Appendix Figure \@ref(fig:purchased-orders-carnegie) shows the number of student lists purchased by Carnegie Classification and state. Appendix Figure \@ref(fig:purchased-prospects-carnegie) shows the number of prospects purchased by Carnegie Classification and state. [CRYSTAL - MOVE THESE FIGURES TO APPENDIX]
 
 
 ```{r received-data}
@@ -642,6 +650,13 @@ lists_df_summary %>%
   guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
 ```
 
+Figure \@ref(fig:orders-prospects-purchased) presents the `r num_orders` total orders --  purchased by `r num_univs` universities --  by university type and total students purchased. The `r num = sum(orders_fig_totals$carnegie == "Master's"); ifelse(num < 10, words(num), num)` master's universities in the purchased `r sum((orders_fig_totals %>% filter(carnegie == "Master's"))$total_orders)` lists, while research universities made `r sum((orders_fig_totals %>% filter(carnegie == "Research"))$total_orders)` orders.  
+
+The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased nearly double the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(carnegie == "Research"))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(carnegie == "Master's"))$num_students, na.rm = T)), ',')`). Results are strongly influenced by universities that made a large number of orders (RQ1) and purchased a large number of prospects (RQ2). In particular, one public research university made XXX orders and purchased XXX prospects [CRYSTAL - ADD NUMBERS FOR ASU].
+
+
+
+
 ```{r orders-prospects-purchased, fig.height = 3, fig.cap = 'Orders and prospects purchased by research vs. ma/doctoral'}
 orders_prospects_purchased %>% 
   ggplot(aes(x = reorder(univ_id, -total_students), y = total_students, fill = univ_label)) +
@@ -657,7 +672,7 @@ orders_prospects_purchased %>%
 ```
 
 
-__Research questions and analyses__. Choices about research questions were informed by data limitations and by substantive considerations. Because we received order summary data and student list data from a non-random sample of universities, we utilize a multiple case study research design [@RN4116] rather than a large-N statistical design. Therefore, our analysis sample identifies behaviors that exist in the population of public universities, but not the prevalence of these behaviors in the population.
+__Research questions__. Choices about research questions were informed by data limitations and by substantive considerations. Because we received order summary data and student list data from a non-random sample of universities, we utilize a multiple case study research design [@RN4116] rather than a large-N statistical design. Therefore, our analysis sample identifies behaviors that exist in the population of public universities, but not the prevalence of these behaviors in the population.
 
 More substantively, analyses should also focus on student list products themselves, not just the behavior of customers (universities) who buy the product. Systematic inequality in purchased versus excluded names is a function of: (A) which prospective students are included in the underlying data base; (B) the set of filters that universities can utilize to select prospects; and finally (C) university choices about which filters to select. Therefore, analyses investigate the relationship between the filters chosen for a particular student list purchase and the characteristics of prospects included in the resulting student list.
 
@@ -672,7 +687,13 @@ The empirical analyses presented in this report are guided by three research que
 
 In RQ1 the unit of analysis is the order or university-order. Analyses allow us to make statements about how orders vary -- within-university variation and between-university variation -- for universities in our sample. In RQ2 the unit of analysis is university-prospect. Analyses allow us to make statements about the characteristics of prospects targeted by universities in our sample. In RQ3 the unit of analysis is order-prospect. Analyses allow us to make statements about the relationship between filter criteria and prospect characteristics that extend to lists purchased by any university that select similar filter criteria.
 
-Empirical analyses consist of simple descriptive statistics presented in tables, figures, and maps. For each research question, analyses are anchored by a small set of tables or figures that present results for the entire analysis sample. Next, we present analyses of selected universities, purchases and/or localities that convey commonly observed or thematically important patterns, with a focus on the nexus between race, class, and geography. For RQ2 and RQ3, we contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups (e.g., all high school graduates in the metropolitan area).
+__Analyses__. Empirical analyses consist of simple descriptive statistics presented in tables, figures, and maps. For each research question, analyses are anchored by a small set of tables or figures that present results for the entire analysis sample. Next, we present analyses of selected universities, purchases and/or localities that convey commonly observed or thematically important patterns, with a focus on the nexus between race, class, and geography. For RQ2 and RQ3, we contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups (e.g., all high school graduates in the metropolitan area).
+
+
+
+<!--
+QUESTION OJ 4/26/2022 - SHOULD WE DEFINE ANY VARABLES HERE? IT IS NECESSARY TO EXPLAIN RACE/ETHNICITY VARIABLES AT LEAST. FOR NOW, I PUT A PARAGRAPH ABOUT RACE/ETHNICITY VARS AT BEGINNING OF RQ2 RESULTS, BUT IT IS SORT OF AWKWARD THERE. WE COULD SAY SOMETHING LIKE "WE DEFINE RACE/ETHNICITY VARIABLES HERE BUT OTHER VARIABLES CAN BE DESCRIBED LATER CUZ THEY DO NOT REQUIRE A SUBSTANTIAL EXPLANATION]. OR WE COULD JUST INCLUDE DESCRIPTION OF RACE/ETHNICITY VARIABLES IN AN APPENDIX.
+-->
 
 # Results  
 
