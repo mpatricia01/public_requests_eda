@@ -29,6 +29,9 @@ ccd <- readRDS(file.path(data_dir, 'ccd_membership_1718.RDS')) %>%
 pss <- readRDS(file.path(data_dir, 'pss_1718.RDS')) %>% 
   left_join(zip_cbsa_name_data, by = 'zip_code')
 
+acs_zip <- acs_income_zip %>% 
+  left_join(acs_race_zipcodev3 %>% select(zip_code, pop_total, contains('15_19'), state_code, cbsa_1, cbsa_1_ratio, cbsatitle_1, csacode, csatitle), by = 'zip_code')
+
 
 # --------------------
 # Prepare univ sample
@@ -652,11 +655,12 @@ uiuc <- lists_orders_zip_hs_df %>%
       `999` = 'unknown'
     )
   ) %>% 
-  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, stu_zip_code) %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, hs_school_control, hs_ncessch, stu_zip_code) %>% 
   left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
   rename(
     cbsa_code = zip_cbsa_1,
-    cbsa_name = zip_cbsatitle_1
+    cbsa_name = zip_cbsatitle_1,
+    control = hs_school_control
   )
 
 uiuc %>% 
@@ -694,6 +698,23 @@ poc_metros <- c('35620', '33100', '26420')
 
 poc <- lists_orders_zip_hs_df %>%
   filter(univ_id == '110680', zip_cbsa_1 %in% poc_metros, ord_num == poc_order) %>% 
+  mutate(
+    ord_type = 'prospect',
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode(
+      stu_race_cb,
+      `0` = 'noresponse',
+      `1` = 'amerindian',
+      `2` = 'asian',
+      `3` = 'black',
+      `4` = 'hispanic',
+      `8` = 'nativehawaii',
+      `9` = 'white',
+      `12` = 'tworaces',
+      `999` = 'unknown'
+    )
+  ) %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, ends_with('_common'), hs_school_control, hs_ncessch, stu_zip_code) %>% 
   left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
   rename(
     cbsa_code = zip_cbsa_1,
@@ -705,10 +726,10 @@ poc %>%
   count(cbsa_code)
 
 poc %>% 
-  count(cbsa_code, stu_race_cb)
+  count(cbsa_code, race)
 
 poc_cb <- poc %>% 
-  group_by(cbsa_code, cbsa_name, stu_race_cb) %>% 
+  group_by(cbsa_code, cbsa_name, race) %>% 
   summarise(
     count = n()
   ) %>% 
@@ -806,9 +827,6 @@ poc_metro_hs <- poc_metro_pubprivhs %>%
 
 poc_hs <- poc %>% 
   filter(hs_ncessch %in% poc_metro_pubprivhs$ncessch) %>% 
-  mutate(
-    ord_type = 'prospect'
-  ) %>% 
   group_by(cbsa_code, cbsa_name, ord_type, control) %>% 
   summarise(
     count = n()
@@ -867,9 +885,6 @@ poc_income_hs <- poc_metro_pubprivhs %>%
 
 poc_income <- poc %>% 
   filter(hs_ncessch %in% poc_metro_pubprivhs$ncessch) %>% 
-  mutate(
-    ord_type = 'prospect'
-  ) %>% 
   group_by(cbsa_code, cbsa_name, ord_type) %>% 
   summarise(
     income_2564 = mean(medincome_2564, na.rm = T)
@@ -1063,3 +1078,4 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # --------------
 
 save(orders_df, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_all, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(acs_zip, ccd, pss, uiuc, poc, file = file.path(data_dir, 'map_data_final.RData'))

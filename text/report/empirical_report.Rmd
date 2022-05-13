@@ -1845,19 +1845,18 @@ Similar patterns in racial/ethnic composition of Women in STEM prospects are als
 ```{r poc-race-deep-dive, fig.cap = 'Targeting students of color, race categories'}
 poc_cb_figure <- poc_cb %>% 
   mutate(
-    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
     race = recode_factor(
-      stu_race_cb,
-      `999` = 'Missing',
-      `0` = 'No response',
-      `10` = 'Other',
-      `12` = 'Multiracial',
-      `8` = 'NH/PI',
-      `1` = 'AI/AN',
-      `4` = 'Latinx',
-      `3` = 'Black',
-      `2` = 'Asian',
-      `9` = 'White'
+      race,
+      'unknown' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
     )
   ) %>% 
   ggplot(aes(x = race, y = pct)) +
