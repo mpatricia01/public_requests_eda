@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.5.12)  16 MAY 2022 09:19
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2022.5.12)  16 MAY 2022 16:14
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -612,7 +612,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) [1
 
 {c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-<empirical_report_files/figure-latex/women-in-stem-1.pdf, id=128, 469.755pt x 108.405pt>
+<empirical_report_files/figure-latex/women-in-stem-1.pdf, id=124, 469.755pt x 108.405pt>
 File: empirical_report_files/figure-latex/women-in-stem-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/women-in-stem-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/women-in-stem-1.pdf  used on input line 139.
@@ -626,13 +626,13 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <5> on input line 143.
 [2 <./empirical_report_files/figure-latex/women-in-stem-1.pdf>]
-<./../../outputs/figures/enrollment_funnel.png, id=151, 496.85625pt x 651.18282pt>
+<./../../outputs/figures/enrollment_funnel.png, id=147, 496.85625pt x 651.18282pt>
 File: ./../../outputs/figures/enrollment_funnel.png Graphic file (type png)
 <use ./../../outputs/figures/enrollment_funnel.png>
 Package pdftex.def Info: ./../../outputs/figures/enrollment_funnel.png  used on input line 174.
 (pdftex.def)             Requested size: 211.39233pt x 277.0521pt.
 [3] [4 <./../../outputs/figures/enrollment_funnel.png>] [5]
-<empirical_report_files/figure-latex/cb-fig-1.pdf, id=186, 469.755pt x 361.35pt>
+<empirical_report_files/figure-latex/cb-fig-1.pdf, id=182, 469.755pt x 361.35pt>
 File: empirical_report_files/figure-latex/cb-fig-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/cb-fig-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/cb-fig-1.pdf  used on input line 202.
@@ -647,192 +647,201 @@ Overfull \hbox (10.3374pt too wide) in paragraph at lines 288--295
  []
 
 [9]
-<empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf, id=235, 469.755pt x 216.81pt>
+<empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf, id=231, 469.755pt x 216.81pt>
 File: empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf  used on input line 301.
 (pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
-[10 <./empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf>] [11] [12]
-<empirical_report_files/figure-latex/orders-filters-1.pdf, id=266, 469.755pt x 361.35pt>
+[10 <./empirical_report_files/figure-latex/orders-prospects-purchased-1.pdf>] [11]
+<empirical_report_files/figure-latex/orders-filters-1.pdf, id=255, 469.755pt x 361.35pt>
 File: empirical_report_files/figure-latex/orders-filters-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-filters-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/orders-filters-1.pdf  used on input line 351.
+Package pdftex.def Info: empirical_report_files/figure-latex/orders-filters-1.pdf  used on input line 343.
 (pdftex.def)             Requested size: 469.75386pt x 361.34912pt.
-[13] [14 <./empirical_report_files/figure-latex/orders-filters-1.pdf>]
-<empirical_report_files/figure-latex/orders-gpa-1.pdf, id=292, 469.755pt x 216.81pt>
+[12] [13 <./empirical_report_files/figure-latex/orders-filters-1.pdf>]
+<empirical_report_files/figure-latex/orders-gpa-1.pdf, id=280, 469.755pt x 216.81pt>
 File: empirical_report_files/figure-latex/orders-gpa-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-gpa-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/orders-gpa-1.pdf  used on input line 364.
 (pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
-<empirical_report_files/figure-latex/orders-sat-1.pdf, id=293, 469.755pt x 289.08pt>
+<empirical_report_files/figure-latex/orders-sat-1.pdf, id=281, 469.755pt x 289.08pt>
 File: empirical_report_files/figure-latex/orders-sat-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-sat-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/orders-sat-1.pdf  used on input line 370.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
-<empirical_report_files/figure-latex/orders-psat-1.pdf, id=294, 469.755pt x 289.08pt>
+<empirical_report_files/figure-latex/orders-psat-1.pdf, id=282, 469.755pt x 289.08pt>
 File: empirical_report_files/figure-latex/orders-psat-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-psat-1.pdf>
 Package pdftex.def Info: empirical_report_files/figure-latex/orders-psat-1.pdf  used on input line 376.
 (pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
-[15 <./empirical_report_files/figure-latex/orders-gpa-1.pdf>] [16 <./empirical_report_files/figure-latex/orders-sat-1.pdf> <./empirical_report_files/figure-latex/orders-psat-1.pdf>]
-<empirical_report_files/figure-latex/orders-zip-1.pdf, id=330, 469.755pt x 289.08pt>
-File: empirical_report_files/figure-latex/orders-zip-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/orders-zip-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/orders-zip-1.pdf  used on input line 397.
-(pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
-[17]
-<empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf, id=336, 469.755pt x 201.75375pt>
+[14] [15 <./empirical_report_files/figure-latex/orders-gpa-1.pdf> <./empirical_report_files/figure-latex/orders-sat-1.pdf>]
+<empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf, id=316, 469.755pt x 201.75375pt>
 File: empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf  used on input line 409.
+Package pdftex.def Info: empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf  used on input line 391.
 (pdftex.def)             Requested size: 469.75386pt x 201.75325pt.
-<empirical_report_files/figure-latex/orders-state-research-instate-1.pdf, id=337, 469.755pt x 201.75375pt>
+<empirical_report_files/figure-latex/orders-state-research-instate-1.pdf, id=317, 469.755pt x 201.75375pt>
 File: empirical_report_files/figure-latex/orders-state-research-instate-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-state-research-instate-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/orders-state-research-instate-1.pdf  used on input line 415.
+Package pdftex.def Info: empirical_report_files/figure-latex/orders-state-research-instate-1.pdf  used on input line 397.
 (pdftex.def)             Requested size: 469.75386pt x 201.75325pt.
-[18 <./empirical_report_files/figure-latex/orders-zip-1.pdf>] [19 <./empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf> <./empirical_report_files/figure-latex/orders-state-research-instate-1.pdf>]
-<empirical_report_files/figure-latex/orders-race-1.pdf, id=393, 469.755pt x 216.81pt>
+[16 <./empirical_report_files/figure-latex/orders-psat-1.pdf>] [17 <./empirical_report_files/figure-latex/orders-state-research-outofstate-1.pdf> <./empirical_report_files/figure-latex/orders-state-research-instate-1.pdf>] [18]
+<empirical_report_files/figure-latex/orders-race-1.pdf, id=357, 469.755pt x 216.81pt>
 File: empirical_report_files/figure-latex/orders-race-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/orders-race-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/orders-race-1.pdf  used on input line 428.
+Package pdftex.def Info: empirical_report_files/figure-latex/orders-race-1.pdf  used on input line 422.
 (pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
-[20 <./empirical_report_files/figure-latex/orders-race-1.pdf>] [21]
-<empirical_report_files/figure-latex/rq2-counts-1.pdf, id=419, 469.755pt x 216.81pt>
-File: empirical_report_files/figure-latex/rq2-counts-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-counts-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-counts-1.pdf  used on input line 482.
-(pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
-[22]
-<empirical_report_files/figure-latex/rq2-race-research-1.pdf, id=429, 469.755pt x 144.54pt>
-File: empirical_report_files/figure-latex/rq2-race-research-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-race-research-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-race-research-1.pdf  used on input line 495.
-(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-<empirical_report_files/figure-latex/rq2-income-research-1.pdf, id=430, 469.755pt x 108.405pt>
-File: empirical_report_files/figure-latex/rq2-income-research-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-income-research-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-income-research-1.pdf  used on input line 501.
-(pdftex.def)             Requested size: 469.75386pt x 108.40472pt.
-<empirical_report_files/figure-latex/rq2-locale-research-1.pdf, id=431, 469.755pt x 144.54pt>
-File: empirical_report_files/figure-latex/rq2-locale-research-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-locale-research-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-locale-research-1.pdf  used on input line 507.
-(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-[23 <./empirical_report_files/figure-latex/rq2-counts-1.pdf> <./empirical_report_files/figure-latex/rq2-race-research-1.pdf>]
-<empirical_report_files/figure-latex/rq2-school-1.pdf, id=455, 469.755pt x 180.675pt>
-File: empirical_report_files/figure-latex/rq2-school-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-school-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-school-1.pdf  used on input line 517.
-(pdftex.def)             Requested size: 469.75386pt x 180.67455pt.
-[24 <./empirical_report_files/figure-latex/rq2-income-research-1.pdf> <./empirical_report_files/figure-latex/rq2-locale-research-1.pdf>]
-<empirical_report_files/figure-latex/rq2-race-regional-1.pdf, id=479, 469.755pt x 144.54pt>
-File: empirical_report_files/figure-latex/rq2-race-regional-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-race-regional-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-race-regional-1.pdf  used on input line 532.
-(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-<empirical_report_files/figure-latex/rq2-income-regional-1.pdf, id=480, 469.755pt x 144.54pt>
-File: empirical_report_files/figure-latex/rq2-income-regional-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-income-regional-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-income-regional-1.pdf  used on input line 538.
-(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-<empirical_report_files/figure-latex/rq2-locale-regional-1.pdf, id=481, 469.755pt x 144.54pt>
-File: empirical_report_files/figure-latex/rq2-locale-regional-1.pdf Graphic file (type pdf)
-<use empirical_report_files/figure-latex/rq2-locale-regional-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/rq2-locale-regional-1.pdf  used on input line 544.
-(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-[25 <./empirical_report_files/figure-latex/rq2-school-1.pdf> <./empirical_report_files/figure-latex/rq2-race-regional-1.pdf>] [26 <./empirical_report_files/figure-latex/rq2-income-regional-1.pdf> <./empirical_report_files/figure-latex/rq2-locale-regional-1.pdf>]
-Underfull \hbox (badness 1609) in paragraph at lines 553--554
-\T1/lmr/m/n/12 We an-a-lyze the re-la-tion-ship be-tween fil-ter cri-te-ria and the char-ac-ter-is-tics of pur-
- []
-
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[27] [28]
-<empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf, id=539, 469.755pt x 216.81pt>
+[19] [20 <./empirical_report_files/figure-latex/orders-race-1.pdf>]
+<empirical_report_files/figure-latex/rq2-counts-1.pdf, id=380, 469.755pt x 216.81pt>
+File: empirical_report_files/figure-latex/rq2-counts-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-counts-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-counts-1.pdf  used on input line 472.
+(pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
+[21 <./empirical_report_files/figure-latex/rq2-counts-1.pdf>]
+<empirical_report_files/figure-latex/rq2-race-research-1.pdf, id=396, 469.755pt x 144.54pt>
+File: empirical_report_files/figure-latex/rq2-race-research-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-race-research-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-race-research-1.pdf  used on input line 487.
+(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
+[22 <./empirical_report_files/figure-latex/rq2-race-research-1.pdf>]
+<empirical_report_files/figure-latex/rq2-income-research-1.pdf, id=413, 469.755pt x 108.405pt>
+File: empirical_report_files/figure-latex/rq2-income-research-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-income-research-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-income-research-1.pdf  used on input line 495.
+(pdftex.def)             Requested size: 469.75386pt x 108.40472pt.
+<empirical_report_files/figure-latex/rq2-locale-research-1.pdf, id=416, 469.755pt x 144.54pt>
+File: empirical_report_files/figure-latex/rq2-locale-research-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-locale-research-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-locale-research-1.pdf  used on input line 503.
+(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
+[23 <./empirical_report_files/figure-latex/rq2-income-research-1.pdf> <./empirical_report_files/figure-latex/rq2-locale-research-1.pdf>]
+<empirical_report_files/figure-latex/rq2-race-regional-1.pdf, id=441, 469.755pt x 144.54pt>
+File: empirical_report_files/figure-latex/rq2-race-regional-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-race-regional-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-race-regional-1.pdf  used on input line 518.
+(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
+<empirical_report_files/figure-latex/rq2-income-regional-1.pdf, id=443, 469.755pt x 144.54pt>
+File: empirical_report_files/figure-latex/rq2-income-regional-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-income-regional-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-income-regional-1.pdf  used on input line 526.
+(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
+[24 <./empirical_report_files/figure-latex/rq2-race-regional-1.pdf>]
+<empirical_report_files/figure-latex/rq2-locale-regional-1.pdf, id=460, 469.755pt x 144.54pt>
+File: empirical_report_files/figure-latex/rq2-locale-regional-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-locale-regional-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-locale-regional-1.pdf  used on input line 534.
+(pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
+
+Underfull \hbox (badness 1609) in paragraph at lines 541--542
+\T1/lmr/m/n/12 We an-a-lyze the re-la-tion-ship be-tween fil-ter cri-te-ria and the char-ac-ter-is-tics of pur-
+ []
+
+[25 <./empirical_report_files/figure-latex/rq2-income-regional-1.pdf> <./empirical_report_files/figure-latex/rq2-locale-regional-1.pdf>] [26] [27]
+<empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf, id=498, 469.755pt x 216.81pt>
 File: empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf  used on input line 625.
+Package pdftex.def Info: empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf  used on input line 622.
 (pdftex.def)             Requested size: 469.75386pt x 216.80946pt.
-[29 <./empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf>] [30] [31] [32] [33] [34] [35] [36]
-<empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf, id=599, 469.755pt x 259.97125pt>
+[28] [29 <./empirical_report_files/figure-latex/asu-la-deep-dive-1.pdf>] [30] [31] [32] [33] [34]
+<empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf, id=555, 469.755pt x 259.97125pt>
 File: empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf  used on input line 798.
+Package pdftex.def Info: empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf  used on input line 783.
 (pdftex.def)             Requested size: 469.75386pt x 259.97061pt.
-<empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf, id=600, 469.755pt x 325.215pt>
+[35 <./empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf>]
+<empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf, id=575, 469.755pt x 325.215pt>
 File: empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf  used on input line 807.
+Package pdftex.def Info: empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf  used on input line 808.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-[37 <./empirical_report_files/figure-latex/uiuc-deep-dive-1.pdf>] [38 <./empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf>] [39] [40]
-<empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf, id=647, 469.755pt x 325.215pt>
+[36] [37 <./empirical_report_files/figure-latex/ucsd-deep-dive-1.pdf>] [38]
+<empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf, id=603, 469.755pt x 325.215pt>
 File: empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf  used on input line 832.
+Package pdftex.def Info: empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf  used on input line 827.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-<empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf, id=648, 469.755pt x 325.215pt>
+<empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf, id=604, 469.755pt x 325.215pt>
 File: empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf  used on input line 838.
+Package pdftex.def Info: empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf  used on input line 833.
 (pdftex.def)             Requested size: 469.75386pt x 325.2142pt.
-[41 <./empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf>] [42 <./empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf>] [43] [44] [45] [46] [47] [48]
-<./../../outputs/figures/order_summary_1.pdf, id=714, 614.295pt x 794.97pt>
+[39 <./empirical_report_files/figure-latex/poc-race-deep-dive-1.pdf>] [40 <./empirical_report_files/figure-latex/poc-prospects-deep-dive-1.pdf>] [41] [42] [43] [44] [45] [46]
+<./../../outputs/figures/order_summary_1.pdf, id=670, 614.295pt x 794.97pt>
 File: ./../../outputs/figures/order_summary_1.pdf Graphic file (type pdf)
 <use ./../../outputs/figures/order_summary_1.pdf>
-Package pdftex.def Info: ./../../outputs/figures/order_summary_1.pdf  used on input line 896.
+Package pdftex.def Info: ./../../outputs/figures/order_summary_1.pdf  used on input line 891.
 (pdftex.def)             Requested size: 399.29639pt x 516.73651pt.
-[49] [50 <./../../outputs/figures/order_summary_1.pdf>]
-<./../../outputs/figures/order_summary_2.pdf, id=734, 614.295pt x 794.97pt>
+[47] [48 <./../../outputs/figures/order_summary_1.pdf>]
+<./../../outputs/figures/order_summary_2.pdf, id=689, 614.295pt x 794.97pt>
 File: ./../../outputs/figures/order_summary_2.pdf Graphic file (type pdf)
 <use ./../../outputs/figures/order_summary_2.pdf>
-Package pdftex.def Info: ./../../outputs/figures/order_summary_2.pdf  used on input line 905.
+Package pdftex.def Info: ./../../outputs/figures/order_summary_2.pdf  used on input line 900.
 (pdftex.def)             Requested size: 399.29639pt x 516.73651pt.
-[51 <./../../outputs/figures/order_summary_2.pdf>]
-<empirical_report_files/figure-latex/univ-carnegie-1.pdf, id=748, 469.755pt x 144.54pt>
+[49 <./../../outputs/figures/order_summary_2.pdf>]
+<empirical_report_files/figure-latex/univ-carnegie-1.pdf, id=704, 469.755pt x 144.54pt>
 File: empirical_report_files/figure-latex/univ-carnegie-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/univ-carnegie-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/univ-carnegie-1.pdf  used on input line 911.
+Package pdftex.def Info: empirical_report_files/figure-latex/univ-carnegie-1.pdf  used on input line 906.
 (pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-<empirical_report_files/figure-latex/univ-locale-1.pdf, id=749, 469.755pt x 144.54pt>
+<empirical_report_files/figure-latex/univ-locale-1.pdf, id=705, 469.755pt x 144.54pt>
 File: empirical_report_files/figure-latex/univ-locale-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/univ-locale-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/univ-locale-1.pdf  used on input line 919.
+Package pdftex.def Info: empirical_report_files/figure-latex/univ-locale-1.pdf  used on input line 914.
 (pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-[52 <./empirical_report_files/figure-latex/univ-carnegie-1.pdf> <./empirical_report_files/figure-latex/univ-locale-1.pdf>]
-<empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf, id=770, 469.755pt x 144.54pt>
+<empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf, id=706, 469.755pt x 144.54pt>
 File: empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf  used on input line 927.
+Package pdftex.def Info: empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf  used on input line 920.
 (pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-<empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf, id=771, 469.755pt x 144.54pt>
+<empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf, id=707, 469.755pt x 144.54pt>
 File: empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf Graphic file (type pdf)
 <use empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf>
-Package pdftex.def Info: empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf  used on input line 933.
+Package pdftex.def Info: empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf  used on input line 926.
 (pdftex.def)             Requested size: 469.75386pt x 144.53963pt.
-[53 <./empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf> <./empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 963--965
+<empirical_report_files/figure-latex/orders-zip-1.pdf, id=708, 469.755pt x 289.08pt>
+File: empirical_report_files/figure-latex/orders-zip-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/orders-zip-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/orders-zip-1.pdf  used on input line 932.
+(pdftex.def)             Requested size: 469.75386pt x 289.07928pt.
+<empirical_report_files/figure-latex/rq2-school-1.pdf, id=709, 469.755pt x 180.675pt>
+File: empirical_report_files/figure-latex/rq2-school-1.pdf Graphic file (type pdf)
+<use empirical_report_files/figure-latex/rq2-school-1.pdf>
+Package pdftex.def Info: empirical_report_files/figure-latex/rq2-school-1.pdf  used on input line 938.
+(pdftex.def)             Requested size: 469.75386pt x 180.67455pt.
+[50 <./empirical_report_files/figure-latex/univ-carnegie-1.pdf> <./empirical_report_files/figure-latex/univ-locale-1.pdf>] [51 <./empirical_report_files/figure-latex/purchased-orders-carnegie-1.pdf> <./empirical_report_files/figure-latex/purchased-prospects-carnegie-1.pdf>] [52 <./empirical_report_files/figure-latex/orders-zip-1.pdf> <./empirical_report_files/figure-latex/rq2-school-1.pdf>]
+Underfull \hbox (badness 10000) in paragraph at lines 968--970
 \T1/lmr/m/n/12 Re-trieved from [][]$https : / / cbsearch . collegeboard . org / pdf / college -[] outreach -[] and -[] student -[]
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 978--980
+Underfull \hbox (badness 10000) in paragraph at lines 986--988
 \T1/lmr/m/n/12 / / www . ru^^[alonl . com / enrollment -[] management -[] solutions / building -[] demand / student -[]
  []
 
-[54] (./empirical_report.aux)
+[53] [54] (./empirical_report.aux)
 Package rerunfilecheck Info: File `empirical_report.out' has not changed.
-(rerunfilecheck)             Checksum: 4EE7B2A6BADFE852E71D02DE4588AF5E;5262.
+(rerunfilecheck)             Checksum: 6B88E8759DD427FF249E85F23A978D0E;4904.
  ) 
 Here is how much of TeX's memory you used:
- 14676 strings out of 480260
- 247763 string characters out of 5892848
- 576475 words of memory out of 5000000
- 32115 multiletter control sequences out of 15000+600000
+ 14677 strings out of 480260
+ 247667 string characters out of 5892848
+ 576425 words of memory out of 5000000
+ 32113 multiletter control sequences out of 15000+600000
  539860 words of font info for 80 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 60i,11n,63p,1954b,415s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 60i,11n,63p,1604b,415s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+pdfTeX warning (dest): name{Hfootnote.13} has been referenced but does not exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.12} has been referenced but does not exist, replaced by a fixed one
+
+
+pdfTeX warning (dest): name{Hfootnote.11} has been referenced but does not exist, replaced by a fixed one
+
 
 pdfTeX warning (dest): name{Hfootnote.10} has been referenced but does not exist, replaced by a fixed one
 
@@ -864,10 +873,10 @@ pdfTeX warning (dest): name{Hfootnote.2} has been referenced but does not exist,
 pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist, replaced by a fixed one
 
 {c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}<c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr10.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr12.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr7.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmr8.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb><c:/Users/ozanj/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/lm/lmri7.pfb>
-Output written on empirical_report.pdf (54 pages, 1166253 bytes).
+Output written on empirical_report.pdf (54 pages, 1166949 bytes).
 PDF statistics:
- 925 PDF objects out of 1000 (max. 8388607)
- 769 compressed objects within 8 object streams
- 181 named destinations out of 1000 (max. 500000)
- 380 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 933 PDF objects out of 1000 (max. 8388607)
+ 777 compressed objects within 8 object streams
+ 184 named destinations out of 1000 (max. 500000)
+ 372 words of extra memory for PDF output out of 10000 (max. 10000000)
 
