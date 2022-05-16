@@ -408,9 +408,7 @@ __Data collection sample__. The broader research project sought data about about
 
 Thus, for the purpose of this report, the data collection sample consists of all public universities in IL, CA, and TX. Additionally, we collected data from two universities in an unnamed western state because a law firm was willing to represent our data collection efforts in this state.
 
-The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. 
-
-Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale) describe the public universities in our data collection sample (excluding the unnamed western state). A majority of the universities are master's or doctoral universities and located in urban areas. 
+The IL higher education system includes 3 universities in the University of Illinois system, 7 in the Illinois State University system, and 2 in the Southern Illinois University system. In CA, there are 9 universities in the University of California system and 23 in the California State University system. In TX, there are 8 universities in the University of Texas system, 4 in the Texas State University system, 11 in the Texas A&M University system, 4 in the University of Houston system, 2 in the University of North Texas system, 2 in the Texas Tech University system, and 4 independent Texas universities. Appendix Figures \@ref(fig:univ-carnegie) and \@ref(fig:univ-locale), respectively, describe the Carnegie Classification and and geographic location of public universities in our data collection sample (excluding the unnamed western state). Most are master's or doctoral universities and located in urban areas. 
 
 
 
@@ -496,43 +494,7 @@ univ_df %>%
   kable_styling(latex_options = 'scale_down')
 ```
 
-```{r univ-carnegie, fig.height = 2, fig.cap = 'University by carnegie classification'}
-univ_df %>% 
-  group_by(STABBR, carnegie) %>% 
-  summarise(count = n()) %>% 
-  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
-  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
-  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
-  xlab('') + ylab('') +
-  scale_y_discrete(limits = rev) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
-  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
-  theme(
-    axis.text.x = element_blank()
-  ) +
-  guides(fill = guide_legend(reverse = T))
-```
 
-\bigskip
-
-```{r univ-locale, fig.height = 2, fig.cap = 'University by locale'}
-univ_df %>% 
-  group_by(STABBR, locale_text) %>% 
-  summarise(count = n()) %>% 
-  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
-  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
-  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
-  xlab('') + ylab('') +
-  scale_y_discrete(limits = rev) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
-  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
-  theme(
-    axis.text.x = element_blank()
-  ) +
-  guides(fill = guide_legend(reverse = T))
-```
 
 
 <!--
@@ -2067,6 +2029,45 @@ knitr::include_graphics('./../../outputs/figures/order_summary_2.pdf')
 ```
 
 \newpage
+
+```{r univ-carnegie, fig.height = 2, fig.cap = 'University by carnegie classification'}
+univ_df %>% 
+  group_by(STABBR, carnegie) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+\bigskip
+
+```{r univ-locale, fig.height = 2, fig.cap = 'University by locale'}
+univ_df %>% 
+  group_by(STABBR, locale_text) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity', alpha = 0.6) +
+  geom_text(aes(x = count, label = count), color = '#555555', size = 2, position = position_stack(vjust = 0.5)) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
 ```{r purchased-orders-carnegie, fig.height = 2, fig.cap = 'Summary of orders purchased by carnegie classification'}
 orders_df %>% 
   left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
