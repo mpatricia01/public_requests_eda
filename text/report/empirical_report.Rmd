@@ -854,7 +854,11 @@ Segment filters come from the College Board’s “Segment Analysis Service,” 
 
 __ma/doctoral universities__. The geographic filters most commonly used by ma/doctoral universities in our sample were state, home zip code, and county. 11% of orders by ma/doctoral universities filtered on state. These orders primarily were used to target in-state prospects or prospects in regional, neighboring states. About 83% of orders by ma/doctoral universities filtered on home zip code, but orders by research universities did not filter by zip code.
 
-Zip code filters were used by ma/doctoral universities in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. About 224 of 381 orders that filtered on zip code filtered on three-digit zip codes. Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. Appendix Figure \@ref(fig:orders-zip) shows a map of three-digit zip codes filtered by a public university located in Texas. 
+Zip code filters were used by ma/doctoral universities in two different ways. In the first approach, universities filtered for three-digit zip codes. Three digit zip codes are prefixes for all five-digit zip codes that fall within a postal service sectional center facility, many of which serve large metropolitan areas within one state but can sometimes serve multiple states. About 224 of 381 orders that filtered on zip code filtered on three-digit zip codes. Orders using three-digit zip codes tended to target areas within the state where the university resides and sometimes in neighboring states, which is likely a function of ma/doctoral universities targeting prospective students in their local regions. 
+
+<!-- CUT TEXT
+Appendix Figure \@ref(fig:orders-zip) shows a map of three-digit zip codes filtered by a public university located in Texas. 
+-->
 
 
 In the second approach, universities specified specific zip codes to use as filters in a separate spreadsheet or text file that was provided to College Board. Unfortunately, our research team was unsuccessful in acquiring these separate files after several attempts. we estimate that about 41% (n=157) of the 381 orders using zip codes filtered on five-digit zip code.^[Because orders that did include specific zip code filters (by printing them on the order summary rather than in separate file) were all the three-digit level, we presume that orders using external files for zip code filters were at the five-digit level. For example, one doctoral university gave us order summaries for 136 student lists they purchased from College Board from April 2019 through February 2020. About 64% of these orders (n=87) specified using a text file to filter for zip code, presumably at the five-digit level. While we were unable to obtain these zip code text files, the names on these orders (e.g., 'Midwest/South II 950-1040 Srs (20)', 'West II Srs (20) AP 3-5') suggests that most of these orders targeted out-of-state five-digit zip codes.]
@@ -2117,7 +2121,8 @@ lists_df_summary %>%
   guides(fill = guide_legend(reverse = T, order = 1, override.aes= list(alpha = 0.6)))
 ```
 
-```{r orders-zip, fig.height = 4, fig.cap = '3-digit zip code filter used'}
+
+```{r orders-zip, fig.height = 4, fig.cap = '3-digit zip code filter used', eval=F, include=F}
 zip_shp_purchased <- subset(zip_shp, str_detect(ZCTA5CE10, str_c('^', orders_df$zip_code %>% na.omit() %>% unique() %>% str_split('\\|') %>% unlist(), collapse = '|')))
 
 leaflet() %>%
