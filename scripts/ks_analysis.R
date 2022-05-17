@@ -235,6 +235,22 @@ library(haven)
     orders_df %>% group_by(univ_type) %>%
       summarise(n=n_distinct(order_num)) 
     
+    #for policy report, how many names purchased annually by institution
+    orders_df <- orders_df %>% mutate(
+      order_year = year(date_start)
+    )
+    
+    policy_report <- orders_df %>% group_by(univ_id, univ_type, order_year) %>% summarise(
+      sum_students_peryear = sum(num_students, na.rm = T)
+    )
+    
+    policy_report <- policy_report %>% filter(!is.na(order_year))  
+    
+    policy_report %>% group_by(univ_type) %>% summarise(
+      mean_students_peryear = mean(sum_students_peryear, na.rm = T)
+    )
+    
+    
     # how many orders total , students total; then by research vs regional
         orders_df %>% count()
         
