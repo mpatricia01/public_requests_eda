@@ -125,7 +125,7 @@ df_rq3_cbsa <- df_rq3 %>% select(row_subj, CBSA) %>% column_to_rownames('row_sub
 
 # Introduction
 
-On March 8th 2020, a selective public research university purchased X [HOW MANY] "student lists" from The College Board. These lists contain demographic and contact information of prospective students that is collected when they complete assessments administered by the College Board. This information is purchased and then used by universities to recruit prospective students using mail, email, text messages, and other marketing interventions. 
+In March 2020, a selective public research university purchased 45 "student lists" from The College Board. These lists contain demographic and contact information of prospective students that is collected when they complete assessments administered by the College Board. This information is purchased and then used by universities to recruit prospective students using mail, email, text messages, and other marketing interventions. 
 
 Several of the student lists purchased by the university targeted women in STEM fields. For example, an order the university named "NR 2021 Female AP STEM" targeted nonresident high school students from 26 states, who identified as women, were in the high school class of 2021, had an average high school GPA ranging from B to A+, and received a 4 or higher on an AP exam in a STEM subject (e.g., calculus, biology, chemistry, computer science, statistics). Another order titled "NR 2021 Female SAT STEM" utilized similar "search filters." However, the AP exam search filter was replaced by two filters: an SAT score between 1300 and 1600; and expressing interest in one or more STEM majors.
 
@@ -222,7 +222,7 @@ grid.arrange(
 ```
 
 
-Efforts to increase representation of women in STEM by purchasing lists from College Board (or ACT) is likely to yield racial and socioeconomic inequality for two reasons. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Exclusion from the database is a function of socioeconomic and racial disparities in access to AP coursework [CITE] and SAT/PSAT test-taking [CITE].^[FOOTNOTE; ACT NRCCUA].
+Efforts to increase representation of women in STEM by purchasing lists from College Board (or ACT) is likely to yield racial and socioeconomic inequality for two reasons. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Exclusion from the database is a function of socioeconomic and racial disparities in access to AP coursework [@RN6014; @RN6015; @RN6017; @RN6016] and SAT/PSAT test-taking [CITE].^[FOOTNOTE; ACT NRCCUA].
 
 <!--  CUT TEXT
 

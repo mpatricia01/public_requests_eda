@@ -103,6 +103,10 @@ library(haven)
     
     #UC SAN DIEGO TOTALS IN 2020
     ucsd <- orders_df %>% filter(univ_id=="110680")
+    ucsd %>% count(order_num)
+    ucsd %>% count(date_start)
+    ucsd %>%count(order_num, gender) %>% print(n=100)
+    
     ucsd %>% group_by(date_start) %>% summarise(total_prosp = sum(num_students, na.rm=T))
     
     
