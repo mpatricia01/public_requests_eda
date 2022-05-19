@@ -29,24 +29,41 @@ header-includes:
 
 Colleges and universities identify prospective students by purchasing “student lists” from College Board, ACT, and other vendors. Student lists contain the contact information of prospective students that meet the criteria (e.g., test score range, high school GPA, zip codes) specified when buying the list. Sometimes referred to as “names,” student lists are a fundamental input for undergraduate recruiting campaigns, which target individual prospects by mail, email, and on social media.
 
-After two years of data collection and analysis of the student list business, our central thesis is that student list products are structurally racist and classist. Structural racism is "a form of systematic racial bias embedded in the 'normal' functions of laws and social relations" [@RN4760, p. 1143]. In a structurally racist system, processes viewed as normal or neutral systematically advantage dominant groups and disadvantage dominated groups. @RN4421 argues that formal and informal organizational processes are important mechanisms of structural racism. We observe structural racism in the recruiting behavior of colleges and universities. On one hand, we observe reverse-redlining by "predatory" for-profit colleges [CITTOM]. On the other hand, we observe selective universities targeting affluent, predominantly white schools and communities in off-campus recruiting visits [@RN4759; @RN4733]. Thus, we initiated research about student lists with a focus on investigating the presence of structural racism in list-buying practices of universities. Over time, we learned that the student list products themselves are structurally racist.
+Recent research suggests that student lists have surprisingly large effects on college access outcomes for millions of students each year. @RN4739 compared SAT test-takers who opted into the College Board Student Search Service – allowing accredited institutions to "licence" their contact information – to test-takers who opted out. For students with the same SAT score, parental education, race/ethnicity, sex, and high school, 41.1% of students who participated in Search attended a 4-year college compared to 32.8% of students who opted out, an 8.3 percentage point difference and a 25.3 percent change. Furthermore, this percent change was higher for students from populations that have historically been excluded from higher education.
+<!-- CUT TEXT
+STATE THAT EM INDUSTRY VIEWS LISTS AS ESSENTIAL MEANS OF RECRUITING STUDENTS??
+-->
 
-Recent research suggests that student lists have surprisingly large effects on college access outcomes for millions of students each year. @RN4739 compared SAT test-takers who opted into the College Board Student Search Service – allowing accredited institutions to “licence” their contact information – to test-takers who opted out. For students with the same SAT score, parental education, race/ethnicity, sex, and high school, 41.1% of students who participated in Search attended a 4-year college compared to 32.8% of students who opted out, an 8.3 (=41.1-32.8) percentage point difference and a 25.3 (=(41.1-32.8)/32.8) percent change. Furthermore, this percent change was higher for students from populations that have historically been excluded from higher education. [STATE THAT EM INDUSTRY VIEWS LISTS AS ESSENTIAL MEANS OF RECRUITING STUDENTS]
+Whereas @RN4739 examine the outcomes of SAT test takers who opt in versus out of College Board Student Search, we examine the student lists purchased by universities (e.g., the search filter criteria and the characteristics of purchased prospects). After two years of data collection and analysis, our central thesis is that student list products are structurally racist and classist. 
 
-PARAGRAPH ON DATA COLLECTION, RESEARCH DESIGN, AND RESEARCH QUESTIONS. 
-- MAYBE INTRODUCE BASIC STUFF ABOUT HOW LISTS ARE PURCHASED HERE?
-- 
+Structural racism is "a form of systematic racial bias embedded in the 'normal' functions of laws and social relations" [@RN4760, p. 1143], whereby processes viewed as normal or neutral systematically advantage dominant groups and disadvantage dominated groups. Organizations and organizational processes are fundamental mechanisms of structural racism [@RN4421]. University recruiting behavior exemplifies this claim. On one hand, "predatory" for-profit colleges practice reverse-redlining [@cottom2017lower]. On the other, off-campus recruiting visits by selective universities systematically target affluent, predominantly white schools and communities [@RN4759; @RN4733]. Thus, we began the student list project with a focus on investigating the presence of structural racism in the list-buying behaviors of universities. Over time, we we came to the conclusion that the student list products themselves are structurally racist. In turn, these products structure the recruiting behavior of colleges and universities.
+
+__The student list project__. We collected data by issuing public records requests to all public universities in CA, IL, MN, and TX. Data collection focused on the three largest student list vendors. For each student list purchased for the purpose of undergraduate recruiting from 2016 through 2020, we requested two related pieces of data: (1) the order summary, which specifies search criteria for the student list purchase; and (2) the de-identified prospect-level list produced from the search criteria. We address three research questions:
+
+1. Which filter criteria (e.g., high school graduating class, SAT score range) were selected in student lists purchased by universities in our sample?
+1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
+1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
+
+This report analyzes student lists purchased from College Board by XX public universities, including X public research universities and Y ma/doctoral universities. We obtained XXX student list orders, which is the analysis sample for RQ1. We obtained de-identified student list data about XXXX prospects, which is the analysis sample for RQ2. We received both the order summary data and the de-identified student list data for XX orders associated with XX prospects, resulting in the analysis sample for RQ3.
+
+__RQ1__. The search filters utilized by universities in our sample can be categorized into four bins: academic (e.g., high school GPA); geographic (e.g., state, zip code); demographic (e.g., gender); and student preferences. At minimum, most orders specified high school graduating class, one or more academic achievement filters and one or more geographic filters. Compared to ma/doctoral universities, research universities were more likely to set higher thresholds on academic achievement criteria, filter for out-of-state states, and utilize demographic filters. By contrast, ma/doctoral universities -- except one -- primarily focused on in-state prospects and were more likely to filter on zip code.
+
+__RQ2__. We examined the characteristics of purchased prospects on the dimensions of ethnicity/race, household income, and geographic "locale" (e.g., urban, suburban, rural). Public research universities in our sample purchased more out-of-state prospects than in-state prospects. Compared to in-state prospects, out-of-state prospects were more affluent, more likely to identify as white or Asian, less likely to identify as Latinx, more likely to live in suburban areas, and less likely to live in urban areas. Ma/doctoral universities in our sample primarily purchased in-state prospects. Compared to in-state prospects purchased by research universities, in-state prospects purchased ma/doctoral universities were slightly less affluent.^[more likely to identify as white or Black, and less likely to identify as Asian or Latinx. but this may be driven by differences in which states the ma vs. research universities are from].
+
+__RQ2__. The central research question of this report examines the relationship between search filter criteria and the characteristics of purchased prospects. In contrast to RQ1 and RQ2, RQ3 faces fewer external validity concerns in the a particular set of search criteria yields a particular set of prospects, regardless of which unviersity placed the order.^[FOOTNOTE: WITH THE EXCEPTION OF THE FILTER - DON'T GIVE ME PROSPECTS I ALREADY PURCHASED OR WHO REACHED OUT TO ME]
 
 
-On the other, we observe selective colleges targeting predominantly white schools and communities [cite salazar; cite private-school paper]
 
-
-“The theory of racialized organizations argues that structural racism is often enacted through formal and informal organizational processes that privilege certain racial groups at the expense of others”
-
-Structural racism is present when what is viewed as normal or neutral systematically disadvantages groups that are already disadvantaged
-
-
-
+Research question 1 asks, which filter criteria were selected in student lists purchased by
+universities in our sample? The most commonly specified filters were high school graduating
+class, SAT or PSAT score range, high school GPA, state and zip code. However, each order
+specified multiple filters. At minimum, most orders specified high school graduating class, one
+or more academic achievement filters, and one or more geographic filters. Only 10% of orders
+by research universities filtered on AP score. The orders we analyzed were mostly purchased
+prior to the Covid Pandemic, which catalyzed the test-optional movement. Universities
+may respond to the decline in SAT/PSAT test-takers by filtering on AP score, which raises
+equity concerns due to inequality in which high schools offer robust AP curricula (Gagnon &
+Mattingly, 2016; Theokas, 2013).
 
 # References
 
