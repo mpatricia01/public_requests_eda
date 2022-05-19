@@ -223,7 +223,7 @@ grid.arrange(
 ```
 
 
-Efforts to increase representation of women in STEM by purchasing lists from College Board (or ACT) is likely to yield racial and socioeconomic inequality for two reasons. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Exclusion from the database is a function of socioeconomic and racial disparities in access to AP coursework [@RN6014; @RN6015; @RN6017; @RN6016] and SAT/PSAT test-taking [CITE].^[FOOTNOTE; ACT NRCCUA].
+Efforts to increase representation of women in STEM by purchasing lists from College Board (or ACT) is likely to yield racial and socioeconomic inequality for two reasons. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Exclusion from the database is a function of socioeconomic and racial disparities in access to AP coursework [@RN6014; @RN6015; @RN6017; @RN6016; @RN6018; @RN6020] and SAT/PSAT test-taking [@RN6021].^[FOOTNOTE; ACT NRCCUA].
 
 <!--  CUT TEXT
 
