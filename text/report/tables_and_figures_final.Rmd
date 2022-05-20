@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = F, message = F, warning = F)
 # webshot::install_phantomjs()
 
 library(tidyverse)
+library(ggbreak)
 library(gridExtra)
 library(kableExtra)
 library(scales)
@@ -50,6 +51,22 @@ orders_prospects_purchased %>%
   theme(
     axis.ticks.x = element_blank(),
     axis.text.x = element_blank()
+  )
+```
+
+```{r, fig.height = 3.5}
+orders_prospects_purchased %>% 
+  ggplot(aes(x = reorder(univ_id, total_students), y = total_students, fill = univ_label)) +
+  geom_bar(stat = 'identity', alpha = 0.6) +
+  geom_text(aes(label = str_c(total_orders, if_else(total_orders == 1, ' order', ' orders'))), hjust = -0.1, size = 2) +
+  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M')), breaks = seq(0, 2.6e6, 2e5), expand = expansion(mult = c(0.01, 0.1)), limits = c(0, 2.7e6)) +
+  scale_y_break(c(5e5, 2.2e6)) +
+  scale_fill_manual(values = color_palette, name = 'University type') +
+  xlab('') + ylab('Number of prospects') +
+  coord_flip() +
+  theme(
+    axis.ticks.y = element_blank(),
+    axis.text.y = element_blank()
   )
 ```
 
