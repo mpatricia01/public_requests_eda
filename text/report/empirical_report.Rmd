@@ -715,6 +715,23 @@ data.frame(
   kable_styling(position = 'center')
 ```
 
+
+
+__Research design and research questions__. Decisions about research design and research questions were informed by both data limitations and substantive considerations. A large-N statistical design is not appropriate because we received order summary data and student list data from a non-random sample of universities. We can conceive of our analysis as a multiple case study research design [@RN4116] in which our analysis sample identifies behaviors that exist in the population of public universities, but not the prevalence of these behaviors in the population.
+
+More substantively, we prefer that analyses focus on student list products rather than the behavior of universities (customers) who buy the product. Our rationale is that inequality in purchased versus excluded names is substantially a function of (A) which prospective students are included in the underlying data base and (B) the set of filters the product allows universities to utilize. Therefore, analyses investigate the relationship between the filters chosen for a particular student list purchase and the characteristics of prospects included in the resulting student list.
+
+<!--
+Prospective students who do not take College Board assessments are excluded from College Board lists. College Board filters encourage customers to purchase prospects based on their score ranges in SAT, PSAT, and AP assessments, but which students attends high schools with widespread access to AP classes? Geographic filters additionally enable to customers to filter prospects based zip code. which is highly correlated by race. More recently, College Board has created "geodemographic" filters that target prospects based on the recent college-going behaviors of nearby peers. 
+-->
+The empirical analyses presented in this report are guided by three research questions, which focus on student lists purchased from College Board:
+
+1. Which filter criteria were selected in student lists purchased by universities in our sample?
+1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
+1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
+
+In RQ1 the unit of analysis is the order or university-order. Analyses allow us to make statements about how orders vary -- within-university variation and between-university variation -- for universities in our sample. In RQ2 the unit of analysis is university-prospect. Analyses allow us to make statements about the characteristics of prospects targeted by universities in our sample. In RQ3 the unit of analysis is order-prospect. Analyses allow us to make statements about the relationship between filter criteria and prospect characteristics that extend to lists purchased by any university that select similar filter criteria.
+
 Figure \@ref(fig:orders-prospects-purchased) presents the `r num_orders` total orders --  purchased by `r num_univs_orders` universities --  by university type and the total number of students purchased. The `r words(num_univs_orders_regional)` master's universities purchased `r num_orders_regional` lists, while the `r words(num_univs_orders_research)` research universities made `r num_orders_research` orders. The number of total prospects purchased within each order varied widely. Across all `r num_orders` orders, the median number of prospects purchased per order was `r prettyNum(median(orders_df$num_students, na.rm = T), ',')`, whereas the mean was `r prettyNum(round(mean(orders_df$num_students, na.rm = T)), ',')` (sd=`r prettyNum(round(sd(orders_df$num_students, na.rm = T)), ',')`). Despite making fewer total orders than master's universities, research universities on average purchased more than quadruple the number of students per order (`r prettyNum(round(mean((orders_df %>% filter(univ_type == 'research'))$num_students, na.rm = T)), ',')` versus `r prettyNum(round(mean((orders_df %>% filter(univ_type == 'regional'))$num_students, na.rm = T)), ',')`). Results are strongly influenced by universities that made a large number of orders (RQ1) and purchased a large number of prospects (RQ2). In particular, one public research university made `r orders_df %>% filter(univ_id == '104151') %>% nrow()` orders and purchased `r sum((lists_df_summary %>% filter(univ_id == '104151'))$n)` prospects. Appendix Figures \@ref(fig:purchased-orders-carnegie) and Figure \@ref(fig:purchased-prospects-carnegie), respectively, show the number of student lists purchased and the number of prospects purchased by Carnegie Classification and state.
 
 
@@ -734,22 +751,6 @@ orders_prospects_purchased %>%
     axis.text.y = element_blank()
   )
 ```
-
-
-__Research design and research questions__. Decisions about research design and research questions were informed by both data limitations and substantive considerations. A large-N statistical design is not appropriate because we received order summary data and student list data from a non-random sample of universities. We can conceive of our analysis as a multiple case study research design [@RN4116] in which our analysis sample identifies behaviors that exist in the population of public universities, but not the prevalence of these behaviors in the population.
-
-More substantively, we prefer that analyses focus on student list products rather than the behavior of universities (customers) who buy the product. Our rationale is that inequality in purchased versus excluded names is substantially a function of (A) which prospective students are included in the underlying data base and (B) the set of filters the product allows universities to utilize. Therefore, analyses investigate the relationship between the filters chosen for a particular student list purchase and the characteristics of prospects included in the resulting student list.
-
-<!--
-Prospective students who do not take College Board assessments are excluded from College Board lists. College Board filters encourage customers to purchase prospects based on their score ranges in SAT, PSAT, and AP assessments, but which students attends high schools with widespread access to AP classes? Geographic filters additionally enable to customers to filter prospects based zip code. which is highly correlated by race. More recently, College Board has created "geodemographic" filters that target prospects based on the recent college-going behaviors of nearby peers. 
--->
-The empirical analyses presented in this report are guided by three research questions, which focus on student lists purchased from College Board:
-
-1. Which filter criteria were selected in student lists purchased by universities in our sample?
-1. What are the characteristics of prospects included in student lists purchased by universities in our sample?
-1. What is the relationship between student list filter criteria and the characteristics of purchased prospects?
-
-In RQ1 the unit of analysis is the order or university-order. Analyses allow us to make statements about how orders vary -- within-university variation and between-university variation -- for universities in our sample. In RQ2 the unit of analysis is university-prospect. Analyses allow us to make statements about the characteristics of prospects targeted by universities in our sample. In RQ3 the unit of analysis is order-prospect. Analyses allow us to make statements about the relationship between filter criteria and prospect characteristics that extend to lists purchased by any university that select similar filter criteria.
 
 __Analyses__. Empirical analyses consist of simple descriptive statistics presented in tables, figures, and maps. For each research question, analyses are anchored by a small set of tables or figures that present results for the entire analysis sample. We also present analyses of selected universities, purchases and/or localities that convey commonly observed or thematically important patterns, with a focus on the nexus between race, class, and geography. For RQ3, we contextualize the characteristics of purchased prospects by showing the characteristics of one or more comparison groups (e.g., all high school graduates in the metropolitan area).
 
