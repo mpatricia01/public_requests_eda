@@ -530,7 +530,7 @@ ucsd_all <- lists_orders_zip_hs_df %>%
       `999` = 'missing'
     )
   ) %>% 
-  select(ord_num, stu_race_cb, race, stu_zip_code) %>% 
+  select(ord_num, stu_state, stu_race_cb, race, stu_zip_code) %>% 
   left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code'))
 
 ucsd <- lists_orders_zip_hs_df %>%
@@ -740,7 +740,8 @@ poc_cb <- poc %>%
   group_by(cbsa_code, cbsa_name) %>% 
   mutate(
     pct = count / sum(count, na.rm = T)
-  )
+  ) %>% 
+  ungroup()
 
 poc_common <- poc %>% 
   select(cbsa_code, cbsa_name, stu_white_common, stu_asian_common, stu_black_common, stu_is_hisp_common, stu_american_indian_common, stu_native_hawaiian_common) %>% 
