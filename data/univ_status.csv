@@ -1,0 +1,92 @@
+state_code,univ_system,univ_id,univ_name,received_recruiting,purchase_student_list,denial_reason,received_cb_orders,received_cb_lists,received_act_orders,received_act_lists,received_nrccua_orders,received_nrccua_lists,received_encoura_orders,received_encoura_lists
+IL,U of IL,145600,University of Illinois at Chicago,Y,Y,,Y,Y,N,Y,N,N,N,N
+IL,U of IL,148654,University of Illinois at Springfield,Y,Y,,Y,Y-,N,N,N,N,Y,Y?
+IL,U of IL,145637,University of Illinois at Urbana-Champaign,Y,Y,,Y,Y,Y,Y,N,N,N,N
+IL,IL State U,144005,Chicago State University,N,N,N,N,N,N,N,N,N,N,N
+IL,IL State U,144892,Eastern Illinois University,Y,Y,,Y-,Y-,Y-,Y-,N,N,N,N
+IL,IL State U,145336,Governors State University,Y,Y,,Y,Y-,N,N,N,N,N,N
+IL,IL State U,145813,Illinois State University,Y,Y,,Y,Y,N,Y,Y,Y,N,N
+IL,IL State U,147776,Northeastern Illinois University,Y,Y,,Y,Y,N,N,N,N,N,N
+IL,IL State U,147703,Northern Illinois University,Y,Y,trade_secrets,N,N,N,N,N,N,N,N
+IL,IL State U,149772,Western Illinois University,Y,Y,,N,Y-,Y-,Y-,N,N,N,N
+IL,SIU,149222,Southern Illinois University-Carbondale,Y,Y,burden,Y,N,N,N,N,N,N,N
+IL,SIU,149231,Southern Illinois University-Edwardsville,Y,Y,,N,Y,N,Y,N,Y,N,N
+MN,UMN,174075,University of Minnesota-Crookston,Y,Y,,Y,Y,Y-,Y,N,N,N,N
+MN,UMN,174233,University of Minnesota-Duluth,Y,Y,,Y,N,Y?,N,N,N,Y,N
+MN,UMN,174251,University of Minnesota-Morris,Y,Y,,N,N,N,N,N,N,N,N
+MN,UMN,456959,University of Minnesota-Rochester,Y,Y,,Y,N,Y?,Y,Y,N,N,Y
+MN,UMN,174066,University of Minnesota-Twin Cities,N,Y,,N,N,N,N,N,N,N,N
+MN,MN State U,173124,Bemidji State University,N,N,N,N,N,N,N,N,N,N,N
+MN,MN State U,174020,Metropolitan State University,N,N,N,N,N,N,N,N,N,N,N
+MN,MN State U,174358,Minnesota State University Moorhead,Y,Y,,Y,Y,N,Y,N,Y,Y,Y
+MN,MN State U,173920,Minnesota State University-Mankato,Y,Y,,N,N,N,N,N,N,N,N
+MN,MN State U,174783,Saint Cloud State University,Y,Y,,Y-,Y,Y?,N,N,N,N,N
+MN,MN State U,175078,Southwest Minnesota State University,N,Y,,N,N,N,Y,N,N,Y,Y
+MN,MN State U,175272,Winona State University,N,N,N,N,N,N,N,N,N,N,N
+CA,UC,110635,University of California-Berkeley,Y-,Y,,N,Y-,N,N,N,N,N,N
+CA,UC,110644,University of California-Davis,Y,Y,,Y,Y,N,N,N,N,N,N
+CA,UC,110653,University of California-Irvine,Y,Y,,Y,Y-,N,N,N,N,N,N
+CA,UC,110662,University of California-Los Angeles,Y,Y,,Y-,Y,Y,N,N,N,N,N
+CA,UC,445188,University of California-Merced,Y,Y,,Y,Y-,N,N,N,N,N,N
+CA,UC,110671,University of California-Riverside,Y,Y,,Y-,Y-,Y-,Y-,N,N,N,N
+CA,UC,110680,University of California-San Diego,Y,Y,,Y-,Y,N,Y,N,N,N,N
+CA,UC,110705,University of California-Santa Barbara,Y,Y,,Y-,Y-,N,N,N,N,Y-,N
+CA,UC,110714,University of California-Santa Cruz,Y,Y,,N,Y-,N,N,N,N,N,N
+CA,CSU,110422,California Polytechnic State University-San Luis Obispo,Y,Y,,Y,Y-,Y?,Y-,N,N,Y,?
+CA,CSU,110529,California State Polytechnic University-Pomona,Y,?,,N,N,N,N,N,N,N,N
+CA,CSU,111188,California State University Maritime Academy,Y,Y,,Y-,Y,N,N,N,N,N,N
+CA,CSU,110486,California State University-Bakersfield,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,441937,California State University-Channel Islands,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,110538,California State University-Chico,Y,Y,,N,N,N,N,N,N,N,N
+CA,CSU,110547,California State University-Dominguez Hills,N,N,N,N,N,N,N,N,N,N,N
+CA,CSU,110574,California State University-East Bay,N,Y,,N,N,N,N,N,N,N,N
+CA,CSU,110556,California State University-Fresno,N,N,N,N,N,N,N,N,N,N,N
+CA,CSU,110565,California State University-Fullerton,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,110583,California State University-Long Beach,N,N,N,N,N,N,N,N,N,N,N
+CA,CSU,110592,California State University-Los Angeles,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,409698,California State University-Monterey Bay,Y,Y,,N,Y,N,N,N,N,N,N
+CA,CSU,110608,California State University-Northridge,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,110617,California State University-Sacramento,Y,Y,,N,Y-,N,N,N,N,N,N
+CA,CSU,110510,California State University-San Bernardino,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,366711,California State University-San Marcos,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,110495,California State University-Stanislaus,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,115755,Humboldt State University,Y,Y,,N,N,N,N,N,N,N,N
+CA,CSU,122409,San Diego State University,N,N,N,N,N,N,N,N,N,N,N
+CA,CSU,122597,San Francisco State University,Y,N?,,N,N,N,N,N,N,N,N
+CA,CSU,122755,San Jose State University,Y,N,,N,N,N,N,N,N,N,N
+CA,CSU,123572,Sonoma State University,Y-,N,,N,N,N,N,N,N,N,N
+TX,U of TX,227368,The University of Texas Rio Grande Valley,N,N,N,N,N,N,N,N,N,N,N
+TX,U of TX,228769,The University of Texas at Arlington,Y-,Y?,,N,N,N,N,N,N,N,N
+TX,U of TX,228778,The University of Texas at Austin,N,N,N,N,N,N,N,N,N,N,N
+TX,U of TX,228787,The University of Texas at Dallas,N,N,N,N,N,N,N,N,N,N,N
+TX,U of TX,228796,The University of Texas at El Paso,Y-,N,,N,N,N,N,N,N,N,N
+TX,U of TX,229027,The University of Texas at San Antonio,Y,Y,,Y-,Y-,N,N,N,N,N,N
+TX,U of TX,228802,The University of Texas at Tyler,Y,Y,,N,Y,N,Y,N,N,N,N
+TX,U of TX,229018,The University of Texas of the Permian Basin,Y,Y,,N,N,N,N,N,N,N,N
+TX,TX State U,226091,Lamar University,Y,Y,,N,N,N,N,N,N,N,N
+TX,TX State U,227881,Sam Houston State University,N,N,N,N,N,N,N,N,N,N,N
+TX,TX State U,228501,Sul Ross State University,N,Y,,Y,N,N,N,N,N,N,N
+TX,TX State U,228459,Texas State University,N,N,N,N,N,N,N,N,N,N,N
+TX,TX A&M,224545,Texas A & M University-Texarkana,Y-,Y,,Y,Y,N,N,N,N,Y,Y
+TX,TX A&M,228529,Tarleton State University,Y,,,Y,Y,N,Y,N,Y,Y,Y
+TX,TX A&M,226152,Texas A & M International University,Y,N,,N,N,N,N,N,N,N,N
+TX,TX A&M,483036,Texas A & M University-Central Texas,N,N,N,N,N,N,N,N,N,N,N
+TX,TX A&M,229814,West Texas A & M University,Y,Y,,N,N,N,Y-,N,N,N,N
+TX,TX A&M,227526,Prairie View A & M University,Y,Y,,N,Y-,N,N,N,N,N,N
+TX,TX A&M,228723,Texas A & M University-College Station,Y,Y,,Y,Y,N,Y,N,N,Y,N
+TX,TX A&M,224554,Texas A & M University-Commerce,Y,Y,,Y-,N,Y-,N,N,N,N,N
+TX,TX A&M,224147,Texas A & M University-Corpus Christi,Y,Y,,Y-,Y-,N,Y-,N,N,N,N
+TX,TX A&M,228705,Texas A & M University-Kingsville,Y,Y,,Y-,Y-,N,Y-,N,Y-,N,N
+TX,TX A&M,459949,Texas A & M University-San Antonio,Y,Y,burden,Y-,N,N,N,N,N,N,N
+TX,U of Houston,225511,University of Houston,Y-,Y,,Y,N,N,N,N,N,N,N
+TX,U of Houston,225414,University of Houston-Clear Lake,Y,Y,,Y?,N,N,N,N,N,Y,N
+TX,U of Houston,225432,University of Houston-Downtown,Y,Y,,Y-,Y,N,N,N,N,N,N
+TX,U of Houston,225502,University of Houston-Victoria,Y,Y,,Y,Y-,N,N,N,N,N,N
+TX,UNT,227216,University of North Texas,N,N,N,N,N,N,N,N,N,N,N
+TX,UNT,484905,University of North Texas at Dallas,Y,Y,,N,Y-,N,Y-,N,N,N,N
+TX,TX Tech,222831,Angelo State University,N,N,N,N,N,N,N,N,N,N,N
+TX,TX Tech,229115,Texas Tech University,N,N,N,N,N,N,N,N,N,N,N
+TX,Indy TX,226833,Midwestern State University,Y-,Y,,N,Y-,N,Y-,N,Y-,N,N
+TX,Indy TX,228431,Stephen F Austin State University,Y-,Y,,Y,Y,N,N,N,N,N,N
+TX,Indy TX,229063,Texas Southern University,Y,Y,,N,Y,N,Y,N,N,N,N
+TX,Indy TX,229179,Texas Woman's University,Y,Y,,Y,Y,N,N,N,N,Y,Y
