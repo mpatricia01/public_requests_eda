@@ -7,7 +7,8 @@ author:
   - Crystal Han
 bibliography: ../bib/student_list_empirics.bib
 citeproc: no
-output: 
+# output: bookdown::word_document2
+output:
   bookdown::pdf_document2:
     toc: FALSE
     pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
