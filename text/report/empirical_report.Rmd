@@ -297,9 +297,9 @@ orders_df_110680 %>% filter(gender == 'Female',is.na(ap_scores)==1) %>% View()
 
 Research universities often purchase lists of female high school students -- those who take STEM AP exams or those with SAT scores within some range who also express interest in a STEM major and -- in order to overcome the under-representation of women in STEM degree programs. However, analyses of the prospects purchased by "women in STEM" orders suggests that efforts to solve inequities in one domain may lead to other problematic inequities. 
 
-Figure \@ref(fig:women-in-stem) shows the average racial and economic characteristics of the 12,938 prospects whose contact information was purchased across 11 total orders made by the university targeting women in STEM.^[Three of the 11 orders resulted in 0 students purchased. Students from the remaining orders came from 27 unique states.] These prospects live in zip codes where the average median household income is \$`r prettyNum(round((ucsd_all_income %>% filter(ord_type == 'prospect'))$income_2564 / 1e3) * 1e3, ',')`, compared to \$`r prettyNum(round((ucsd_all_income %>% filter(ord_type == 'metro'))$income_2564 / 1e3) * 1e3, ',')`, which is the average median household income of all zip codes in the 27 states the prospects came from. Figure \@ref(fig:women-in-stem) also shows very few prospects whose information were purchased are Latinx (`r ucsd_all_race_pct[['prospect_hispanic']]`%), Black (`r ucsd_all_race_pct[['prospect_black']]`%), Multiracial (`r ucsd_all_race_pct[['prospect_tworaces']]`%), or Native American students (`r ucsd_all_race_pct[['prospect_amerindian']]`%); whereas White (`r ucsd_all_race_pct[['prospect_white']]`%) and Asian (`r ucsd_all_race_pct[['prospect_asian']]`%) students make up more than 8 of every 10 women in STEM prospects. This is compared to the racial composition of all female 12th graders in public high schools in the purchased 27 states, where Latinx (`r ucsd_all_race_pct[['metro_hispanic']]`%) and Black (`r ucsd_all_race_pct[['metro_black']]`%) students make up more of the enrolled population and Asian (`r ucsd_all_race_pct[['metro_asian']]`%) students make up much less.^[Public high schools that satisfied the following criteria were included: enrolls at least ten female 12th graders; is a non-virtual school; is an open, new, or reopened school.]
+Figure \@ref(fig:women-in-stem) shows the average racial and economic characteristics of the 12,938 prospects whose contact information was purchased across 11 total orders made by the university targeting women in STEM.^[Three of the 11 orders resulted in 0 students purchased. Students from the remaining orders came from 27 unique states.] These prospects live in zip codes where the average median household income is \$`r prettyNum(round((ucsd_all_income %>% filter(ord_type == 'prospect'))$income_2564 / 1e3) * 1e3, ',')`, compared to \$`r prettyNum(round((ucsd_all_income %>% filter(ord_type == 'metro'))$income_2564 / 1e3) * 1e3, ',')`, which is the average median household income of all zip codes in the 27 states the prospects came from.^[Zip code-level income data for homeowners between 25-64 years old is used. This was calculated by taking the average of the median income for age group 25-44 and age group 45-64 years olds, as reported in the 2019 American Community Survey (ACS) 5-year estimates. However, disaggregated income data is not available for all zip codes, so zip codes with missing data do not appear in our results.] Figure \@ref(fig:women-in-stem) also shows very few prospects whose information were purchased are Latinx (`r ucsd_all_race_pct[['prospect_hispanic']]`%), Black (`r ucsd_all_race_pct[['prospect_black']]`%), Multiracial (`r ucsd_all_race_pct[['prospect_tworaces']]`%), or Native American students (`r ucsd_all_race_pct[['prospect_amerindian']]`%); whereas White (`r ucsd_all_race_pct[['prospect_white']]`%) and Asian (`r ucsd_all_race_pct[['prospect_asian']]`%) students make up more than 8 of every 10 women in STEM prospects. This is compared to the racial composition of all female 12th graders in public high schools in the purchased 27 states, where Latinx (`r ucsd_all_race_pct[['metro_hispanic']]`%) and Black (`r ucsd_all_race_pct[['metro_black']]`%) students make up more of the enrolled population and Asian (`r ucsd_all_race_pct[['metro_asian']]`%) students make up much less.
 
-```{r women-in-stem, fig.height = 1.5, fig.cap = 'Women in STEM prospects, average income and racial composition'}
+```{r women-in-stem, fig.height = 1.5, fig.cap = 'Women in STEM prospects (average income and racial composition)'}
 ucsd_income_figure <- ucsd_all_income %>% 
   mutate(
     count_type = recode_factor(
@@ -378,6 +378,9 @@ grid.arrange(
 )
 ```
 
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten female 12th graders; is a non-virtual school; is an open, new, or reopened school._
+\endgroup
 
 Efforts to increase representation of women in STEM by purchasing lists from College Board (or ACT) is likely to yield racial and socioeconomic inequality for two reasons. First, universities cannot purchase the contact information of prospects who are not included in the underlying database of test-takers. Exclusion from the database is a function of socioeconomic and racial disparities in access to AP coursework [@RN6014; @RN6015; @RN6017; @RN6016; @RN6018; @RN6020] and SAT/PSAT test-taking [@RN6021].^[Although, some student list vendors have acquired sources of student list data beyond test-takers. ACT achieved this by acquiring NRCCUA in 2018. Years earlier, NRCCUA replaced the paper surveys students filled out during school with an online college search engine named myOptions. See @list_biz for more details.]
 
@@ -469,7 +472,7 @@ A similar study compared the college access outcomes of students who opted into 
 -->
 
 
-```{r cb-fig, fig.height = 5, out.width = '85%', fig.cap = 'Effects of College Board Student Search Service'}
+```{r cb-fig, fig.height = 5, out.width = '85%', fig.cap = 'Student Search Service and college enrollment and degree completion'}
 create_cb_figure <- function(categories, values, plot_title) {
   cb_fig_df <- data.frame(
     category = rep(categories, each = 2),
@@ -860,6 +863,10 @@ orders_filters %>%
   )
 ```
 
+\begingroup\fontsize{6}{12}\selectfont
+_Note: One research university placed a large amount of orders, which influenced the overall filters used for all research universities. The contribution of this particular university is shown using a different color in the figure above._
+\endgroup
+
 __Academic__. Commonly used academic filters across university type include GPA, SAT, and PSAT. Compared to ma/doctoral universities, research universities were somewhat less likely to filter on GPA or SAT score and more likely to filter on PSAT score. Additionally, research universities filtered on high school class rank (`r orders_filters_totals[['research_rank']]`% of orders) and AP score (`r orders_filters_totals[['research_ap_score']]`% of orders), but few ma/doctoral orders utilized these filters.
 
 __Geographic__. Orders by ma/doctoral versus research universities differed across geographic filters. About `r orders_filters_totals[['research_states_fil']]`% of orders by research universities used a state filter but only `r orders_filters_totals[['regional_states_fil']]`% of orders by ma/doctoral universities filtered for entire states. More than 8 of every 10 orders by ma/doctoral universities used a zip-code filter<!--orders_filters_totals[['regional_zip']]-->, but most of these orders came from one doctoral university that recruits out-of-state students extensively. By contrast, research universities in our sample did not use zip code filters<!--orders_filters_totals[['research_zip']]-->. However, research universities also filtered by geomarket (`r orders_filters_totals[['research_geomarket']]`%), segment (`r orders_filters_totals[['research_segment']]`%), core based statistical area (`r orders_filters_totals[['research_cbsa']]`%), and international status (`r orders_filters_totals[['research_intl']]`%), whereas ma/doctoral universities generally did not but did use these filters.
@@ -930,6 +937,10 @@ orders_sat %>%
   facet_wrap(~ range_label) +
   coord_flip()
 ```
+
+\begingroup\fontsize{6}{12}\selectfont
+_Note: There were also SAT filters for separate components of the exam (e.g., math, reading, writing), however those were excluded from the figure above. Only the filter criteria for the overall SAT score was considered._
+\endgroup
 
 ```{r orders-psat, fig.height = 4, fig.cap = 'PSAT filter used by research vs. ma/doctoral'}
 orders_psat_total <- orders_psat %>% 
@@ -1458,7 +1469,7 @@ Student lists purchased by the university include at least one prospect from 355
 
 Figure \@ref(fig:asu-la-deep-dive) presents the racial characteristics of Los Angeles prospects across four different orders using the hypothetical zip code filter. Given the greatest number of Los Angeles prospects were selected by orders using PSAT filters, the figure presents results for three orders using PSAT scores and one order using SAT scores. For example, the "high" PSAT order filtered for California prospects with PSAT scores ranging from 1270 to 1520, resulting in a student list of `r prettyNum(asu_la_totals[['psat_high_top10']] + asu_la_totals[['psat_high_bottom90']], ',')` prospects from the Los Angeles metropolitan area. When we apply the hypothetical zip code filter, `r prettyNum(asu_la_totals[['psat_high_top10']], ',')` of the `r prettyNum(asu_la_totals[['psat_high_top10']] + asu_la_totals[['psat_high_bottom90']], ',')` prospects live in one of the top 10% zip codes and are included in the purchased student list. On the other hand, `r prettyNum(asu_la_totals[['psat_high_bottom90']], ',')` of the `r prettyNum(asu_la_totals[['psat_high_top10']] + asu_la_totals[['psat_high_bottom90']], ',')` prospects do not live in one of the top 10% zip codes and make up the group of prospects that would be excluded from the purchased student list if we apply the hypothetical zip code filter.
 
-```{r asu-la-deep-dive, fig.height = 3, fig.cap = 'Los Angeles purchased prospects in top income decile zip code'}
+```{r asu-la-deep-dive, fig.height = 3, fig.cap = 'Los Angeles prospects from top income decile zip codes (racial composition)'}
 asu_la %>% 
   mutate(
     stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
@@ -1673,7 +1684,7 @@ Figure \@ref(fig:metro-income) presents the average median household income of p
 -->
 
 
-```{r uiuc-deep-dive, fig.height = 3.6, fig.cap = 'Segment deep dive'}
+```{r uiuc-deep-dive, fig.height = 3.6, fig.cap = 'Segment filter prospects by metro (average income and racial composition)'}
 uiuc_income_figure <- uiuc_income %>% 
   mutate(
     count_type = recode_factor(
@@ -1757,7 +1768,11 @@ grid.arrange(
 )
 ```
 
-(ref:uiuc-deep-dive-maps) [Segment deep dive maps](https://mpatricia01.github.io/public_requests_eda/outputs/maps/map_segment.html)
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten 12th graders; is a non-virtual school; is an open, new, or reopened school._
+\endgroup
+
+(ref:uiuc-deep-dive-maps) [Segment filter prospects by metro maps (average income and racial composition)](https://mpatricia01.github.io/public_requests_eda/outputs/maps/map_segment.html)
 
 ```{r uiuc-deep-dive-maps, fig.cap = '(ref:uiuc-deep-dive-maps)'}
 grid.arrange(
@@ -1774,7 +1789,9 @@ grid.arrange(
 )
 ```
 
-
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten 12th graders; is a non-virtual school; is an open, new, or reopened school._
+\endgroup
 
 ### Women in STEM
 
@@ -1789,7 +1806,7 @@ The university made a total of 11 orders in March 2020 targeting women in STEM, 
 
 Figure \@ref(fig:ucsd-deep-dive) compares racial and income characteristics of purchased prospects to the characteristics of all female public high school students in each metropolitan area. For each metropolitan area, we show two figures. The figure on the left column provides the average median household income for the overall metropolitan area, for prospects purchased using AP scores, and prospects purchased using SAT scores. Prospect-level economic characteristics are measured by taking the average median household income of all prospects' home zip codes. The figure on the right column provides the racial/ethnic composition of all public high school women 12th grade students in the metropolitan area, of prospects purchased using AP scores, and of prospects purchased using SAT scores.
 
-```{r ucsd-deep-dive, fig.cap = 'Women in STEM deep dive'}
+```{r ucsd-deep-dive, fig.cap = 'Women in STEM prospects by metro (average income and racial composition)'}
 ucsd_income_figure <- ucsd_income %>% 
   mutate(
     count_type = recode_factor(
@@ -1876,6 +1893,10 @@ grid.arrange(
 )
 ```
 
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten female 12th graders; is a non-virtual school; is an open, new, or reopened school._
+\endgroup
+
 Figure \@ref(fig:ucsd-deep-dive) shows the overall median household income for the Atlanta metropolitan area is $`r ucsd_income_2564[['atl_metro']]`. Relative to this overall median household income, Women in STEM prospects purchased by the university across both types of orders are more affluent. Purchased prospects that scored a 4 or 5 on an AP STEM exam live in Atlanta zip codes where the average median household income is \$`r ucsd_income_2564[['atl_ap']]`. Whereas purchased prospects that scored a 1200 to 1600 on the SAT and indicated an interest in STEM majors live in Atlanta zip codes where the average median household income is \$`r ucsd_income_2564[['atl_sat']]`.
 
 Women in STEM prospects are also consistently more affluent than their overall metropolitan areas across Chicago, New York, and Seattle, with prospects purchased through SAT filters having the highest overall incomes. For Chicago, prospects purchased via AP and SAT filters have average median household incomes \$`r prettyNum(parse_number(ucsd_income_2564[['chicago_ap']]) - parse_number(ucsd_income_2564[['chicago_metro']]), ',')` and \$`r prettyNum(parse_number(ucsd_income_2564[['chicago_sat']]) - parse_number(ucsd_income_2564[['chicago_metro']]), ',')` greater than the overall median household income across the metropolitan area (\$`r ucsd_income_2564[['chicago_metro']]`), respectively. This difference in median household income between the overall metropolitan area and prospects purchased via AP (\$`r prettyNum(parse_number(ucsd_income_2564[['seattle_ap']]) - parse_number(ucsd_income_2564[['seattle_metro']]), ',')`) and SAT filters (\$`r prettyNum(parse_number(ucsd_income_2564[['seattle_sat']]) - parse_number(ucsd_income_2564[['seattle_metro']]), ',')`) is most pronounced for Seattle. 
@@ -1922,9 +1943,9 @@ We analyze the three core based statistical areas (CBSAs) with the largest numbe
 
 Figure \@ref(fig:poc-race-deep-dive) examines the race and ethnicity of purchased prospects in each of the three CBSAs. The left column utilizes the College Board "derived aggregate race/ethnicity" variable, which allocates each student to one race/ethnicity category among White, Asian, Black, Latinx, American Indian/Alaska Native, or Native Hawaiian/Pacific Islander. For example, if a student selected a Hispanic ethnicity and White as their race, these students were defined as Latinx on the left hand column of Figure \@ref(fig:poc-race-deep-dive). However, a given student may identify with multiple ethnicities and multiple racial groups. The right column shows the percent of prospects who identify with each racial group, which is why percent totals sum to greater than 100. 
 
-For the Houston metro area, the aggregate race/ethnicity column (left) of Figure \@ref(fig:poc-race-deep-dive) shows that `r poc_cb_pct[['houston_hispanic']]`% of the `r poc_totals[['houston']]` purchased prospects prospects were categorized as Latinx, `r poc_cb_pct[['houston_black']]`% Black, `r poc_cb_pct[['houston_amerindian']]`% AI/AN, and `r poc_cb_pct[['houston_tworaces']]`% multi-racial. The right hand column allows each prospect to identify with multiple racial groups. For these same `r poc_totals[['houston']]` prospects, `r poc_common_pct[['houston_white']]`% identified as White, `r poc_common_pct[['houston_black']]`% as Black, `r poc_common_pct[['houston_asian']]`% as Asian, and `r poc_common_pct[['houston_american_indian']]`% AI/AN. Thus, the aggregate race/ethnicity column (left) understates the number of prospects who identiy as Black and dramatically understates the number of prospects who identify as AI/AN.
+For the Houston metro area, the aggregate race/ethnicity column (left) of Figure \@ref(fig:poc-race-deep-dive) shows that `r poc_cb_pct[['houston_hispanic']]`% of the `r poc_totals[['houston']]` purchased prospects prospects were categorized as Latinx, `r poc_cb_pct[['houston_black']]`% Black, `r poc_cb_pct[['houston_amerindian']]`% AI/AN, and `r poc_cb_pct[['houston_tworaces']]`% multi-racial. The right hand column allows each prospect to identify with multiple racial groups. For these same `r poc_totals[['houston']]` prospects, `r poc_common_pct[['houston_white']]`% identified as White, `r poc_common_pct[['houston_black']]`% as Black, `r poc_common_pct[['houston_asian']]`% as Asian, and `r poc_common_pct[['houston_american_indian']]`% AI/AN. Thus, the aggregate race/ethnicity column (left) understates the number of prospects who identify as Black and dramatically understates the number of prospects who identify as AI/AN.
 
-```{r poc-race-deep-dive, fig.cap = 'Targeting students of color, race and ethnicity'}
+```{r poc-race-deep-dive, fig.cap = 'Race and ethnicity variables, aggregated vs. alone'}
 poc_cb_totals <- poc_cb %>%
   group_by(cbsa_code) %>% 
   summarise(total = sum(count)) %>% 
@@ -2004,7 +2025,7 @@ The middle column examines household income. Prospects purchased from New York l
 The right column examines the race/ethnicity composition of public and private high schools. For example, New York CBSA public high schools where no prospects were purchased were, on average, `r poc_race_pct[['ny_public_zero_black']]`% Black, `r poc_race_pct[['ny_public_zero_hispanic']]`% Latinx, `r poc_race_pct[['ny_public_zero_white']]`% white, and `r poc_race_pct[['ny_public_zero_asian']]`% Asian. On the other hand, public high schools with one to five purchased prospects were on average, `r poc_race_pct[['ny_public_1-5_black']]`% Black, `r poc_race_pct[['ny_public_1-5_hispanic']]`% Latinx, `r poc_race_pct[['ny_public_1-5_white']]`% white, and `r poc_race_pct[['ny_public_1-5_asian']]`% Asian.
 
 
-```{r poc-prospects-deep-dive, fig.cap = 'Targeting students of color, purchased prospects'}
+```{r poc-prospects-deep-dive, fig.cap = 'Purchased students of color by metro (HS type, average income, racial composition)'}
 poc_hs_figure <- poc_hs %>% 
   left_join(poc_cb_totals, by = 'cbsa_code') %>% 
   mutate(
@@ -2149,7 +2170,11 @@ grid.arrange(
 )
 ```
 
-(ref:poc-prospects-deep-dive-maps) [Targeting students of color, purchased prospects maps](https://mpatricia01.github.io/public_requests_eda/outputs/maps/map_poc.html)
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten 12th graders; is a non-virtual school; is an open, new, or reopened school. Private high schools that satisfied the following criteria were included: enrolls at least ten 12th graders._
+\endgroup
+
+(ref:poc-prospects-deep-dive-maps) [Purchased students of color by metro maps (average income and racial composition)](https://mpatricia01.github.io/public_requests_eda/outputs/maps/map_poc.html)
 
 ```{r poc-prospects-deep-dive-maps, fig.cap = '(ref:poc-prospects-deep-dive-maps)'}
 grid.arrange(
@@ -2166,7 +2191,9 @@ grid.arrange(
 )
 ```
 
-
+\begingroup\fontsize{6}{12}\selectfont
+_Note: Public high schools that satisfied the following criteria were included: enrolls at least ten 12th graders; is a non-virtual school; is an open, new, or reopened school. Private high schools that satisfied the following criteria were included: enrolls at least ten 12th graders._
+\endgroup
 
 Results for Miami differed from New York. Figure \@ref(fig:poc-prospects-deep-dive) shows the differences in household income were less pronounced than the case of New York. However, public high schools with greater than six purchased prospects had an average household income of \$`r poc_income_2564[['miami_public_6+']]` relative to \$`r poc_income_2564[['miami_public_zero']]` for public high schools where no prospects were purchased. With respect to the racial composition of public schools, schools with at least one prospect purchased tended to enroll a higher number of Latinx students but a lower number of Black students than schools with no prospects purchased<!--Check: poc_race_pct[['miami_public_1-5_black']] & poc_race_pct[['miami_public_6+_black']] < poc_race_pct[['miami_public_zero_black']]; poc_race_pct[['miami_public_1-5_hispanic']] & poc_race_pct[['miami_public_6+_hispanic']] > poc_race_pct[['miami_public_zero_hispanic']]-->. At the same time `r poc_hs_pct[['miami_prospect_private']]`% of prospects purchased from Miami attended a private high school. 
 
