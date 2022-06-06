@@ -9,7 +9,8 @@ bibliography: ../bib/student_list_empirics.bib
 citeproc: no
 # output: bookdown::word_document2
 output:
-  bookdown::word_document2:
+  #bookdown::word_document2:
+  bookdown::pdf_document2:
     toc: FALSE
     pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
 eoutput: pdf_document
@@ -429,7 +430,7 @@ College Board student list products are fundamentally based on standardized test
 
 Over the past decade, College Board -- and ACT -- have added new search filters (e.g., "[Interest In My Peers](https://signup.collegeboard.org/subscription-features/)," "[Environmental Attributes](https://www.youtube.com/watch?v=VmTU9sb4ZiY)") that facilitate micro-targeting of the "right" kind of students. Ironically, the primary reason universities value these filters is because the price of names is so high. In 2021, College Board charged \$0.50 per name. In 2022, they are transitioning to a tiered subscription model. College Board uses revenues from "these license fees to help support its mission-driven work" [@cb_opt_in]. 
 
-College Board describes itself as a "mission-driven not-for-profit organization that connects students to college success and opportunity, founded \ldots to expand access to higher education" [@cb_about_us]. Student Search Service is central to the College Board mission, not some money-making side-hustle. If College Board is serious about this mission, they should eliminate problematic micro-targeting search filters and provide all names for free.
+College Board describes itself as a "mission-driven not-for-profit organization that connects students to college success and opportunity \ldots, founded \ldots to expand access to higher education" [@cb_about_us]. The College Board Student Search Service is literally central to this stated mission, not a money-making side-hustle. If College Board is serious about their mission, they should eliminate problematic micro-targeting search filters and provide all names for free.
 
 # Introduction
 
