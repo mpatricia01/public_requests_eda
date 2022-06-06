@@ -135,7 +135,7 @@ lists_df_summary <- lists_orders_zip_hs_df %>%
 
 
 # ----------------------------------------------------------------------
-# Figure 7 - Orders and prospects purchased by research vs. ma/doctoral
+# Figure 4 - Orders and prospects purchased by research vs. ma/doctoral
 # ----------------------------------------------------------------------
 
 orders_prospects_purchased <- orders_df %>% 
@@ -148,7 +148,7 @@ orders_prospects_purchased <- orders_df %>%
 
 
 # -----------------------------------------------------------------------
-# Figure 8 - Filters used in order purchases by research vs. ma/doctoral
+# Figure 5 - Filters used in order purchases by research vs. ma/doctoral
 # -----------------------------------------------------------------------
 
 orders_filters <- orders_df %>% 
@@ -185,7 +185,7 @@ orders_filters <- orders_filters %>%
 
 
 # -------------------------------------------------------
-# Figure 9 - GPA filter used by research vs. ma/doctoral
+# Figure 6 - GPA filter used by research vs. ma/doctoral
 # -------------------------------------------------------
 
 orders_gpa <- orders_df %>% 
@@ -201,9 +201,9 @@ orders_gpa <- orders_df %>%
   complete(nesting(univ_type, univ_label), gpa_low, fill = list(n_low = 0, pct_low = 0))
 
 
-# --------------------------------------------------------
-# Figure 10 - SAT filter used by research vs. ma/doctoral
-# --------------------------------------------------------
+# -------------------------------------------------------
+# Figure 7 - SAT filter used by research vs. ma/doctoral
+# -------------------------------------------------------
 
 test_scores_breaks <- c(-1, 1000, 1101, 1201, 1301, 1401, 1501, 1620)
 test_scores_labels <- c('<=1000', '1010-1100', '1110-1200', '1210-1300', '1310-1400', '1410-1500', '1510+')
@@ -240,9 +240,9 @@ orders_sat <- orders_df %>%
   complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0)) 
 
 
-# ---------------------------------------------------------
-# Figure 11 - PSAT filter used by research vs. ma/doctoral
-# ---------------------------------------------------------
+# --------------------------------------------------------
+# Figure 8 - PSAT filter used by research vs. ma/doctoral
+# --------------------------------------------------------
 
 orders_psat <- orders_df %>% 
   filter(!is.na(psat_score_min) | !is.na(psat_score_max)) %>% 
@@ -276,9 +276,9 @@ orders_psat <- orders_df %>%
   complete(nesting(univ_type, univ_label), test_range, brks, fill = list(num = 0, pct = 0))
 
 
-# ----------------------------------------------------------------------------------
-# Figure 12 - State filter used by research universities, in-state vs. out-of-state
-# ----------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------
+# Figure 9 & 10 - State filter used by research universities, in-state vs. out-of-state
+# --------------------------------------------------------------------------------------
 
 get_state_abb <- Vectorize(
   function(x) {
@@ -318,7 +318,7 @@ orders_state_research <- us_map(regions = 'states') %>%
 
 
 # ---------------------------------------------------------
-# Figure 13 - Race filter used by research vs. ma/doctoral
+# Figure 11 - Race filter used by research vs. ma/doctoral
 # ---------------------------------------------------------
 
 orders_race <- orders_df %>%
@@ -354,7 +354,7 @@ orders_race <- orders_df %>%
 
 
 # --------------------------------------------------------------------------
-# Figure 14 - Number of prospects purchased by university type and location
+# Figure 12 - Number of prospects purchased by university type and location
 # --------------------------------------------------------------------------
 
 rq2_counts <- lists_orders_zip_hs_df %>%
@@ -362,12 +362,12 @@ rq2_counts <- lists_orders_zip_hs_df %>%
 
 
 # ----------------------------------------------------------------------------------
-# Figure 15 - Racial composition of prospects purchased by research universities
+# Figure 13 - Racial composition of prospects purchased by research universities
 # +
-# Figure 18 - Racial composition of prospects purchased by ma/doctoral universities
+# Figure 16 - Racial composition of prospects purchased by ma/doctoral universities
 # ----------------------------------------------------------------------------------
 
-rq2_race <- lists_orders_zip_hs_df %>% 
+rq2_race_full <- lists_orders_zip_hs_df %>% 
   group_by(univ_type, univ_label, region, locale, stu_race_cb) %>% 
   summarise(
     count = n()
@@ -377,11 +377,22 @@ rq2_race <- lists_orders_zip_hs_df %>%
   ) %>% 
   ungroup()
 
+rq2_race <- lists_orders_zip_hs_df %>% 
+  group_by(univ_type, univ_label, region, locale, stu_race_cb) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  filter(!is.na(stu_race_cb)) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
+
 
 # ---------------------------------------------------------------------------------------
-# Figure 16 - Median household income of prospects purchased by research universities
+# Figure 14 - Median household income of prospects purchased by research universities
 # +
-# Figure 19 - Median household income of prospects purchased by ma/doctoral universities
+# Figure 17 - Median household income of prospects purchased by ma/doctoral universities
 # ---------------------------------------------------------------------------------------
 
 rq2_income <- lists_orders_zip_hs_df %>% 
@@ -398,9 +409,9 @@ rq2_income <- lists_orders_zip_hs_df %>%
 
 
 # ----------------------------------------------------------------------
-# Figure 17 - Locale of prospects purchased by research universities
+# Figure 15 - Locale of prospects purchased by research universities
 # +
-# Figure 20 - Locale of prospects purchased by ma/doctoral universities
+# Figure 18 - Locale of prospects purchased by ma/doctoral universities
 # ----------------------------------------------------------------------
 
 rq2_locale <- lists_orders_zip_hs_df %>% 
@@ -433,9 +444,9 @@ rq2_locale <- lists_orders_zip_hs_df %>%
   ungroup()
 
 
-# --------------------------------------------------------------------------
-# Figure 21 - Zip code deep dive by Arizona State University in Los Angeles
-# --------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------
+# Figure 19 - Los Angeles prospects from top income decile zip codes (racial composition)
+# ----------------------------------------------------------------------------------------
 
 la_zips <- acs_race_zipcodev3 %>%  # 378 (total) zip codes in LA
   filter(cbsa_1 == '31080') %>% 
@@ -448,7 +459,7 @@ la_zips %>% count(is.na(medincome_2564))  # 14 zip codes missing income data
 la_zips_top10pct <- la_zips %>%  # 38 (top 10% income) zip codes in LA
   head(n = 38)
 
-asu_la <- lists_orders_zip_hs_df %>%
+asu_la_full <- lists_orders_zip_hs_df %>%
   filter(univ_id == '104151', zip_cbsa_1 == '31080', ord_num %in% c('366935', '448420', '448374', '394956')) %>% 
   mutate(
     ord_type = recode(
@@ -469,17 +480,159 @@ asu_la <- lists_orders_zip_hs_df %>%
   ) %>% 
   ungroup()
 
+asu_la <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '104151', zip_cbsa_1 == '31080', ord_num %in% c('366935', '448420', '448374', '394956')) %>% 
+  mutate(
+    ord_type = recode(
+      ord_num,
+      '366935' = 'psat_low',   # PSAT score from 1110-1210
+      '448420' = 'psat_med',   # PSAT score from 1190-1260
+      '448374' = 'psat_high',  # PSAT score from 1270-1520
+      '394956' = 'sat_med'     # SAT score from 1140-1260
+    ),
+    in_zip_top10pct = if_else(stu_zip_code %in% la_zips_top10pct$zip_code, 1, 0)
+  ) %>% 
+  group_by(ord_num, ord_type, in_zip_top10pct, stu_race_cb) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  filter(!is.na(stu_race_cb), stu_race_cb != 0) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup()
 
-# ---------------------------------------------------------------------------
-# Figure 22 - Women in STEM deep dive by University of California, San Diego
-# ---------------------------------------------------------------------------
+
+# --------------------------------------------------------------------------------------
+# Figure 20 - Segment filter prospects by metro (average income and racial composition)
+# --------------------------------------------------------------------------------------
+
+uiuc_metros <- c('35620', '31080', '37980', '47900')
+
+uiuc_metro_race <- ccd %>%
+  filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% uiuc_metros) %>% 
+  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_[a-z]{2,}$')) %>%
+  pivot_longer(
+    cols = -c(cbsa_1, cbsatitle_1, ncessch),
+    names_pattern = 'g12_(\\w+)',
+    names_to = 'race',
+    values_to = 'count'
+  ) %>%
+  mutate(
+    count = if_else(is.na(count), 0L, count)
+  ) %>% 
+  group_by(cbsa_1, cbsatitle_1, ncessch) %>%
+  mutate(
+    pct = count / sum(count, na.rm = T),
+    pct = if_else(is.nan(pct), NA_real_, pct)
+  ) %>%
+  ungroup() %>%
+  group_by(cbsa_1, cbsatitle_1, race) %>%
+  summarise(
+    count = sum(count, na.rm = T), 
+    pct = mean(pct, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    cbsa_code = cbsa_1,
+    cbsa_name = cbsatitle_1
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, race, count, pct)
+
+uiuc_metro_race %>%  # 0 for unknown race so no effect on pct if removed
+  filter(race == 'unknown')
+
+uiuc_metro_income <- acs_income_metro %>% 
+  filter(cbsa_code %in% uiuc_metros) %>% 
+  mutate(
+    ord_type = 'metro'
+  ) %>% 
+  rename(
+    income_2564 = medincome_2564
+  ) %>% 
+  select(cbsa_code, cbsa_name, ord_type, income_2564)
+
+uiuc_orders <- orders_df %>%
+  filter(univ_id == '145637', filter_segment == 1, filter_gender == 0) %>% 
+  select(order_num, order_title, num_students, hs_grad_class, segment, state_name, cbsa_name, sat_score_min, sat_score_max, psat_score_min, psat_score_max, gpa_low, gpa_high)
+
+uiuc <- lists_orders_zip_hs_df %>%
+  filter(univ_id == '145637', zip_cbsa_1 %in% uiuc_metros, ord_num %in% uiuc_orders$order_num) %>% 
+  mutate(
+    ord_type = 'prospect',
+    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
+    race = recode(
+      stu_race_cb,
+      `0` = 'noresponse',
+      `1` = 'amerindian',
+      `2` = 'asian',
+      `3` = 'black',
+      `4` = 'hispanic',
+      `8` = 'nativehawaii',
+      `9` = 'white',
+      `12` = 'tworaces',
+      `999` = 'unknown'
+    )
+  ) %>% 
+  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, hs_school_control, hs_ncessch, stu_zip_code) %>% 
+  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
+  rename(
+    cbsa_code = zip_cbsa_1,
+    cbsa_name = zip_cbsatitle_1,
+    control = hs_school_control
+  )
+
+uiuc %>% 
+  count(ord_num)
+
+uiuc %>% 
+  count(cbsa_code)
+
+uiuc_race_full <- uiuc %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(uiuc_metro_race)
+
+uiuc_race <- uiuc %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  filter(!race %in% c('unknown', 'noresponse')) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(uiuc_metro_race %>% filter(race != 'unknown'))
+
+uiuc_income <- uiuc %>% 
+  group_by(cbsa_code, cbsa_name, ord_type) %>% 
+  summarise(
+    income_2564 = mean(medincome_2564, na.rm = T)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(uiuc_metro_income)
+
+
+# -------------------------------------------------------------------------------------
+# Figure 22 - Women in STEM prospects by metro (average income and racial composition)
+# -------------------------------------------------------------------------------------
 
 ccd %>% count(is_virtual, virtual, virtual_text)
 ccd %>% count(updated_status, updated_status_text)
 
 ucsd_metros <- c('16980', '42660', '35620', '12060')
 
-ucsd_metro_race <- ccd %>%
+ucsd_metro_race <- ccd %>%  # no unknown for g12 female
   filter(g12_f >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% ucsd_metros) %>% 
   select(cbsa_1, cbsatitle_1, ncessch, matches('g12_\\w+_f')) %>%
   pivot_longer(
@@ -560,11 +713,23 @@ ucsd %>%
 ucsd %>% 
   count(cbsa_code, ord_type)
 
+ucsd_race_full <- ucsd %>% 
+  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(ucsd_metro_race)
+
 ucsd_race <- ucsd %>% 
   group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
   summarise(
     count = n()
   ) %>% 
+  filter(!race %in% c('missing', 'noresponse')) %>% 
   mutate(
     pct = count / sum(count)
   ) %>% 
@@ -581,7 +746,7 @@ ucsd_income <- ucsd %>%
 
 
 # ---------------------------------------------------------------------------
-# INTRO - All women in STEM deep dive by University of California, San Diego
+# Figure 1 - Women in STEM prospects (average income and racial composition)
 # ---------------------------------------------------------------------------
 
 ucsd_all <- lists_orders_zip_hs_df %>%
@@ -612,7 +777,7 @@ ucsd_all %>%  # 8 of 11 orders have more than 0 students
 ucsd_all %>%  # students came from 27 states
   count(stu_state)
 
-ucsd_all_metro_race <- ccd %>%
+ucsd_all_metro_race <- ccd %>%  # no unknown for g12 female
   filter(g12_f >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), state_code %in% ucsd_all$stu_state) %>% 
   select(ncessch, matches('g12_\\w+_f')) %>%
   pivot_longer(
@@ -652,11 +817,23 @@ ucsd_all_metro_income <- acs_income_zip %>%
   ) %>% 
   select(ord_type, income_2564)
 
+ucsd_all_race_full <- ucsd_all %>% 
+  group_by(ord_type, race) %>% 
+  summarise(
+    count = n()
+  ) %>% 
+  mutate(
+    pct = count / sum(count)
+  ) %>% 
+  ungroup() %>% 
+  bind_rows(ucsd_all_metro_race)
+
 ucsd_all_race <- ucsd_all %>% 
   group_by(ord_type, race) %>% 
   summarise(
     count = n()
   ) %>% 
+  filter(!race %in% c('missing', 'noresponse')) %>% 
   mutate(
     pct = count / sum(count)
   ) %>% 
@@ -672,114 +849,9 @@ ucsd_all_income <- ucsd_all %>%
   bind_rows(ucsd_all_metro_income)
 
 
-# ----------------------------------------------------------------------------
-# Figure 23 - Segment deep dive by University of Illinois at Urbana-Champaign
-# ----------------------------------------------------------------------------
-
-uiuc_metros <- c('35620', '31080', '37980', '47900')
-
-uiuc_metro_race <- ccd %>%
-  filter(g12 >= 10, is_virtual == 0, updated_status %in% c('1', '3', '8'), cbsa_1 %in% uiuc_metros) %>% 
-  select(cbsa_1, cbsatitle_1, ncessch, matches('g12_[a-z]{2,}$')) %>%
-  pivot_longer(
-    cols = -c(cbsa_1, cbsatitle_1, ncessch),
-    names_pattern = 'g12_(\\w+)',
-    names_to = 'race',
-    values_to = 'count'
-  ) %>%
-  mutate(
-    count = if_else(is.na(count), 0L, count)
-  ) %>% 
-  group_by(cbsa_1, cbsatitle_1, ncessch) %>%
-  mutate(
-    pct = count / sum(count, na.rm = T),
-    pct = if_else(is.nan(pct), NA_real_, pct)
-  ) %>%
-  ungroup() %>%
-  group_by(cbsa_1, cbsatitle_1, race) %>%
-  summarise(
-    count = sum(count, na.rm = T), 
-    pct = mean(pct, na.rm = T)
-  ) %>% 
-  ungroup() %>% 
-  mutate(
-    ord_type = 'metro'
-  ) %>% 
-  rename(
-    cbsa_code = cbsa_1,
-    cbsa_name = cbsatitle_1
-  ) %>% 
-  select(cbsa_code, cbsa_name, ord_type, race, count, pct)
-
-uiuc_metro_income <- acs_income_metro %>% 
-  filter(cbsa_code %in% uiuc_metros) %>% 
-  mutate(
-    ord_type = 'metro'
-  ) %>% 
-  rename(
-    income_2564 = medincome_2564
-  ) %>% 
-  select(cbsa_code, cbsa_name, ord_type, income_2564)
-
-uiuc_orders <- orders_df %>%
-  filter(univ_id == '145637', filter_segment == 1, filter_gender == 0) %>% 
-  select(order_num, order_title, num_students, hs_grad_class, segment, state_name, cbsa_name, sat_score_min, sat_score_max, psat_score_min, psat_score_max, gpa_low, gpa_high)
-
-uiuc <- lists_orders_zip_hs_df %>%
-  filter(univ_id == '145637', zip_cbsa_1 %in% uiuc_metros, ord_num %in% uiuc_orders$order_num) %>% 
-  mutate(
-    ord_type = 'prospect',
-    stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
-    race = recode(
-      stu_race_cb,
-      `0` = 'noresponse',
-      `1` = 'amerindian',
-      `2` = 'asian',
-      `3` = 'black',
-      `4` = 'hispanic',
-      `8` = 'nativehawaii',
-      `9` = 'white',
-      `12` = 'tworaces',
-      `999` = 'unknown'
-    )
-  ) %>% 
-  select(zip_cbsa_1, zip_cbsatitle_1, ord_num, ord_type, stu_race_cb, race, hs_school_control, hs_ncessch, stu_zip_code) %>% 
-  left_join(acs_income_zip, by = c('stu_zip_code' = 'zip_code')) %>% 
-  rename(
-    cbsa_code = zip_cbsa_1,
-    cbsa_name = zip_cbsatitle_1,
-    control = hs_school_control
-  )
-
-uiuc %>% 
-  count(ord_num)
-
-uiuc %>% 
-  count(cbsa_code)
-
-uiuc_race <- uiuc %>% 
-  group_by(cbsa_code, cbsa_name, ord_type, race) %>% 
-  summarise(
-    count = n()
-  ) %>% 
-  mutate(
-    pct = count / sum(count)
-  ) %>% 
-  ungroup() %>% 
-  bind_rows(uiuc_metro_race)
-
-uiuc_income <- uiuc %>% 
-  group_by(cbsa_code, cbsa_name, ord_type) %>% 
-  summarise(
-    income_2564 = mean(medincome_2564, na.rm = T)
-  ) %>% 
-  ungroup() %>% 
-  bind_rows(uiuc_metro_income)
-
-
-# ---------------------------------------------------------
-# Figure 24 - Targeting students of color, race categories
-# ---------------------------------------------------------
+# ---------------------------------------------------------------
+# Figure 23 - Race and ethnicity variables, aggregated vs. alone
+# ---------------------------------------------------------------
 
 poc_order <- '560119'
 poc_metros <- c('35620', '33100', '26420')
@@ -850,9 +922,9 @@ poc_common <- poc %>%
   )
 
 
-# -------------------------------------------------------------
-# Figure 25 - Targeting students of color, purchased prospects
-# -------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
+# Figure 24 - Purchased students of color by metro (HS type, average income, racial composition)
+# -----------------------------------------------------------------------------------------------
 
 poc_metro_income <- acs_income_metro %>% 
   filter(cbsa_code %in% poc_metros) %>% 
@@ -958,6 +1030,9 @@ poc_race <- poc_metro_pubprivhs %>%
   ) %>% 
   ungroup()
 
+poc_race %>%  # 0 for unknown race so no effect on pct if removed
+  filter(race == 'unknown')
+
 poc_income_hs <- poc_metro_pubprivhs %>% 
   select(cbsa_code, cbsa_name, control, ncessch, n_cat, n, medincome_2564) %>% 
   group_by(cbsa_code, cbsa_name, control, n_cat) %>% 
@@ -988,7 +1063,7 @@ poc_income %>% filter(!is.na(num_hs)) %>% group_by(cbsa_code, ord_type) %>% summ
 
 
 # ----------------------------------------------------------------------------------------
-# Figure A1 - School type of prospects purchased by research vs. ma/doctoral universities
+# Figure A6 - School type of prospects purchased by research vs. ma/doctoral universities
 # ----------------------------------------------------------------------------------------
 
 rq2_school <- lists_orders_zip_hs_df %>% 
@@ -1003,7 +1078,7 @@ rq2_school <- lists_orders_zip_hs_df %>%
 
 
 # ----------------------------------------------------------------------------
-# Table 7 - Filter combos used in order purchases by research vs. ma/doctoral
+# Table 3 - Filter combos used in order purchases by research vs. ma/doctoral
 # ----------------------------------------------------------------------------
 
 orders_filters_combo <- orders_df %>% 
@@ -1055,7 +1130,7 @@ orders_filters_combo <- orders_df %>%
 
 
 # --------------------------------------------------
-# Table 8 - Prospect characteristics by filter used
+# Table 4 - Prospect characteristics by filter used
 # --------------------------------------------------
 
 rq3_prospects <- lists_orders_zip_hs_df %>% 
@@ -1166,5 +1241,5 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_df, lists_df_summary, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la, ucsd_all_race, ucsd_all_income, ucsd_race, ucsd_income, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_df, lists_df_summary, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race_full, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_full, asu_la, ucsd_all_race_full, ucsd_all_race, ucsd_all_income, ucsd_race_full, ucsd_race, ucsd_income, uiuc_race_full, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
 save(acs_zip, ccd, pss, uiuc, poc, file = file.path(data_dir, 'map_data_final.RData'))
