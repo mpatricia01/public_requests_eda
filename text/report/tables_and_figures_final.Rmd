@@ -2,10 +2,18 @@
 title: 'Tables & Figures'
 output:
   pdf_document: default
+header-includes:
+  - \usepackage[scaled]{helvet}  # https://stackoverflow.com/a/28538633/6373540
+  - \renewcommand{\familydefault}{\sfdefault}
+  - \usepackage[T1]{fontenc}
+  # - \usepackage{booktabs}  # https://tex.stackexchange.com/a/593877/268650
+  # - \setlength\aboverulesep{0ex}
+  # - \setlength\belowrulesep{0ex}
 ---
 
 ```{r setup, include = F}
 options(knitr.kable.NA = '')
+options(scipen = 999)
 knitr::opts_chunk$set(echo = F, message = F, warning = F)
 # webshot::install_phantomjs()
 
@@ -22,67 +30,387 @@ load(file.path(data_dir, 'tbl_fig_data_final.RData'))
 
 theme_set(
   theme(
-    text = element_text(size = 7),
+    text = element_text(size = 7, family = 'Helvetica'),
     panel.background = element_blank(),
     plot.title = element_text(color = '#444444', size = 7, face = 'bold', hjust = 0.5),
     axis.ticks = element_blank(),
     axis.title = element_text(face = 'bold'),
-    legend.title = element_text(face = 'bold'),
+    legend.title = element_text(face = 'bold', hjust = 0),
     legend.key.size = unit(0.3, 'cm'),
     strip.text.x = element_text(size = 7, face = 'bold', hjust = 0.5),
     strip.background = element_rect(fill = NA, color = NA)
   )
 )
 
-color_palette <- c('#bbcfd7', '#d2c8bc', '#ba9a88')
-```
+# color_palette <- c('#bbcfd7', '#d2c8bc', '#ba9a88')
+color_palette <- c('#46a69e', '#7ec7b8', '#b9efe6', '#bf7bb2', '#9e508a', '#537ec4', '#344273', '#fdc3bb', '#fa634b')
+extra_colors <- c('#b5b5b5', '#767676')
+color_text <- 'white'
 
+# https://stackoverflow.com/a/65844319/6373540
+linesep <- function(x, y = character()){
+  if(!length(x))
+    return(y)
+  linesep(x[-length(x)], c(rep('', x[length(x)] - 1), '\\addlinespace', y))  
+}
 
-## Figure 7: Orders and prospects purchased by research vs. ma/doctoral
+num_orders <- nrow(orders_df)
+num_orders_w_list <- sum(orders_df$order_num %in% lists_df_summary$ord_num)
+num_orders_no_list <- num_orders - num_orders_w_list
+num_univs_orders <- length(unique(orders_df$univ_id))
 
-```{r, fig.height = 3}
-orders_prospects_purchased %>% 
-  ggplot(aes(x = reorder(univ_id, -total_students), y = total_students, fill = univ_label)) +
-  geom_bar(stat = 'identity', alpha = 0.6) +
-  geom_text(aes(label = str_c(total_orders, if_else(total_orders == 1, ' order', ' orders')), y = total_students + 2000), vjust = 0, size = 1.8) +
-  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
-  scale_fill_manual(values = color_palette, name = 'University type') +
-  xlab('') + ylab('Number of prospects') +
-  theme(
-    axis.ticks.x = element_blank(),
-    axis.text.x = element_blank()
+num_lists <- length(na.omit(lists_df_summary$ord_num))
+num_univs_lists <- length(unique(lists_df_summary$univ_id))
+
+num_prospects <- sum(lists_df_summary$n)
+num_prospects_w_order <- sum((lists_df_summary %>% filter(ord_num %in% orders_df$order_num))$n)
+num_prospects_no_order <- sum((lists_df_summary %>% filter(!ord_num %in% orders_df$order_num))$n)
+
+univs_summary <- orders_df %>% 
+  select(univ_id, univ_name, univ_type) %>% 
+  distinct() %>% mutate(has_order = T) %>% 
+  left_join(
+    lists_df_summary %>% 
+      select(univ_id) %>% 
+      distinct() %>% 
+      mutate(has_list = T)
+    , by = 'univ_id'
   )
+
+ipeds_df <- read_csv(file.path(data_dir, 'ipeds_data.csv'), na = 'NULL', col_types = c('unitid' = 'c', 'endyear' = 'c', 'satactcomp25' = 'n', 'satactcomp75' = 'n', 'freshoutstpct' = 'n', 'pgrnt_n' = 'n', 'cohortsfaef' = 'n')) %>% filter(endyear == '2017')
+hd_df <- read_csv(file.path(data_dir, 'hd2017.csv'), col_types = c('UNITID' = 'c', 'SECTOR' = 'c', 'UGOFFER' = 'c', 'LOCALE' = 'c'))
+carnegie_df <- read_csv(file.path(data_dir, 'carnegie_2018.csv'), col_types = c('UNITID' = 'c', 'BASIC2015' = 'c'))
+
+univ_df <- hd_df %>% select(UNITID, INSTNM, STABBR, SECTOR, UGOFFER, LOCALE) %>% 
+  left_join(carnegie_df %>% select(UNITID, BASIC2015), by = 'UNITID') %>% 
+  filter(
+    STABBR %in% c('CA', 'TX', 'IL'),
+    SECTOR == 1,
+    UGOFFER == 1,
+    !BASIC2015 %in% c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+    !UNITID %in% c('488800', '229337', '229300', '228644', '416801', '228653')
+  ) %>% 
+  left_join(ipeds_df %>% select(unitid, satactcomp25, satactcomp75, tfuginst, tfugoutst, ugftptfreshtot, freshoutstpct, pgrnt_n, cohortsfaef, ugftptfreshwhmf, ugftptfreshblmf, ugftptfreshapmf, ugftptfreshhimf, ugftptfreshalmf), by = c('UNITID' = 'unitid')) %>% 
+  mutate(
+    system = case_when(
+      str_detect(INSTNM, 'University of California') ~ 'UC',
+      STABBR == 'CA' ~ 'CSU',
+      str_detect(INSTNM, 'Texas A') | UNITID %in% c('228529', '227526') ~ 'TX A&M',
+      str_detect(INSTNM, 'University of Houston') ~ 'U of Houston',
+      str_detect(INSTNM, 'University of North Texas') ~ 'UNT',
+      str_detect(INSTNM, 'University of Texas') ~ 'U of TX',
+      UNITID %in% c('222831', '229115') ~ 'TX Tech',
+      UNITID %in% c('226091', '227881', '228501', '228459') ~ 'TX State U',
+      STABBR == 'TX' ~ 'Indy TX',
+      str_detect(INSTNM, 'University of Illinois') ~ 'U of IL',
+      str_detect(INSTNM, 'Southern Illinois University') ~ 'SIU',
+      STABBR == 'IL' ~ 'IL State U',
+      str_detect(INSTNM, 'University of Minnesota') ~ 'UMN',
+      STABBR == 'MN' ~ 'MN State U'
+    ),
+    locale = str_sub(LOCALE, end = 1),
+    locale_text = recode_factor(
+      locale,
+      `4` = 'Rural',
+      `3` = 'Town',
+      `2` = 'Suburban',
+      `1` = 'City'
+    ),
+    carnegie = recode_factor(
+      BASIC2015,
+      `-2` = 'Unknown',
+      `15` = 'Doctoral Universities: Highest Research Activity',
+      `16` = 'Doctoral Universities: Higher Research Activity',
+      `17` = 'Doctoral Universities: Moderate Research Activity',
+      `18` = 'Master\'s Colleges & Universities: Larger Programs',
+      `19` = 'Master\'s Colleges & Universities: Medium Programs',
+      `20` = 'Master\'s Colleges & Universities: Small Programs',
+      `21` = 'Baccalaureate Colleges: Arts & Sciences Focus',
+      `22` = 'Baccalaureate Colleges: Diverse Fields',
+      `26` = 'Special Focus Four-Year: Other Health Professions Schools'
+    )
+  )
+
+univ_df$STABBR = factor(univ_df$STABBR, levels = c('IL', 'MN', 'CA', 'TX'))
+univ_df$system = factor(univ_df$system, levels = c('U of IL', 'IL State U', 'SIU', 'UMN', 'MN State U', 'UC', 'CSU', 'U of TX', 'TX State U', 'TX A&M', 'U of Houston', 'UNT', 'TX Tech', 'Indy TX'))
 ```
 
-```{r, fig.height = 3.5}
+
+# Geodemographics of Student List Purchases by Public Universities
+
+## Figure 2.1: Women in STEM prospects (average income and racial composition)
+
+```{r women-in-stem, fig.height = 1.5}
+ucsd_income_figure <- ucsd_all_income %>% 
+  mutate(
+    count_type = recode_factor(
+        ord_type,
+        'prospect' = 'Prospects',
+        'metro' = 'Metro'
+    )
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = extra_colors[[1]], width = 0.8) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 130000)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+  )
+
+ucsd_race_figure_data <- ucsd_all_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'missing' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+        ord_type,
+        'prospect' = 'Prospects',
+        'metro' = 'Metro'
+    )
+  )
+
+ucsd_race_figure_totals <- ucsd_all_race_full %>% 
+  mutate(
+    count_type = recode_factor(
+        ord_type,
+        'prospect' = 'Prospects',
+        'metro' = 'Metro'
+    )
+  ) %>% 
+  group_by(count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+ucsd_race_figure <- ucsd_race_figure_data %>% 
+  filter(!race %in% c('No response', 'Missing')) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity', width = 0.8) + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type == 'Prospects', str_c('N=', prettyNum(count, big.mark = ',')), '')), size = 2, hjust = -0.1) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette[1:7]), name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    plot.margin = unit(c(5.5, 0, 5.5, 2), 'pt')
+  )
+
+grid.arrange(
+  ucsd_income_figure,
+  ucsd_race_figure,
+  ncol = 2,
+  widths = c(2, 3)
+)
+```
+
+## Figure 3.2: Student Search Service and college enrollment and degree completion
+
+```{r cb-fig, fig.height = 5, out.width = '100%'}
+create_cb_figure <- function(categories, values, plot_title, fill_values = rev(color_palette[1:2])) {
+  cb_fig_df <- data.frame(
+    category = rep(categories, each = 2),
+    subcategory = rep(c('Not Licensed', 'Gain from being Licensed'), length(categories)), 
+    value = values
+  )
+  
+  cb_fig_df$category <- factor(cb_fig_df$category, levels = categories)
+  
+  cb_fig_df %>%
+    left_join(
+      cb_fig_df %>%
+        pivot_wider(id_cols = category, names_from = subcategory, values_from = value) %>%
+        mutate(
+          total = `Not Licensed` + `Gain from being Licensed`,
+          pct_change = `Gain from being Licensed` / `Not Licensed` * 100
+        ),
+      by = 'category') %>% 
+    ggplot(aes(x = category, y = value, fill = subcategory, width = 0.6)) +
+    geom_bar(position = 'stack', stat = 'identity') +
+    geom_text(aes(y = value, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', value), '%'), '')), color = color_text, size = 2, position = position_stack(vjust = 0.5)) +
+    geom_text(aes(y = total + 3, label = if_else(subcategory == 'Not Licensed', str_c('(', sprintf('%.1f', pct_change), '%)'), '')), color = '#444444', size = 2) +
+    geom_text(aes(y = total + 7, label = if_else(subcategory == 'Not Licensed', str_c(sprintf('%.1f', `Gain from being Licensed`), 'pp'), '')), color = '#444444', size = 2) +
+    ggtitle(plot_title) +
+    xlab('') + ylab('') + 
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 80)) +
+    scale_fill_manual(values = fill_values) +
+    theme(
+        plot.margin = margin(t = 0.6, unit = 'cm'),
+        panel.grid.major.y = element_line(size = 0.1, color = 'gray'),
+        legend.title = element_blank(),
+        legend.position = 'bottom',
+        legend.margin = margin(t = -0.5, unit = 'cm'),
+        legend.text = element_text(margin = margin(r = 0.2, unit = 'cm'))
+      ) +
+      guides(fill = guide_legend(reverse = T))
+}
+
+grid.arrange(
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'HI/PI', 'White'),
+    c(32.8, 8.3, 37.5, 5.7, 31.8, 7.8, 24.1, 8.3, 26.5, 6.3, 22.2, 5.8, 44.4, 9.6),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'White'),
+    c(15.7, 4.9, 17.7, 5.0, 7.2, 2.9, 6.7, 2.9, 8.7, 4.2, 24.0, 6.7),
+    'BA Completion within 4 Years'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(32.8, 8.3, 24.9, 10.1, 36.5, 11.0, 53.4, 10.1),
+    'Enrollment'
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(15.7, 4.9, 13.6, 6.8, 21.3, 8.5, 39.9, 10.1),
+    'BA Completion within 4 Years'
+  ),
+  ncol = 2
+)
+```
+
+## Table 4.1: Summary of data received
+
+```{r received-data}
+univ_status <- read_csv(file.path(data_dir, 'univ_status.csv'))
+
+univ_status_tbl <- univ_status %>% 
+  filter(state_code != 'MN') %>% 
+  mutate(
+    not_received_orders = if_else(received_cb_orders == 'N' & received_act_orders == 'N' & received_nrccua_orders == 'N' & received_encoura_orders == 'N', 1, 0), 
+    received_orders = if_else(not_received_orders == 1, 0, 1),
+    not_received_lists = if_else(received_cb_lists == 'N' & received_act_lists == 'N' & received_nrccua_lists == 'N' & received_encoura_lists == 'N', 1, 0), 
+    received_lists = if_else(not_received_lists == 1, 0, 1),
+    received_both = if_else(received_orders == 1 & received_lists == 1, 1, 0),
+    not_received_both = if_else(received_both == 1, 0, 1)
+  ) %>% 
+  group_by(state_code) %>% 
+  summarise(
+    not_received_orders = sum(not_received_orders),
+    received_orders = sum(received_orders),
+    not_received_lists = sum(not_received_lists),
+    received_lists = sum(received_lists),
+    received_both = sum(received_both),
+    not_received_both = sum(not_received_both)
+  ) %>% 
+  ungroup() %>% 
+  select(state_code, received_orders, not_received_orders, received_lists, not_received_lists, received_both, not_received_both)
+
+univ_status_tbl %>% 
+  kable(booktabs = T, col.names = c('State', '# received order summary', '# no order summary', '# received list', '# no list', '# received both', '# did not receive both'), align = rep('c', 7)) %>% 
+  row_spec(0, bold = T) %>%
+  column_spec(1:6, border_right = T) %>% 
+  kable_styling(latex_options = c('scale_down', 'HOLD_position')) %>%
+  sub('\\\\centering', '\\\\centering\\\\aboverulesep=0ex\\\\belowrulesep=0ex', .) %>% 
+  sub('\\\\toprule', '\\\\rule{0pt}{1.1EM}', .) %>%
+  sub('\\\\bottomrule', '', .) %>%
+  sub('\\\\midrule', '\\\\midrule\\\\rule{0pt}{1.1EM}', .)
+```
+
+```{r received-data-v2}
+univ_status_tbl %>% 
+  kable(booktabs = T, col.names = c('State', '# received order summary', '# no order summary', '# received list', '# no list', '# received both', '# did not receive both'), align = rep('c', 7)) %>% 
+  row_spec(0, bold = T) %>%
+  sub('\\\\toprule', '', .) %>%
+  sub('\\\\bottomrule', '', .) %>%
+  kable_styling(latex_options = c('scale_down', 'HOLD_position'))
+```
+
+## Table 4.2: Summary of orders and prospects
+
+```{r purchased-data}
+data.frame(
+  orders_total = num_orders,
+  orders_with_list = num_orders_w_list,
+  prospects_total = prettyNum(num_prospects, ','),
+  prospects_with_order = prettyNum(num_prospects_w_order, ',')
+) %>% 
+  kable(booktabs = T, col.names = c('# orders total', '# orders with list', '# prospects total', '# prospects with order'), align = rep('c', 4)) %>% 
+  add_header_above(c('RQ1' = 1, 'RQ3' = 1, 'RQ2' = 1, 'RQ3' = 1), bold = T) %>% 
+  # row_spec(0, bold = T) %>% 
+  # kable_styling(position = 'center') %>% 
+  column_spec(1:3, border_right = T) %>% 
+  kable_styling(latex_options = c('HOLD_position')) %>% 
+  sub('\\\\centering', '\\\\centering\\\\aboverulesep=0ex\\\\belowrulesep=0ex', .) %>% 
+  sub('\\\\toprule', '', .) %>%
+  sub('\\\\bottomrule', '', .) %>% 
+  sub('\\\\midrule', '\\\\midrule\\\\rule{0pt}{1.1EM}', .)
+```
+
+```{r purchased-data-2}
+data.frame(
+  orders_total = num_orders,
+  orders_with_list = num_orders_w_list,
+  prospects_total = prettyNum(num_prospects, ','),
+  prospects_with_order = prettyNum(num_prospects_w_order, ',')
+) %>% 
+  kable(booktabs = T, col.names = c('\\shortstack{\\textbf{RQ1}\\\\\\# orders total}', '\\shortstack{\\textbf{RQ3}\\\\\\# orders with list}', '\\shortstack{\\textbf{RQ2}\\\\\\# prospects total}', '\\shortstack{\\textbf{RQ3}\\\\\\# prospects with order}'), align = rep('c', 4), escape = F) %>% 
+  # add_header_above(c('RQ1' = 1, 'RQ3' = 1, 'RQ2' = 1, 'RQ3' = 1), bold = T) %>% 
+  # row_spec(0, bold = T) %>% 
+  # kable_styling(position = 'center') %>% 
+  column_spec(1:3, border_right = T) %>% 
+  kable_styling(latex_options = c('HOLD_position')) %>% 
+  sub('\\\\centering', '\\\\centering\\\\aboverulesep=0ex\\\\belowrulesep=0ex', .) %>% 
+  sub('\\\\toprule', '', .) %>%
+  sub('\\\\bottomrule', '', .) %>% 
+  sub('\\\\midrule', '\\\\midrule\\\\rule{0pt}{1.1EM}', .)
+```
+
+## Figure 4.1: Orders and prospects purchased by research vs. ma/doctoral
+
+```{r orders-prospects-purchased, fig.height = 3.5}
 orders_prospects_purchased %>% 
-  ggplot(aes(x = reorder(univ_id, total_students), y = total_students, fill = univ_label)) +
-  geom_bar(stat = 'identity', alpha = 0.6) +
+  ggplot(aes(x = total_students, y = reorder(univ_id, total_students), fill = univ_label)) +
+  geom_bar(stat = 'identity') +
   geom_text(aes(label = str_c(total_orders, if_else(total_orders == 1, ' order', ' orders'))), hjust = -0.1, size = 2) +
-  scale_y_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M')), breaks = seq(0, 2.6e6, 2e5), expand = expansion(mult = c(0.01, 0.1)), limits = c(0, 2.7e6)) +
-  scale_y_break(c(5e5, 2.2e6)) +
-  scale_fill_manual(values = color_palette, name = 'University type') +
-  xlab('') + ylab('Number of prospects') +
-  coord_flip() +
+  scale_x_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M')), breaks = seq(0, 2.6e6, 2e5), expand = expansion(mult = c(0.01, 0.1)), limits = c(0, 2.7e6)) +
+  scale_x_break(c(5e5, 2.2e6)) +
+  scale_fill_manual(values = color_palette[1:2], name = 'University type') +
+  xlab('Number of prospects') + ylab('') +
   theme(
     axis.ticks.y = element_blank(),
-    axis.text.y = element_blank()
+    axis.text.y = element_blank(),
+    axis.ticks.x.top = element_blank(),
+    axis.text.x.top = element_blank()
   )
 ```
 
+## Figure 5.1: Filters used in order purchases by research vs. ma/doctoral
 
-## Figure 8: Filters used in order purchases by research vs. ma/doctoral
-
-```{r, fig.height = 5}
+```{r orders-filters, fig.height = 5}
 orders_filters %>% 
-  add_row(univ_label = 'Research', filters = 'academic', num = 0) %>% 
-  add_row(univ_label = 'MA/doctoral', filters = 'academic', num = 0) %>% 
-  add_row(univ_label = 'Research', filters = 'geographic', num = 0) %>% 
-  add_row(univ_label = 'MA/doctoral', filters = 'geographic', num = 0) %>% 
-  add_row(univ_label = 'Research', filters = 'demographic', num = 0) %>% 
-  add_row(univ_label = 'MA/doctoral', filters = 'demographic', num = 0) %>% 
-  add_row(univ_label = 'Research', filters = 'student preferences', num = 0) %>% 
-  add_row(univ_label = 'MA/doctoral', filters = 'student preferences', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'academic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'academic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'geographic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'geographic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'demographic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'demographic', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'Research', filters = 'student preferences', is_asu = 'all', num = 0) %>% 
+  add_row(univ_label = 'MA/doctoral', filters = 'student preferences', is_asu = 'all', num = 0) %>% 
   mutate(
     filters_label = recode_factor(
       filters,
@@ -128,20 +456,24 @@ orders_filters %>%
     )
   ) %>% 
   filter(!filters %in% c('hs_math', 'proximity_search', 'rotc', 'citizenship')) %>% 
-  ggplot(aes(x = filters_label, y = num)) +
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  ggplot(aes(x = filters_label, y = num, fill = is_asu)) +
+  geom_bar(stat = 'identity') +
   geom_text(aes(label = if_else(filters %in% c('academic', 'geographic', 'demographic', 'student preferences') & univ_label == 'Research', str_c(str_to_sentence(filters), ' filters'), ''), y = 0), hjust = 0, vjust = 0.8, size = 2, fontface = 'bold') +
-  geom_text(aes(label = if_else(!filters %in% c('academic', 'geographic', 'demographic', 'student preferences'), str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
+  geom_text(aes(y = num_total, label = if_else(!filters %in% c('academic', 'geographic', 'demographic', 'student preferences') & is_asu != 'asu', str_c(round(pct * 100), '%'), '')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  scale_fill_manual(values = rev(color_palette[c(1, 2)]), name = 'ASU') +
   xlab('') + ylab('Number of orders') +
+  guides(fill = guide_legend(reverse = T)) +
   facet_wrap(~ factor(univ_label, levels = c('Research', 'MA/doctoral'))) +
-  coord_flip()
+  coord_flip() + 
+  theme(
+    legend.position = 'none'
+  )
 ```
 
+## Figure 5.2: GPA filter used by research vs. ma/doctoral
 
-## Figure 9: GPA filter used by research vs. ma/doctoral
-
-```{r, fig.height = 3}
+```{r orders-gpa, fig.height = 3}
 orders_gpa_total <- orders_gpa %>% 
   group_by(univ_type) %>% 
   summarise(
@@ -165,10 +497,9 @@ orders_gpa %>%
   xlab('') + ylab('% of orders in university type')
 ```
 
+## Figure 5.3: SAT filter used by research vs. ma/doctoral
 
-## Figure 10: SAT filter used by research vs. ma/doctoral
-
-```{r, fig.height = 4}
+```{r orders-sat, fig.height = 4}
 orders_sat_total <- orders_sat %>% 
   filter(test_range == 'sat_min') %>% 
   group_by(univ_type) %>% 
@@ -200,10 +531,9 @@ orders_sat %>%
   coord_flip()
 ```
 
+## Figure 5.4: PSAT filter used by research vs. ma/doctoral
 
-## Figure 11: PSAT filter used by research vs. ma/doctoral
-
-```{r, fig.height = 4}
+```{r orders-psat, fig.height = 4}
 orders_psat_total <- orders_psat %>% 
   filter(test_range == 'psat_min') %>% 
   group_by(univ_type) %>% 
@@ -235,11 +565,9 @@ orders_psat %>%
   coord_flip()
 ```
 
+## Figure 5.5: State filter used by research universities, out-of-state
 
-\newpage
-## Figure 12: State filter used by research universities
-
-```{r, fig.height = 2.8}
+```{r orders-state-research-outofstate, fig.height = 2.8}
 # Out-of-state
 plot_usmap(
   regions = 'states',
@@ -247,15 +575,15 @@ plot_usmap(
   values = 'frequency'
 ) +
   scale_fill_gradient2(
-    low = 'gray',
-    mid = 'lightgray',
-    high = 'cyan', 
+    low = 'white',
+    mid = '#ededed',
+    high = color_palette[[1]], 
     midpoint = 35,
     name = 'Number of orders',
     label = label_number(accuracy = 1),
     limits = c(0, 120)
   ) + 
-  labs(title = 'State filter used by research universities (out-of-state)') +
+  # labs(title = 'State filter used by research universities (out-of-state)') +
   theme(
     text = element_text(size = 7), 
     plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
@@ -264,7 +592,9 @@ plot_usmap(
   )
 ```
 
-```{r, fig.height = 2.8}
+## Figure 5.6: State filter used by research universities, in-state
+
+```{r orders-state-research-instate, fig.height = 2.8}
 # In-state
 plot_usmap(
   regions = 'states',
@@ -272,13 +602,13 @@ plot_usmap(
   values = 'frequency'
 ) +
   scale_fill_continuous(
-    low = 'lightgray',
-    high = 'cyan', 
+    low = '#ededed',
+    high = color_palette[[1]], 
     name = 'Number of orders',
     label = label_number(accuracy = 1),
     limits = c(0, 10)
   ) + 
-  labs(title = 'State filter used by research universities (in-state)') +
+  # labs(title = 'State filter used by research universities (in-state)') +
   theme(
     text = element_text(size = 7), 
     plot.title = element_text(color = '#444444', hjust = 0.5, face = 'bold'), 
@@ -287,10 +617,9 @@ plot_usmap(
   )
 ```
 
+## Figure 5.7: Race filter used by research vs. ma/doctoral
 
-## Figure 13: Race filter used by research vs. ma/doctoral
-
-```{r, fig.height = 3}
+```{r orders-race, fig.height = 3}
 orders_race %>% 
   ggplot(aes(fill = univ_label, y = count, x = reorder(race_ethnicity_group, count))) + 
   geom_bar(position = 'stack', stat = 'identity') +
@@ -301,10 +630,34 @@ orders_race %>%
   coord_flip()
 ```
 
+## Table 5.1: Filter combos used in order purchases by research vs. ma/doctoral
 
-## Figure 14: Number of prospects purchased by university type and location
+```{r orders-filters-combo}
+bind_cols(
+  orders_filters_combo %>% 
+    filter(univ_type == 'research') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%')),
+  orders_filters_combo %>% 
+    filter(univ_type == 'regional') %>% 
+    select(filter_combos, n, pct) %>% 
+    head(10) %>%
+    mutate(pct = str_c(round(pct * 100), '%'))
+) %>% 
+  kable(
+    booktabs = T, 
+    col.names = rep(c('Filters', 'Count', 'Percent'), 2), 
+    align = rep(c('l', 'c', 'c'), 2)
+  ) %>%
+  add_header_above(c('Research' = 3, 'MA/doctoral' = 3), bold = T) %>% 
+  row_spec(0, bold = T) %>%
+  kable_styling(position = 'center', latex_options = c('hold_position', 'scale_down'))
+```
 
-```{r, fig.height = 3}
+## Figure 5.8: Number of prospects by university type and location
+
+```{r rq2-counts, fig.height = 3}
 rq2_counts %>% 
   mutate(
     region = recode_factor(
@@ -325,7 +678,7 @@ rq2_counts %>%
   geom_bar(position = 'stack', stat = 'identity') + 
   geom_text(mapping = aes(label = if_else(univ_type == 'regional' & locale == 'outofstate', '', if_else(n < 1000000, str_c(round(n / 1000), 'K'), str_c(round(n / 1000000, 1), 'M')))), size = 2, position = position_stack(vjust = 0.5)) +
   geom_text(mapping = aes(label = if_else(univ_type == 'regional' & region == 'Domesetic' & locale == 'outofstate', str_c(round(n / 1000), 'K (300 international)'), ''), x = 30e3), hjust = 0, size = 2) +
-  scale_fill_manual(values = color_palette, name = '') +
+  scale_fill_manual(values = rev(color_palette[1:2]), name = '') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M'))) +
   xlab('Number of prospects') + ylab('') +
   guides(fill = guide_legend(reverse = T)) +
@@ -334,10 +687,9 @@ rq2_counts %>%
   )
 ```
 
+## Figure 5.9: Racial composition of prospects in lists purchased by research universities
 
-## Figure 15: Racial composition of prospects purchased by research universities
-
-```{r, fig.height = 2}
+```{r rq2-race-research, fig.height = 2}
 rq2_race %>% 
   filter(univ_type == 'research', region != 'international') %>% 
   mutate(
@@ -362,10 +714,12 @@ rq2_race %>%
       'research_instate' = 'Research (in-state)'
     )
   ) %>% 
+  filter(race != 'Missing') %>% 
   ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette), name = 'Race') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
@@ -376,10 +730,9 @@ rq2_race %>%
   )
 ```
 
+# Figure 5.10: Median household income of prospects in lists purchased by research universities
 
-## Figure 16: Median household income of prospects purchased by research universities
-
-```{r, fig.height = 1.5}
+```{r rq2-income-research, fig.height = 1.5}
 rq2_income %>% 
   filter(univ_type == 'research', region != 'international') %>% 
   mutate(
@@ -391,7 +744,7 @@ rq2_income %>%
     )
   ) %>% 
   ggplot(aes(y = count_type, x = income_2564)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) + 
   geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 115000)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
@@ -403,10 +756,9 @@ rq2_income %>%
   )
 ```
 
+## Figure 5.11: Locale of prospects in lists purchased by research universities
 
-## Figure 17: Locale of prospects purchased by research universities
-
-```{r, fig.height = 2}
+```{r rq2-locale-research, fig.height = 2}
 rq2_locale %>% 
   filter(univ_type == 'research', region != 'international') %>% 
   mutate(
@@ -418,9 +770,10 @@ rq2_locale %>%
     )
   ) %>% 
   ggplot(aes(y = count_type, x = pct, fill = locale_text)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  scale_fill_manual(values = rev(color_palette[c(1:5, 7)]), name = 'Locale') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
@@ -431,10 +784,9 @@ rq2_locale %>%
   )
 ```
 
+## Figure 5.12: Racial composition of prospects in lists purchased by ma/doctoral universities
 
-## Figure 18: Racial composition of prospects purchased by ma/doctoral universities
-
-```{r, fig.height = 2}
+```{r rq2-race-regional, fig.height = 2}
 rq2_race %>% 
   filter(locale == 'instate', region != 'international') %>% 
   mutate(
@@ -459,10 +811,12 @@ rq2_race %>%
       'regional_instate' = 'MA/doctoral (in-state)'
     )
   ) %>% 
+  filter(race != 'Missing') %>% 
   ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette), name = 'Race') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
@@ -473,10 +827,9 @@ rq2_race %>%
   )
 ```
 
+## Figure 5.13: Median household income of prospects purchased by ma/doctoral universities
 
-## Figure 19: Median household income of prospects purchased by ma/doctoral universities
-
-```{r, fig.height = 2}
+```{r rq2-income-regional, fig.height = 2}
 rq2_income %>% 
   filter(locale == 'instate', region != 'international') %>% 
   mutate(
@@ -488,7 +841,7 @@ rq2_income %>%
     )
   ) %>% 
   ggplot(aes(y = count_type, x = income_2564)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) + 
   geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 105000)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
@@ -500,10 +853,9 @@ rq2_income %>%
   )
 ```
 
+## Figure 5.14: Locale of prospects in lists purchased by ma/doctoral universities
 
-## Figure 20: Locale of prospects purchased by ma/doctoral universities
-
-```{r, fig.height = 2}
+```{r rq2-locale-regional, fig.height = 2}
 rq2_locale %>% 
   filter(locale == 'instate', region != 'international') %>% 
   mutate(
@@ -515,9 +867,10 @@ rq2_locale %>%
     )
   ) %>% 
   ggplot(aes(y = count_type, x = pct, fill = locale_text)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Locale') +
+  scale_fill_manual(values = rev(color_palette[c(1:5, 7)]), name = 'Locale') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
@@ -528,10 +881,82 @@ rq2_locale %>%
   )
 ```
 
+## Table 5.2: Prospect characteristics by filter used
 
-## Figure 21: Zip code deep dive by Arizona State University in Los Angeles
+```{r rq3}
+rq3 %>% 
+  mutate_if(is.numeric, ~if_else(. < 1, . * 100, .)) %>% 
+  mutate_if(is.numeric, round, 0) %>% 
+  mutate_if(is.numeric, ~if_else(row_number() == 18, str_c('$', round(. / 1000), 'K'), prettyNum(., big.mark = ','))) %>% 
+  mutate(
+    row_subj = recode_factor(
+      row_subj,
+      'n' = 'Total count',
+      'pct_instate' = '% In-state',
+      'pct_outofstate' = '% Out-of-state',
+      'pct_white' = '% White',
+      'pct_asian' = '% Asian',
+      'pct_black' = '% Black',
+      'pct_latinx' = '% Latinx',
+      'pct_aian' = '% AI/AN',
+      'pct_nhpi' = '% NH/PI',
+      'pct_multiracial' = '% Multiracial',
+      'pct_raceother' = '% Other',
+      'pct_noresponse' = '% No response',
+      'pct_racemissing' = '% Missing',
+      'pct_male' = '% Male',
+      'pct_female' = '% Female',
+      'pct_genderother' = '% Other ',
+      'pct_gendermissing' = '% Missing ',
+      'med_income' = 'Median income',
+      'pct_city' = '% City',
+      'pct_suburban' = '% Suburban',
+      'pct_fringe' = '% Rural - Fringe',
+      'pct_distant' = '% Rural - Distant',
+      'pct_remote' = '% Rural - Remote',
+      'pct_localemissing' = '% Missing  '
+    )
+  ) %>%
+  arrange(row_subj) %>% 
+  kable(
+    booktabs = T, 
+    col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Geomarket', 'Segment', 'CBSA', 'Race', 'Gender'), 
+    align = c('l', rep('r', 13))
+    ) %>% 
+  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 5, 'Demographic' = 2), bold = T) %>% 
+  group_rows('Location', 2, 3) %>%
+  group_rows('Race/ethnicity', 4, 13) %>%
+  group_rows('Gender', 14, 17) %>%
+  group_rows('Household income', 18, 18) %>%
+  group_rows('Locale', 19, 24) %>%
+  row_spec(0, bold = T) %>%
+  kable_styling(latex_options = c('hold_position', 'scale_down'))
+```
 
-```{r, fig.height = 3}
+## Figure 5.15: Los Angeles prospects from top income decile zip codes (racial composition)
+
+```{r asu-la-deep-dive, fig.height = 3}
+asu_la_figure_totals <- asu_la_full %>% 
+  mutate(
+    count_type = recode_factor(
+      in_zip_top10pct,
+      `0` = 'Rest',
+      `1` = 'Top 10%'
+    ),
+    ord_type = recode_factor(
+      ord_type,
+      'psat_high' = 'High PSAT order (1270-1520)',
+      'psat_med' = 'Medium PSAT order (1190-1260)',
+      'psat_low' = 'Low PSAT order (1110-1210)',
+      'sat_med' = 'Medium SAT order (1140-1260)'
+    )
+  ) %>% 
+  group_by(ord_type, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+
 asu_la %>% 
   mutate(
     stu_race_cb = if_else(is.na(stu_race_cb), 999, unclass(stu_race_cb)),
@@ -561,11 +986,14 @@ asu_la %>%
       'sat_med' = 'Medium SAT order (1140-1260)'
     )
   ) %>% 
+  filter(!race %in% c('Missing', 'No response')) %>% 
   ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(data = asu_la_figure_totals, mapping = aes(x = 1, fill = NULL, label = str_c('N=', prettyNum(count, ','))), size = 2, hjust = -0.1) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette[1:7]), name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.15)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
   facet_wrap(~ ord_type) +
@@ -576,10 +1004,167 @@ asu_la %>%
   )
 ```
 
+## Table 5.3: Filter by neighborhood segments
 
-## Figure 22: Women in STEM deep dive by University of California, San Diego
+```{r orders-cluster-en}
+en_df <- data.frame(
+  cluster = c(51:83, 'Total'),
+  sat_math = c(546, 480, 561, 458, 566, 420, 541, 533, 561, 589, 585, 596, 548, 466, 440, 499, 519, 552, 534, 613, 405, 399, 528, 433, 459, 514, 502, 594, 550, 534, 491, 496, 500, 512),
+  sat_cr = c(533, 470, 544, 443, 565, 411, 519, 489, 562, 590, 567, 595, 541, 466, 433, 492, 501, 558, 521, 598, 408, 397, 514, 435, 457, 509, 492, 578, 551, 527, 483, 491, 490, 502),
+  pct_outofstate = c(0.32, 0.3, 0.32, 0.25, 0.52, 0.29, 0.52, 0.28, 0.52, 0.63, 0.51, 0.67, 0.39, 0.48, 0.23, 0.2, 0.27, 0.52, 0.37, 0.65, 0.39, 0.31, 0.29, 0.29, 0.28, 0.27, 0.26, 0.56, 0.57, 0.39, 0.27, 0.29, 0.19, 0.32),
+  pct_nonwhite = c(0.3, 0.58, 0.5, 0.83, 0.24, 0.93, 0.47, 0.87, 0.24, 0.37, 0.3, 0.24, 0.23, 0.34, 0.93, 0.12, 0.53, 0.35, 0.19, 0.29, 0.97, 0.87, 0.42, 0.84, 0.85, 0.38, 0.18, 0.26, 0.32, 0.39, 0.57, 0.21, 0.26, 0.43),
+  pct_aid = c(0.57, 0.71, 0.55, 0.76, 0.63, 0.66, 0.43, 0.69, 0.74, 0.36, 0.4, 0.72, 0.65, 0.29, 0.78, 0.76, 0.59, 0.65, 0.65, 0.61, 0.68, 0.47, 0.62, 0.79, 0.72, 0.64, 0.75, 0.39, 0.74, 0.65, 0.72, 0.75, 0.71, 0.65),
+  med_income = c(95432, 63578, 92581, 38977, 71576, 35308, 67394, 68213, 54750, 104174, 123858, 59824, 69347, 49829, 45081, 50453, 60960, 57902, 88100, 86381, 42661, 32708, 90849, 44065, 50421, 61332, 62372, 134400, 40909, 49877, 63030, 53465, 49335, 70231)
+)
 
-```{r}
+en_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(en_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6))
+  ) %>% 
+  row_spec(c(0, nrow(en_df)), bold = T) %>%
+  row_spec(c(1, 3, 8, 10, 11, 13, 19, 20, 23, 28), background = color_palette[[3]]) %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
+```
+
+## Table 5.4: Filter by high school segments
+
+```{r orders-cluster-hs}
+hs_df <- data.frame(
+  cluster = c(51:79, 'Total'),
+  sat_math = c(462, 489, 471, 376, 489, 536, 434, 592, 499, 523, 485, 474, 440, 606, 515, 498, 526, 541, 390, 595, 400, 528, 451, 654, 514, 600, 595, 473, 594, 514),
+  sat_cr = c(457, 496, 484, 371, 481, 508, 435, 577, 489, 549, 370, 473, 427, 542, 503, 515, 546, 540, 395, 581, 412, 544, 438, 579, 502, 584, 508, 468, 585, 502),
+  pct_outofstate = c(0.14, 0.81, 0.28, 0.33, 0.39, 0.73, 0.29, 0.51, 0.19, 0.23, 0.33, 0.34, 0.28, 0.37, 0.28, 0.37, 0.48, 0.41, 0.36, 0.56, 0.57, 0.35, 0.24, 0.76, 0.31, 0.72, 0.64, 0.48, 0.61, 0.32),
+  pct_nonwhite = c(0.33, 0.99, 0.38, 0.96, 0.46, 0.43, 0.82, 0.27, 0.18, 0.3, 0.89, 0.92, 0.86, 0.89, 0.43, 0.37, 0.41, 0.26, 0.92, 0.33, 0.98, 0.25, 0.89, 0.8, 0.2, 0.5, 0.75, 0.43, 0.26, 0.44),
+  pct_aid = c(0.68, 0.77, 0.62, 0.38, 0.44, 0.49, 0.79, 0.32, 0.74, 0.33, 0.09, 0.67, 0.72, 0.57, 0.65, 0.73, 0.69, 0.62, 0.74, 0.48, 0.8, 0.64, 0.76, 0.46, 0.71, 0.28, 0.39, 0.22, 0.71, 0.65),
+  med_income = c(40918, 64730, 60833, 38146, 71845, 63967, 48301, 104509, 47685, 70175, 61385, 55515, 49238, 81911, 72692, 60272, 71279, 79260, 43391, 105721, 43137, 70018, 48406, 59089, 72850, 90265, 39490, 56703, 65180, 70223)
+)
+
+hs_df %>% 
+  mutate(
+    pct_outofstate = percent(pct_outofstate, accuracy = 1),
+    pct_nonwhite = percent(pct_nonwhite, accuracy = 1),
+    pct_aid = percent(pct_aid, accuracy = 1),
+    med_income = dollar(med_income)
+  ) %>% 
+  kable(
+    booktabs = T,
+    linesep = linesep(nrow(hs_df) - 1, 1),
+    col.names = c('2011 D+ Cluster', 'SAT Math', 'SAT CR', 'Going Out of State', 'Percent NonWhite', 'Need Financial Aid', 'Med Income'),
+    align = c('l', rep('c', 6))
+  ) %>% 
+  row_spec(c(0, nrow(hs_df)), bold = T) %>%
+  row_spec(c(8, 13:16, 18:20, 23, 25, 29), background = color_palette[[3]]) %>% 
+  column_spec (1:7, border_left = F, border_right = F) %>% 
+  kable_styling(latex_options = 'scale_down')
+```
+
+## Figure 5.16: Segment filter prospects by metro (average income and racial composition)
+
+```{r uiuc-deep-dive, fig.height = 3.6}
+uiuc_income_figure <- uiuc_income %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  ) %>% 
+  ggplot(aes(y = count_type, x = income_2564)) + 
+  geom_bar(stat = 'identity', fill = extra_colors[[1]]) + 
+  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 250000)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA', 'Los Angeles-Long Beach-Anaheim, CA', 'Philadelphia-Camden-Wilmington, PA-NJ-DE-MD', 'Washington-Arlington-Alexandria, DC-VA-MD-WV')), ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+  )
+
+uiuc_race_figure_data <- uiuc_race %>% 
+  mutate(
+    race = recode_factor(
+      race,
+      'unknown' = 'Missing',
+      'noresponse' = 'No response',
+      'other' = 'Other',
+      'tworaces' = 'Multiracial',
+      'nativehawaii' = 'NH/PI',
+      'amerindian' = 'AI/AN',
+      'hispanic' = 'Latinx',
+      'black' = 'Black',
+      'asian' = 'Asian',
+      'white' = 'White'
+    ),
+    count_type = recode_factor(
+      ord_type,
+      'prospect' = 'Prospects',
+      'metro' = 'Metro'
+    ),
+    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
+  ) 
+
+uiuc_race_figure_totals <- uiuc_race_full %>% 
+  mutate(
+    count_type = recode_factor(
+        ord_type,
+        'prospect' = 'Prospects',
+        'metro' = 'Metro'
+    )
+  ) %>% 
+  group_by(cbsa_name, count_type) %>% 
+  summarise(
+    count = sum(count)
+  ) %>% 
+  ungroup()
+  
+uiuc_race_figure <- uiuc_race_figure_data %>% 
+  filter(!race %in% c('Missing', 'No response')) %>% 
+  ggplot(aes(y = count_type, x = pct, fill = race)) + 
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(data = uiuc_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', prettyNum(count, big.mark = ',')), '')), size = 2, hjust = -0.15) +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette[1:7]), name = 'Race') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
+  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
+  xlab('') + ylab('') +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA', 'Los Angeles-Long Beach-Anaheim, CA', 'Philadelphia-Camden-Wilmington, PA-NJ-DE-MD', 'Washington-Arlington-Alexandria, DC-VA-MD-WV')), ncol = 1) +
+  guides(fill = guide_legend(reverse = T)) +
+  theme(
+    # plot.background = element_rect(color = 'gray'),
+    # panel.background = element_rect(color = 'red'),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -45), 'pt')
+  )
+
+grid.arrange(
+  uiuc_income_figure,
+  uiuc_race_figure,
+  ncol = 2
+)
+```
+
+## 5.18: Women in STEM prospects by metro (average income and racial composition)
+
+```{r ucsd-deep-dive}
 ucsd_income_figure <- ucsd_income %>% 
   mutate(
     count_type = recode_factor(
@@ -591,7 +1176,7 @@ ucsd_income_figure <- ucsd_income %>%
     cbsa_name = str_replace(str_replace(cbsa_name, 'Roswell', 'Alpharetta'), ' Metro Area', '')
   ) %>% 
   ggplot(aes(y = count_type, x = income_2564)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_bar(stat = 'identity', fill = extra_colors[[1]]) + 
   geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 163000)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
@@ -630,7 +1215,15 @@ ucsd_race_figure_data <- ucsd_race %>%
     cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
   )
 
-ucsd_race_figure_totals <- ucsd_race_figure_data %>% 
+ucsd_race_figure_totals <- ucsd_race_full %>% 
+  mutate(
+    count_type = recode_factor(
+      ord_type,
+      'sat' = 'SAT',
+      'ap' = 'AP',
+      'metro' = 'Metro'
+    )
+  ) %>% 
   group_by(cbsa_name, count_type) %>% 
   summarise(
     count = sum(count)
@@ -638,11 +1231,13 @@ ucsd_race_figure_totals <- ucsd_race_figure_data %>%
   ungroup()
   
 ucsd_race_figure <- ucsd_race_figure_data %>% 
+  filter(!race %in% c('Missing', 'No response')) %>% 
   ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
   geom_text(data = ucsd_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', count), '')), size = 2, hjust = -0.2) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette[1:7]), name = 'Race') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
@@ -665,97 +1260,16 @@ grid.arrange(
 )
 ```
 
+## Figure 5.19: Race and ethnicity variables, aggregated vs. alone
 
-## Figure 23: Segment deep dive by University of Illinois at Urbana-Champaign
-
-```{r, fig.height = 3.6}
-uiuc_income_figure <- uiuc_income %>% 
-  mutate(
-    count_type = recode_factor(
-      ord_type,
-      'prospect' = 'Prospects',
-      'metro' = 'Metro'
-    ),
-    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
-  ) %>% 
-  ggplot(aes(y = count_type, x = income_2564)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
-  geom_text(mapping = aes(label = str_c('$', round(income_2564 / 1000), 'K')), size = 2, hjust = -0.1) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 250000)) +
-  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
-  xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
-  guides(fill = guide_legend(reverse = T)) +
-  theme(
-    # plot.background = element_rect(color = 'gray'),
-    # panel.background = element_rect(color = 'red'),
-    axis.text.x = element_blank(),
-    axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
-    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
-  )
-
-uiuc_race_figure_data <- uiuc_race %>% 
-  mutate(
-    race = recode_factor(
-      race,
-      'unknown' = 'Missing',
-      'noresponse' = 'No response',
-      'other' = 'Other',
-      'tworaces' = 'Multiracial',
-      'nativehawaii' = 'NH/PI',
-      'amerindian' = 'AI/AN',
-      'hispanic' = 'Latinx',
-      'black' = 'Black',
-      'asian' = 'Asian',
-      'white' = 'White'
-    ),
-    count_type = recode_factor(
-      ord_type,
-      'prospect' = 'Prospects',
-      'metro' = 'Metro'
-    ),
-    cbsa_name = str_replace(cbsa_name, ' Metro Area', '')
-  )
-
-uiuc_race_figure_totals <- uiuc_race_figure_data %>% 
-  group_by(cbsa_name, count_type) %>% 
-  summarise(
-    count = sum(count)
-  ) %>% 
+```{r poc-race-deep-dive}
+poc_cb_totals <- poc_cb %>%
+  group_by(cbsa_code) %>% 
+  summarise(total = sum(count)) %>% 
   ungroup()
-  
-uiuc_race_figure <- uiuc_race_figure_data %>% 
-  ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  geom_text(data = uiuc_race_figure_totals, mapping = aes(x = 1, fill = NULL, label = if_else(count_type != 'Metro', str_c('N=', prettyNum(count, big.mark = ',')), '')), size = 2, hjust = -0.15) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
-  scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
-  xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
-  guides(fill = guide_legend(reverse = T)) +
-  theme(
-    # plot.background = element_rect(color = 'gray'),
-    # panel.background = element_rect(color = 'red'),
-    axis.text.x = element_blank(),
-    axis.text.y = element_blank(),
-    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
-    plot.margin = unit(c(5.5, 0, 5.5, -45), 'pt')
-  )
 
-grid.arrange(
-  uiuc_income_figure,
-  uiuc_race_figure,
-  ncol = 2
-)
-```
-
-
-## Figure 24: Targeting students of color, race categories
-
-```{r}
 poc_cb_figure <- poc_cb %>% 
+  left_join(poc_cb_totals, by = 'cbsa_code') %>% 
   mutate(
     race = recode_factor(
       race,
@@ -765,23 +1279,25 @@ poc_cb_figure <- poc_cb %>%
       'tworaces' = 'Multiracial',
       'nativehawaii' = 'NH/PI',
       'amerindian' = 'AI/AN',
-      'hispanic' = 'Latinx',
       'black' = 'Black',
       'asian' = 'Asian',
-      'white' = 'White'
-    )
+      'white' = 'White',
+      'hispanic' = 'Latinx'
+    ),
+    cbsa_name = str_c(cbsa_name, ' (N=', total, ')')
   ) %>% 
   ggplot(aes(x = race, y = pct)) +
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) +
   geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
-  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
+  scale_y_continuous(expand = expansion(mult = c(0.01, 0.1)), limits = c(0, 1)) +
   xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA (N=949)', 'Miami-Fort Lauderdale-West Palm Beach, FL (N=671)', 'Houston-The Woodlands-Sugar Land, TX (N=371)')), ncol = 1) +
   coord_flip() +
   theme(
     axis.text.x = element_blank(),
     axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
-    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+    strip.text.x = element_text(size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, 0), 'pt')
   )
 
 poc_common_figure <- poc_common %>% 
@@ -790,37 +1306,39 @@ poc_common_figure <- poc_common %>%
       race,
       'native_hawaiian' = 'NH/PI',
       'american_indian' = 'AI/AN',
-      'is_hisp' = 'Latinx',
       'black' = 'Black',
       'asian' = 'Asian',
-      'white' = 'White'
+      'white' = 'White',
+      'is_hisp' = 'Latinx'
     )
   ) %>% 
   ggplot(aes(x = race, y = pct)) +
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) +
+  geom_bar(stat = 'identity', fill = color_palette[[1]]) +
   geom_text(aes(label = str_c(round(pct * 100), '%')), hjust = -0.1, size = 2) +
   scale_y_continuous(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA', 'Miami-Fort Lauderdale-West Palm Beach, FL', 'Houston-The Woodlands-Sugar Land, TX')), ncol = 1) +
   coord_flip() +
   theme(
     axis.text.x = element_blank(),
     axis.text.y = element_text(color = '#444444', size = 6, face = 'bold', hjust = 1),
-    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm'))
+    strip.text.x = element_text(color = NA, size = 7, face = 'bold', hjust = 0, margin = margin(2, 0, 2, 0, 'mm')),
+    plot.margin = unit(c(5.5, 0, 5.5, -20), 'pt')
   )
 
 grid.arrange(
-  poc_cb_figure,
-  poc_common_figure,
-  ncol = 2
+  arrangeGrob(poc_cb_figure, top = ggpubr::text_grob('Aggregate race/ethnicity variable', size = 7, face = 'bold'), padding = unit(c(0, 0, -10, 0), 'pt')),
+  arrangeGrob(poc_common_figure, top = ggpubr::text_grob('Multiple races and ethnicities', size = 7, face = 'bold'), padding = unit(c(0, 0, -10, 0), 'pt')),
+  ncol = 2,
+  widths = c(6, 5)
 )
 ```
 
+## Figure 5.20: Purchased profiles for students of color by metro (HS type, average income, racial composition)
 
-## Figure 25: Targeting students of color, purchased prospects
-
-```{r}
+```{r poc-prospects-deep-dive}
 poc_hs_figure <- poc_hs %>% 
+  left_join(poc_cb_totals, by = 'cbsa_code') %>% 
   mutate(
     control = recode_factor(
       control,
@@ -831,16 +1349,17 @@ poc_hs_figure <- poc_hs %>%
       ord_type,
       'prospect' = 'Prospects',
       'metro' = 'Metro'
-    )
+    ),
+    cbsa_name = str_c(cbsa_name, ' (N=', total, ')')
   ) %>% 
   filter(control == 'Private HS') %>% 
   ggplot(aes(y = count_type, x = pct, fill = control)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[1]]) + 
+  geom_bar(stat = 'identity', fill = extra_colors[[2]]) + 
   geom_text(mapping = aes(label = str_c(round(pct * 100), '% ', control)), size = 2, hjust = -0.05) +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.5)) +
   # scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA (N=949)', 'Miami-Fort Lauderdale-West Palm Beach, FL (N=671)', 'Houston-The Woodlands-Sugar Land, TX (N=371)')), ncol = 1) +
   guides(fill = guide_legend(reverse = T)) +
   theme(
     # plot.background = element_rect(color = 'gray'),
@@ -873,14 +1392,15 @@ poc_income_figure <- poc_income %>%
     ),
     cbsa_name = str_replace(str_replace(cbsa_name, 'Pompano', 'West Palm'), ' Metro Area', '')
   ) %>% 
+  filter(str_detect(ord_type, 'private', T)) %>% 
   ggplot(aes(y = count_type, x = income_2564)) + 
-  geom_bar(stat = 'identity', fill = color_palette[[2]]) + 
+  geom_bar(stat = 'identity', fill = extra_colors[[1]]) + 
   geom_text(mapping = aes(label = if_else(income_2564 == 0, '', str_c('$', round(income_2564 / 1000), 'K'))), size = 2, hjust = -0.1) +
   geom_text(aes(label = if_else(income_2564 != 0, '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 350000)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA', 'Miami-Fort Lauderdale-West Palm Beach, FL', 'Houston-The Woodlands-Sugar Land, TX')), ncol = 1) +
   guides(fill = guide_legend(reverse = T)) +
   theme(
     # plot.background = element_rect(color = 'gray'),
@@ -895,10 +1415,16 @@ poc_race_figure <- poc_race %>%
   # filter(count != 0) %>% 
   add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'public', race = 'white', pct = 0) %>% 
   add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'prospect', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '26420', cbsa_name = 'Houston-The Woodlands-Sugar Land, TX', ord_type = 'metro', race = 'white', pct = 0) %>% 
   add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'public', race = 'white', pct = 0) %>% 
   add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'prospect', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '33100', cbsa_name = 'Miami-Fort Lauderdale-West Palm Beach, FL', ord_type = 'metro', race = 'white', pct = 0) %>% 
   add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'public', race = 'white', pct = 0) %>% 
   add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'private', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'prospect', race = 'white', pct = 0) %>% 
+  add_row(cbsa_code = '35620', cbsa_name = 'New York-Newark-Jersey City, NY-NJ-PA', ord_type = 'metro', race = 'white', pct = 0) %>% 
   mutate(
     race = recode_factor(
       race,
@@ -920,20 +1446,22 @@ poc_race_figure <- poc_race %>%
       'public_1-5' = '1-5',
       'public_zero' = 'No buys',
       'public' = '',
-      'prospect' = 'Prospects',
-      'metro' = 'Metro'
+      'prospect' = '  ',
+      'metro' = '   '
     )
   ) %>% 
+  filter(!race %in% c('Missing', 'No response'), str_detect(ord_type, 'private', T)) %>% 
   ggplot(aes(y = count_type, x = pct, fill = race)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  geom_text(aes(label = if_else(str_detect(count_type, '\\w'), '', if_else(count_type == '', 'Public HS', 'Private HS')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(aes(label = if_else(str_detect(count_type, '\\w'), '', if_else(count_type == '', 'Public HS', '')), x = 0), hjust = 0, vjust = 0.9, size = 2, fontface = 'bold') +
   geom_text(aes(x = 1, fill = NULL, label = if_else(str_detect(count_type, '\\w'), str_c(' ', num_hs, ' HS', if_else(num_prospects > 0, str_c('\n ', num_prospects, ' prospects'), '')), '')), size = 1, hjust = 0) +
-  scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  # scale_fill_brewer(palette = 'BrBG', direction = -1, name = 'Race') +
+  scale_fill_manual(values = rev(color_palette[1:7]), name = 'Race') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04)), limits = c(0, 1.14)) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('') + ylab('') +
-  facet_wrap(~ cbsa_name, ncol = 1) +
+  facet_wrap(~ factor(cbsa_name, levels = c('New York-Newark-Jersey City, NY-NJ-PA', 'Miami-Fort Lauderdale-West Palm Beach, FL', 'Houston-The Woodlands-Sugar Land, TX')), ncol = 1) +
   guides(fill = guide_legend(reverse = T)) +
   theme(
     # plot.background = element_rect(color = 'gray'),
@@ -954,11 +1482,108 @@ grid.arrange(
 )
 ```
 
+## Figure 7.2: University by carnegie classification
 
+```{r univ-carnegie, fig.height = 2}
+univ_df %>% 
+  group_by(STABBR, carnegie) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = carnegie, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  geom_text(aes(x = count, label = count), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.8, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  # scale_fill_brewer(palette = 'Spectral', direction = -1, name = 'Carnegie classification') +
+  scale_fill_manual(values = rev(color_palette[c(1:7, 9)]), name = 'Carnegie classification') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
 
-## Figure A1: School type of prospects purchased by research vs. ma/doctoral universities
+## Figure 7.3: University by locale
 
-```{r, fig.height = 2.5}
+```{r univ-locale, fig.height = 2}
+univ_df %>% 
+  group_by(STABBR, locale_text) %>% 
+  summarise(count = n()) %>% 
+  ggplot(aes(x = count, y = STABBR, fill = locale_text, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  geom_text(aes(x = count, label = count), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  geom_text(data = univ_df %>% group_by(STABBR) %>% summarise(total = n()), aes(x = total + 1.2, y = STABBR, label = str_c('N=', total), fill = NULL), color = '#444444', size = 2) +
+  xlab('') + ylab('') +
+  scale_y_discrete(limits = rev) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, 37)) +
+  # scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'Locale') +
+  scale_fill_manual(values = rev(color_palette[1:4]), name = 'Locale') +
+  theme(
+    axis.text.x = element_blank()
+  ) +
+  guides(fill = guide_legend(reverse = T))
+```
+
+## Figure 7.4: Summary of orders purchased by type
+
+```{r purchased-orders-type, fig.height = 2}
+orders_df %>% 
+  filter(!univ_state %in% c('MN', 'AZ')) %>% 
+  left_join(lists_df_summary %>% select(ord_num, n), by = c('order_num' = 'ord_num')) %>%
+  mutate(has_list = !is.na(n)) %>% 
+  group_by(has_list, univ_state, univ_type) %>% 
+  summarise(count = n()) %>% 
+  ungroup() %>% 
+  mutate(
+    has_list = factor(has_list, levels = c(F, T)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    univ_label = recode_factor(
+      univ_type,
+      'regional' = 'MA/doctoral',
+      'research' = 'Research'
+    )
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = univ_label, alpha = has_list, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of orders') + ylab('') +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.05))) +
+  # scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'University type') +
+  scale_fill_manual(values = rev(color_palette[c(1, 5)]), name = 'University type') +
+  scale_alpha_manual(values = c(0.4, 1), name = 'Has list') +
+  guides(fill = guide_legend(reverse = T, order = 1), alpha = guide_legend(reverse = T))
+```
+
+## Figure 7.5: Summary of prospects by type
+
+```{r purchased-prospects-type, fig.height = 2}
+lists_df_summary %>% 
+  filter(!univ_state %in% c('MN', 'AZ')) %>% 
+  mutate(has_order = !is.na(ord_num)) %>% 
+  group_by(has_order, univ_state, univ_type) %>% 
+  summarise(count = sum(n)) %>% 
+  ungroup() %>% 
+  mutate(
+    has_order = factor(has_order, levels = c(F, T)),
+    univ_state = factor(as.character(univ_state), levels = c('TX', 'CA', 'MN', 'IL')),
+    univ_label = recode_factor(
+      univ_type,
+      'regional' = 'MA/doctoral',
+      'research' = 'Research'
+    )
+  ) %>% 
+  ggplot(aes(x = count, y = univ_state, fill = univ_label, alpha = has_order, width = 0.6)) +
+  geom_bar(position = 'stack', stat = 'identity') +
+  xlab('Number of prospects') + ylab('') +
+  scale_x_continuous(labels = function(n) if_else(n < 1000000, str_c(n / 1000, 'K'), str_c(n / 1000000, 'M')), expand = expansion(mult = c(0, 0.05))) +
+  # scale_fill_brewer(palette = 'YlGnBu', direction = -1, name = 'University type') +
+  scale_fill_manual(values = rev(color_palette[c(1, 5)]), name = 'University type') +
+  scale_alpha_manual(values = c(0.4, 1), name = 'Has order summary') +
+  guides(fill = guide_legend(reverse = T, order = 1), alpha = guide_legend(reverse = T))
+```
+
+## Figure 7.6: School type of prospects by research vs. ma/doctoral universities
+
+```{r rq2-school, fig.height = 2.5}
 rq2_school %>% 
   filter(univ_type == 'research' | locale == 'instate', region != 'international') %>% 
   mutate(
@@ -978,9 +1603,10 @@ rq2_school %>%
     )
   ) %>% 
   ggplot(aes(y = count_type, x = pct, fill = control)) + 
-  geom_bar(position = 'stack', stat = 'identity', alpha = 0.4) + 
-  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5)) +
-  scale_fill_brewer(palette = 'PuBuGn', direction = 1, name = 'School type') +
+  geom_bar(position = 'stack', stat = 'identity') + 
+  geom_text(mapping = aes(label = if_else(pct > 0.02, as.character(round(pct * 100)), '')), size = 2, position = position_stack(vjust = 0.5), color = color_text) +
+  # scale_fill_brewer(palette = 'PuBuGn', direction = 1, name = 'School type') +
+  scale_fill_manual(values = rev(color_palette[1:3]), name = 'School type') +
   scale_x_continuous(expand = expansion(mult = c(0, 0.04))) +
   scale_y_discrete(expand = expansion(mult = c(0.01, 0.1))) +
   xlab('Percent of prospects') + ylab('') +
@@ -992,73 +1618,41 @@ rq2_school %>%
 ```
 
 
-\newpage
-## Table 7: Filter combos used in order purchases by research vs. ma/doctoral
+# Student List Policy
 
-```{r}
-bind_cols(
-  orders_filters_combo %>% 
-    filter(univ_type == 'research') %>% 
-    select(filter_combos, n, pct) %>% 
-    head(10) %>%
-    mutate(pct = str_c(round(pct * 100), '%')),
-  orders_filters_combo %>% 
-    filter(univ_type == 'regional') %>% 
-    select(filter_combos, n, pct) %>% 
-    head(10) %>%
-    mutate(pct = str_c(round(pct * 100), '%'))
-) %>% 
-  kable(booktabs = T, col.names = rep(c('Filters', 'Count', 'Percent'), 2), align = rep(c('l', 'c', 'c'), 2)) %>%
-  add_header_above(c('Research' = 3, 'MA/doctoral' = 3), bold = T) %>% 
-  row_spec(0, bold = T) %>%
-  kable_styling(position = 'center', latex_options = c('hold_position', 'scale_down'))
+## Figure 2.1
+
+```{r cb-fig-2, fig.height = 5, out.width = '100%'}
+blue_palette <- rev(c('#88a2d0', '#404d77'))
+
+grid.arrange(
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'HI/PI', 'White'),
+    c(32.8, 8.3, 37.5, 5.7, 31.8, 7.8, 24.1, 8.3, 26.5, 6.3, 22.2, 5.8, 44.4, 9.6),
+    'Enrollment',
+    blue_palette
+  ),
+  create_cb_figure(
+    c('Overall', 'Asian', 'Black', 'Hispanic', 'AI/AN', 'White'),
+    c(15.7, 4.9, 17.7, 5.0, 7.2, 2.9, 6.7, 2.9, 8.7, 4.2, 24.0, 6.7),
+    'BA Completion within 4 Years',
+    blue_palette
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(32.8, 8.3, 24.9, 10.1, 36.5, 11.0, 53.4, 10.1),
+    'Enrollment',
+    blue_palette
+  ),
+  create_cb_figure(
+    c('Overall', 'No College', 'College,\nNo BA', 'College,\nBA or Higher'),
+    c(15.7, 4.9, 13.6, 6.8, 21.3, 8.5, 39.9, 10.1),
+    'BA Completion within 4 Years',
+    blue_palette
+  ),
+  ncol = 2
+)
 ```
 
 
-## Table 8: Prospect characteristics by filter used
-
-```{r}
-rq3 %>% 
-  mutate_if(is.numeric, ~if_else(. < 1, . * 100, .)) %>% 
-  mutate_if(is.numeric, round, 0) %>% 
-  mutate_if(is.numeric, ~if_else(row_number() == 18, str_c('$', round(. / 1000), 'K'), prettyNum(., big.mark = ','))) %>% 
-  mutate(
-    row_subj = recode_factor(
-      row_subj,
-      'n' = 'Total count',
-      'pct_instate' = '% In-state',
-      'pct_outofstate' = '% Out-of-state',
-      'pct_white' = '% White',
-      'pct_asian' = '% Asian',
-      'pct_black' = '% Black',
-      'pct_latinx' = '% Latinx',
-      'pct_nhpi' = '% NH/PI',
-      'pct_aian' = '% AI/AN',
-      'pct_multiracial' = '% Multiracial',
-      'pct_raceother' = '% Other',
-      'pct_noresponse' = '% No response',
-      'pct_racemissing' = '% Missing',
-      'pct_male' = '% Male',
-      'pct_female' = '% Female',
-      'pct_genderother' = '% Other ',
-      'pct_gendermissing' = '% Missing ',
-      'med_income' = 'Median income',
-      'pct_city' = '% City',
-      'pct_suburban' = '% Suburban',
-      'pct_fringe' = '% Rural - Fringe',
-      'pct_distant' = '% Rural - Distant',
-      'pct_remote' = '% Rural - Remote',
-      'pct_localemissing' = '% Missing  '
-    )
-  ) %>%
-  arrange(row_subj) %>% 
-  kable(booktabs = T, col.names = c('', 'All domestic', 'GPA', 'PSAT', 'SAT', 'HS rank', 'AP score', 'Zip code', 'State', 'Geomarket', 'Segment', 'CBSA', 'Race', 'Gender'), align = c('l', rep('r', 13))) %>% 
-  add_header_above(c(' ' = 2, 'Academic' = 5, 'Geographic' = 5, 'Demographic' = 2), bold = T) %>% 
-  group_rows('Location', 2, 3) %>%
-  group_rows('Race/ethnicity', 4, 13) %>%
-  group_rows('Gender', 14, 17) %>%
-  group_rows('Household income', 18, 18) %>%
-  group_rows('Locale', 19, 24) %>%
-  row_spec(0, bold = T) %>%
-  kable_styling(latex_options = c('hold_position', 'scale_down'))
-```
+# The Student List Business
