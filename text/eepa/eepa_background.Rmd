@@ -1,0 +1,129 @@
+---
+title: "EEPA, CF"
+subtitle: ""
+author: 
+  - Ozan Jaquette
+  - Karina Salazar
+bibliography: ../bib/eepa_student_list.bib
+citeproc: no
+output: 
+  #bookdown::word_document2:    
+  bookdown::pdf_document2:
+    toc: FALSE
+    pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
+eoutput: pdf_document
+always_allow_html: true
+csl: ../bib/apa.csl
+urlcolor: blue
+fontsize: 12pt
+#header-includes:
+#      - \usepackage{pdflscape}
+#      - \usepackage{geometry}
+header-includes:
+      - \usepackage{floatrow}
+      - \floatsetup{capposition=top}
+      - \usepackage{setspace}\onehalfspacing #\doublespacing
+---
+
+# Background: The Student List Business
+
+## Situating Student Lists Vis-a-vis Recruiting
+
+Student lists are a match-making intermediary connecting universities to prospective students. The U.S. higher education market can be conceived as a national voucher system, whereby tuition revenue -- composed of household savings and grants and loans from federal, state, and private sources -- follow students to whichever institution they enroll in. Students want to attend college but do not know all their options, where they would be admitted, and how much it will cost. Universities have a financial incentive to provide access to students. Additionally, universities pursue some mix mix of broad enrollment goals (e.g., academic profile, racial diversity), while also meeting the needs of various campus constituencies (e.g., College of Engineering needs majors, marching band needs players) [@RN3519]. Universities cannot realize these goals solely from prospects who contact the university on their own. They must find prospects who can convinced to apply. However, universities don’t know who they are, where they are, or how to contact them. Student lists overcome the problem faced by universities, providing the contact information of prospects who satisfy their criteria. <!-- Student lists can also help overcome problems faced by students – what are their college options, where would they be admitted, how much would it cost – by enabling interested universities to contact them. But in practice, student list products are oriented to university enrollment goals rather than student opportunity goals because universities pay for the lists. -->
+
+
+The "enrollment funnel" -- depicted in in Figure \@ref(fig:em-funnel) -- is a conceptual model used in the enrollment management industry to describe stages in the process of recruiting students. The funnel begins with a large pool of "prospects" (i.e., prospective students) that the university would like to convert into enrolled students. "Leads" are prospects whose contact information (or "profiles") has been purchased. "Inquiries" are prospects that contact your institution and consist of two types: first, inquiries who respond to an initial solicitation  (e.g., email) from the university; and second, "student as first contact" inquiries who reach out to the university on their own (e.g., by sending ACT scores). Applicants consist of inquiries who apply plus "stealth applicants" who do not contact the university before applying. The funnel narrows at each successive stage in order to convey the assumption of "melt" at each stage (e.g., a subset of "inquiries" will apply). Practically, the enrollment funnel informs interventions that increase the probability of "conversion" from one stage to another [@RN4322]. For example, financial aid packages are used to convert admits to enrolled students [e.g., @RN1948].
+<!-- 
+In order to situate student lists within the process of recruiting recruiting, Figure \@ref(fig:em-funnel) depicts the "enrollment funnel," a conceptual model used by enrollment management industry to visualize stages in the recruiting of students (e.g., prospects, leads, inquiries, applicants, admits, and enrolled students). "Prospects" are "all the potential students you would want to attract to your institution" [@RN4322]. We define "leads" as prospects whose contact information has been purchased. "Inquiries" are prospects that contact your institution and consist of two types: first, inquiries who respond to an initial solicitation  (e.g., email) from the university; and second, "student as first contact" inquiries who reach out to the university on their own, for example, by sending ACT scores or by taking a "[virtual tours](https://eab.com/products/virtual-tours/)" that records IP address. Applicants consist of inquiries who apply plus "stealth applicants" who do not contact the university before applying.
+-->
+
+```{r em-funnel, echo = FALSE, fig.align = 'center', fig.cap = "The enrollment funnel", out.width = "45%"}
+knitr::include_graphics('./../../outputs/figures/enrollment_funnel.png')
+#![The enrollment funnel](assets/images/enrollment_funnel.png)
+```
+
+At the top of the enrollment funnel, universities identify leads by buying student lists. The sum of purchased leads plus student-as-first-contact inquiries (e.g., taking a "[virtual tours](https://eab.com/products/virtual-tours/)" that records IP address) constitutes the set of all prospects the university has contact information for, who can receive targeted recruiting interventions via mail, email, social media, etc. The majority of BA granting public and private non-profit institutions purchase student lists annually. Based on data provided by university clients, @RN4741 reported that 28\% of public universities purchased less than 50,000 names, 44\% purchased 50,000-100,000 names, 13\% purchased 100,000-150,000 names, and 15\% purchased more than 150,000 names. 34\% of private institutions purchased fewer than 50,000 names, 24\% purchased 50,000-100,000 names, 23\% purchased 100,000-150,000 names, and 18\% purchased more than 150,000 names. @RN4402 asked clients to rate different "first contact" interventions (e.g., off-campus recruiting visit) as sources of inquiries and enrolled students. For the median public university, student list purchases were the highest source of inquiries, accounting for 26\% of inquiries, and accounted for 14\% of enrolled students, which ranked fourth after "application as first contact" (19\%), campus visit (17\%), and off-campus visit (16\%). For the median private non-profit university, student list purchases were the highest source of inquiries, accounting for 32\% of inquiries and were tied with off-campus recruiting visits as the highest source of enrolled students, accounting for 18\% of enrolled students. 
+
+[??? ADD PARAGRAPH(S)] ON BUYING/USING STUDENT LISTS? WHO ARE LEADING SELLERS? EFFECT ON COLLEGE ACCESS?
+<!-- 
+historically, largest vendors are CB and ACT; Buying and using CB/ACT student lists; Transition, but over last 20 years market for student list biz has become increasingly dynamic 
+-->
+
+## Dynamics in Enrollment Management and Edtech
+
+_**Enrollment management industry**_. Although the student list business has historically been dominated by College Board and ACT, in the 21st century student lists have been central to a surprising level of dynamism in the enrollment management industry. Drawing from @list_biz, this section summarizes key dynamics that have have shaped the contemporary market for student list data.
+
+<!-- 
+Historically the market for student list data has been dominated by College Board and ACT, which capitalize on their database of test-takers. In the 21st Century, however, student lists have been central to market dynamics in the broader enrollment management industry. 
+-->
+
+The first dynamic is the centrality of enrollment management consulting firms to the student list business. Although universities are the paying customers of student list products, many universities outsource student list purchases to enrollment management consulting firms. Furthermore, student lists are an essential input to the predictive models and recruiting interventions (e.g., emailing prospects) the consultancies provide.
+
+The second dynamic is competition followed by concentration. In the 2000s, advances in technology yielded new sources of student list data, creating opportunities for new vendors. Start-up firms entered the student list market by creating college search engines, which asked students to submit information in order to receive recommendations about
+colleges and scholarships. Another new source of student list data comes from college planning software that is sold to high schools and used by high school students and guidance counselors. In the 2010s, the enrollment management industry experienced a surge in horizontal followed by vertical acquisitions. Horizontal acquisitions occurred when one enrollment management consulting firm acquired a competitor (e.g., e.g., RuffaloCODY acquired Noel-Levitz in 2014) [CITE]. Vertical transformations transformed the student list business. For example, the K-12 information system provider PowerSchool entered the student list business by acquiring the edtech/enrollment management firm Hobsons, which operated the Naviance college planning software and Intersect student recruiting software. EAB entered the market for student list data through acquisitions (e.g., Cappex college search engine) and by becoming the exclusive reseller of the Intersect recruiting platform.
+
+
+Third, incumbents College Board and ACT attempted to retain their competitive advantage -- through new products and features -- amidst the test-optional movement. Both organizations conspicuously embraced data science by developing new search filters based on statistical models that promise to help universities make "efficient" name buys that target "right-fit" students. For example, ACT allows universities to filter prospects based on their predicted probability of enrolling, while College Board developed “geodemographic” search filters that target prospects based on the characteristics/behavior of their high school and their neighborhood. While EAB has become a supplier of names, both College Board and ACT leveraged their oligopoly position in the student list business to sell enrollment management consulting, offering clients information about prospects that is not included in purchased lists. However, the test-optional movement poses an existential threat to the college entrance exam. As fewer prospective students take College Board and ACT assessments, their competitive advantage in the coverage of college-going high school students will erode. Several for-profit firms are positioned to acquire market share ceded by College Board and ACT.
+
+_**The digital economy and edtech**_. Shifts in the market for student list data are part of broader dynamics in the digital economy and the educational technology (edtech) industry. The digital economy refers to economic output "from digital technologies with a business model based on digital goods or surveces" [@RN4838, p. 13]. Digital platforms, the engines of the digital economy, are intermediaries that create markets and coordinate market transactions [@RN4829]. The platform is also the "ground on which all the user activity happens, alloweing the platform to record everything happening in it" [@RN4793, p. 322]. RN4816 (p. 9) describes three categories of digital platforms in the higher education sector: first, platforms that directly target individual students (e.g., apps for renting textbooks or taking notes); second, platforms that connect "service buyers (learners) and sellers (content providers)\ldots that "that almost serve as educational “institutions” in their own right (e.g., apps that allow self-employed teachers to offer micro- and other courses directly to prospective students); and third, platforms that perform some function for the university, which often integrate "directly into the work of a university" and "universities pay a subscription or fees for the use of such platforms. Examples include learning management systems (e.g., Canvas), student success platforms, and recruiting platforms that target prospective students.
+
+
+“Platform capitalism” refers to the business model of generating profit from digital platforms. Platform capitalism generates profit by charging customers “rent” – as in the rent a tenant pays a landlord – for the right to use the platform without transferring ownership rights to the customer [@RN4829]. Monetary rent refers to money a customer pays to an organization for access to digital products, for example a university pays annual subscription fees to Elsevier for access to academic journals [@RN4793]. Data rent refers to “digital traces” that platform users create by interacting with the platform (e.g., personal information they submit, behavior and interactions on the platform) [@RN4793]. Digital platforms gain ownership over user data via terms-of-use agreements. These user data may be utilized to improve the platform, become the basis for new products, or may be sold to third-party entities.
+
+@RN4799 builds _Capital_ by @RN1025 to develop the the concept "data as capital." @RN1025 describes capital as the process by which capitalists generate profit from money ($M$) and commodities ($C$). $C-M-C$ is the formula for _consumption_, whereby a commodity $C$ (e.g., wool) is sold for money $M$, which is then used to purchase another commodity $C'$ (e.g., sewing machines). By contrast, the formula $M-C-M'$ represents capital, whereby money $M$ is used to buy a commodity $C$, which is sold for a larger amount of money $M'$. Here, the source of capitalist profit is not the market exchanges -- $M-C$ or $C-M'$ -- but rather the exploitation of labor; that is, the workers hired to produce the commodity $C$ are paid less than the value of what they produce. [TIGHTEN THIS TEXT; TRANSITION TO DATA]
+
+
+<!-- 
+
+
+## Capital
+
+_**Marx, Capital**_. Following, @RN4799 we conceptualize student list data as a form of capital. First, we introduce basic concepts. In _Capital_, @RN1423 describes the process by which capitalists invest money ($M$) to generate profit. A _commodity_ is an object that has both _use-value_ – the practical utility of an object – and _exchange-value_ – what the object can be exchanged for, usually measured in terms of money. The formula $C-M$ -- commodity for money -- represents a sale and the formula $M-C$ -- money for a commodity represents a purchase. 
+
+@RN1423 distinguishes between two fundamental cycles between money and commodities. First, $C-M-C'$ is the formula for _consumption_; a commodity $C$ is sold for money $M$, which is then used to purchase another commodity $C'$. Here, the end goal is the use-value of commodity $C'$. The consumption transaction generates no profit -- because the exchange value of commodity $C$ is the same as the exchange-value of commodity $C'$ -- and at the end of this transaction the money $M$ ceases to be capital because it is expended.
+
+Second, the formula $M-C-M'$ represents capital. Here, money $M$ is used to buy a commodity $C$, which is sold for money $M'$. In the formula for capital, $M'$ exceeds $M$, such that capitalists generate a "surplus value" or profit of $M' -M$. [@RN4799, p. 4] describes the "logic of capital accumulation
+
+> this unending accumulation of capital, represented by $M-C-M'-C-M''-C-M''' \ldots$, is a defining feature of capitalism. \ldots, As Marx explains, ‘Use-values must therefore never be treated as the immediate aim of the capitalist; nor must the profit on any single transaction. His aim is rather the unceasing movement of profit-making’ (Marx, 1990: 254).
+
+
+@RN1423 defined capital both as a process of generating profit and as an object utilized in the process of generating profit. @RN1423 differentiates between _money capital_ -- money invested to make more money -- and _real capital_. Real capital is differentiated into _constant capital_ -- the exchange value of input commodities (e.g., materials, machinery, and facilities) necessary to produce a commodity - and _variable capital_ -- wages paid to labor to produce a commodity.  
+
+
+What is the source of surplus value for the capitalist? @RN1423 assumes that all commodities exchange at their exchange-value, meaning that the process of buying ($M-C$) and selling ($C-M$) are not the source of profit. Instead, the source of profit in the production of commodities is the exploitation of labor. 
+
+Labor is paid a wage (exchange-value) that is less than the value (use-value) they add to the commodity. This trick is achieved by cloaking the reality of exploitation with the appearance of freedom. @RN1402 states that man owns his own labor and freely consents to exchange his labor for wages. By contrast, @RN1423 argues that man’s only means of subsistence is to sell his labor to capitalists. Therefore, the capitalist coerces labor to accept subsistence wages. Thus, surplus value (profit) is the difference between the (exchange?use?) value created by labor and the wages they are paid.
+
+NOTE: Constant capital is purchased at its exchange-value.
+
+_**Data as capital**_. Bulding on @RN1423, @RN4799 asks, what is the economic form of data? Conceptualizing economic capital as an object used to generate profit, @RN4799 conceives of data as form of capital that is distinct from economic capital, but has roots in economic capital. Furthermore, data can be converted into economic capital in two ways: as raw material (constant capital) and as a product (commodity) of digital labor. First, data can be conceptualized as "digital raw material" -- akin to lumber in construction -- "necessary in the production of commodities" [@RN4799, p. 4]. For example, software that predicts hospital staffing needs depends on historical data about patients. Second, @RN4799 conceptualizes data as a commodity that is 
+
+> produced by the digital labour of people posting on Facebook, clicking on Google, exercising with Fitbits, and all the other things we do that create data and that data is created about. The cliche´ about the ‘free’ services provided digital platforms is that, ‘If you’re not the customer, you’re the product.’1 Through the work of using platforms and devices, people are turned into commodities that take the form of personal data, which is sold to advertisers and data brokers [@RN4799, p. 4].
+
+
+Organizations approach data collection utilizing the logic of capital accumulation. @RN4799 p. 4 states that "the capitalist is not concerned with the immediate use of a data point or with any single collection, but rather the unceasing flow of data-creating." For example, @RN4799 p. 5 quotes an artificial intelligence researcher who said, "'At large companies, sometimes we launch products not for the revenue, but for the data. We actually do that quite often ... and we monetize the data through a different product'"
+
+@RN4799 argues that data collection is better conceptualized as "data extraction" in order to highlight "the people targeted by, and the exploitative nature" (p. 6) of the process. Much of the data extracted by organizations are data about people (e.g., beliefs, behaviors, personal information). Data extraction typically occurs without "meaningful consent." In order to use a platform, users must sign "consent agreements" that entitle companies to extract, own, and sell data about its users.
+
+Finally, data extraction typically occurs without fair compensation. Often, companies compensate users by allowing users to use the platform. In return, "the owner collects data as payment" [@RN4799, p. 8]. For companies, the exchange "value of data capital is massive. Some of the wealthiest companies in the world, like Facebook and Google, are built on data capital"  [@RN4799, p. 8]. Returning to @RN1423, capitalists generate profit by paying labor less than the value they add to the exchange value of commodities. In platform capitalism, the source of profit is paying users less than the value of the digital labor they provide.
+
+_**Student list data as capital**_. We conceptualize student list data as economic capital, in the sense of an object used to generate profit. Consistent with @RN4799, nearly all student list data is derived from the user-data of students using some product. For example, College Board generates student list data from users of their testing services. Both "Free" college search engines (e.g., Cappex) and also college search software purchased by high schools (e.g., Naviance) created student list data from users looking for colleges and/or scholarships. As a commodity, student list data is a product of the labor of students. For example, student list data sold by College Board is created by the labor of students who fill out pre-test questionnaires about their college preferences and then complete the test. College search software (e.g., Cappex, Naviance) asks students to describe their college preferences and also extracts behavioral data from the efforts of students searching for college using the platform.
+
+Because student list data are a commodity valued by universities looking for customers, the process of profiting from student list data follows follows cycles of money ($M$) and commodities ($C$) observed by @RN1423. A simple real-life  example of $M-C-M'$ is an organization (e.g., Cappex) invests money ($M$) to create a "free" college search engine ($C$) that generates student list data, which is then sold to universities for more money ($M'$). More lucrative approaches generate proprietary student list data as a by-product of money-making products, thereby following an $M-C-M'-C-M''$. For example, College Board invests money ($M$) to create standardized assessments ($C$), which is sold households $M'$ and also extracts student list data ($C$), which are utilized to create the Student Search Service product ($C$), which is sold to universities ($M''$) looking for students. The Naviance (college planning) and Intersect (college recruiting) software platforms -- now owned by PowerSchool -- follow a similar cycle. PowerSchool invests money ($M$) to purchase/maintain Naviance ($C$), which is sold to high school districts ($M'$) and also extracts student list data ($C$), which are utilized to create the Intersect recruiting platform  ($C$), which is sold to universities ($M''$) looking for students.
+
+
+Finally, @list_biz observed that generating surplus value depends substantially on being an oligopolist supplier, that is extracting proprietary ownership over a large, unique pool of prospective students. For example, in 2011 the online textbook company Chegg tried to enter the student list business. Although Chegg extracted some student list data in-house -- through the acquisition of Zinch -- they were mostly a "lead aggregator," buying student list data from other venders ($M-C$) and reselling these data to universities ($M-C$). @RN1423 argues commodity exchange is not the source of surplus value because commodities are bought and sold at their market exchange-value. Consistent with this argument, the Chegg student list business failed to generate profit because they were paying market price for leads purcahsed from third-party suppliers [CITE].
+
+Whereas vendors historically capitalized by selling student list data at a price-per-prospect to universities, organizations increasingly leverage market power in the supply of student list data to promote software produts and/or consulting services. The most common approach -- exemplified by the PowerSchool's Intersect product and EAB's Enroll360 product -- is to wrap a large pool of proprietary prospects within a software-as-service product designed to target these prospects. Universities that want to recruit these prospects must purchase the software. Similarly, College Board and ACT now leverage their databases of prospective students to promote enrollment management consulting services. Universities that purchases these consulting services gain access to information about prospective students that is not available within purchased student lists (e.g., GIVE EXAMPLE)
+
+-->
+
+
+
+
+# References
+
+<div id="refs"></div>
+
+
+
