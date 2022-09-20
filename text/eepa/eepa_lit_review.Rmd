@@ -1,0 +1,68 @@
+---
+#title: "EEPA"
+#subtitle: ""
+#author: 
+#  - Ozan Jaquette
+#  - Karina Salazar
+bibliography: ../bib/eepa_student_list.bib
+citeproc: no
+output: 
+  #bookdown::word_document2:    
+  bookdown::pdf_document2:
+    toc: FALSE
+    pandoc_args: !expr rmdfiltr::add_wordcount_filter(rmdfiltr::add_citeproc_filter(args = NULL))
+eoutput: pdf_document
+always_allow_html: true
+csl: ../bib/apa.csl
+urlcolor: blue
+fontsize: 12pt
+#header-includes:
+#      - \usepackage{pdflscape}
+#      - \usepackage{geometry}
+header-includes:
+      - \usepackage{floatrow}
+      - \floatsetup{capposition=top}
+      - \usepackage{setspace}\onehalfspacing #\doublespacing
+---
+
+
+# Literature Review
+
+We position our scholarly contribution as a bridge between two literatures in sociology. First, we review scholarship that engages with the recruiting side of enrollment management [e.g., @RN3519; @RN4774; @RN4324]. Second, we review scholarship from the sociology of race that focuses on the nexus between structural racism and the digital economy [e.g., @RN4774; @RN4786; @RN4778]
+
+
+## Sociological Scholarship on Recruiting
+
+Considering the "enrollment funnel" depicted in Figure \@ref(fig:em-funnel), scholarship from the sociology of education has focused more on the latter stage of which applicants get admitted [e.g., @RN4131; @RN3522] [and financial aid? check] than earlier "recruiting" stages of identifying prospects, acquiring leads, and soliciting inquiries and applications. However, a growing body of research substantively analyzes recruiting from the perspective of students, high schools, and postsecondary institutions [e.g., @RN4774; @RN4324; @RN3519; @RN4520; @RN4758], often utilizing ethnographic or case-study designs and often as part of a broader analysis of college access or enrollment management.
+
+Holland's [-@RN4324] analysis of pathways from high school to college exemplifies scholarship that engages with recruiting from the perspective of high school students [e.g., @RN1814][CITE]. First-generation students and underrepresented students of color often reported that “school counselors had low expectations for them and were too quick to suggest that they attend community college” [@RN4324, p. 97]. This trust vacuum created an enrollment opportunity because these students were drawn to colleges that made them feel wanted. @RN4324 found that high school recruiting visits -– including college fairs, instant decision events, and small-group representative visits -– influenced where students applied and where they enrolled, but this finding was strongest for first-generation students and underrepresented students of color. By contrast, affluent students with college-educated parents were less taken by such overtures and more concerned with college prestige.
+
+Several studies analyze connections between colleges and high schools from an organizational perspective. These studies often conceptualize off-campus recruiting visits as an indicator of enrollment priorities and a network tie indicating the existence of a substantive relationship [@RN4733]. @RN3519 provides an ethnography of enrollment management at a selective private college that depends on revenue from tuition and donations and is sensitive about acceptance and yield rates. The College valued recruiting visits to local high schools as a means of maintaining relationships with guidance counselors at feeder schools and tended to visit the same set of largely affluent private and public schools year after year. Analyzing the other side of the coin, @RN4407 shows how private school guidance counselors exploit colleges' desire for trustworthy information about applicant enrollment intentions to get less-qualified students into top colleges. @RN4758 analyzed off-campus recruiting visits by public research universities. 12 of the 15 universities made more visits to out-of-state schools than in-state schools, and these out-of-state visits concentrated focused on affluent public and private schools located in predominantly white communities. @RN4759 analyzes recruiting visits to Los Angeles and Dallas by out-of-state public research universities, finding that universities engage in "recruitment redlining -- the circuitous avoidance of predominantly Black and Latinx communities along recruiting visit paths" [p. X]. Thus, in contrast to branding by about the commitment to racial diversity [@RN4839], scholarship consistently finds that the recruiting efforts of selective institutions prioritize affluent, predominantly white schools and communities.
+
+A smaller set of studies analyze recruiting at open-access institutions that target working adults 
+[E.G., CITE]. Cottom's [-@cottom2017lower] analysis of the for-profit sector is simultaneously an ethnography of enrollment management and a work of political economy. For-profits found a niche in Black and Latinx communities because traditional colleges and universities disregarded these communities. They systematically sold low-quality programs to women of color, generating profit by encouraging these students to take on federal and private loans. This business model exemplifies "predatory inclusion," the logic of "including marginalized consumer-citizens into ostensibly democratizing mobility schemes on extractive terms" [@RN4774, p. 443]
+
+Upon reflection, scholarship assumes that recruiting is something done by individual colleges and universities. But university enrollment management behaviors are increasingly structured by software and services purchased from third-party vendors. Scholarship on enrollment management must analyze the products being sold to universities and the vendors that create these products. For most universities, student list purchases largely determine which prospective undergraduate students will receive recruiting interventions. Although universities make choices about which names purchase, these choices are structured by the algorithmic architecture of student list products –- which prospects are included in the product, the targeting behaviors allowed by the product, and the targeting behaviors encouraged by the product. @RN4774 argues that algorithmic products are not race neutral. Rather, scholarship on the sociology of race shows that algorithmic products reproduce racial inequality by incorporating seemingly neutral inputs that systematically exclude non-white people. Therefore, we review key advances from the sociology of race in order to conceptualize how student list products reproduce racial inequality.
+
+
+
+## Sociology of Race
+
+<!-- PX: THIS PARAGRAPH DEFINES RACIALIZED SOCIAL SYSTEM -->
+Contemporary sociology is largely concerned with a structural analysis of race. @RN4814 argues that most social sciences define racism as an ideology held by individuals (e.g., explicit or implicit racial bias). This approach measures societal racism by examining the attitudes of individuals and excludes the possibility that institutions can be racist. @RN4814 argues for a focus on the underlying social structure rather than the ideology associated with it. He defines "racialized social systems" as “societies that allocate differential economic, political, social, and even psychological rewards to groups along racial lines” (p. 474). Racial groups are a social construction of a racialized social system. For example, in the U.S. “black people” is a construct that emerges from the slave trade and its legacy. "Racial ideology" -- commonly known as racism -- is the ideological component of a racialized social system, which includes individual bias and also institutions that that benefit dominant racial groups. @RN4814[p. 476] argues “that the only way to ‘cure’ society of racism is by eliminating its systemic roots.” As the practices that produce racial inequality become increasingly covert, the utility of the concept racialized social system is drawing attention to the systemic roots of seemingly neutral institutions and practices that produce racial inequality. 
+
+<!-- PX: THIS PARAGRAPH DEFINES DEFINES STRUCTURAL RACISM; SAYS THAT CAPITALISM IS EXPLOITATION BASED ON RACE; AND SAYS THAT THIS ARTICLE FOCUSES ON STRUCTURAL RACISM IN CONSUMER SIDE OF THE ECONOMY; MAYBE THIS DEFINITION OF STRUCTURAL RACISM DOESN'T BELONG IN THIS PARRAGRAPH -->
+The sociology of race defines structural racism as a “a form of systematic racial bias embedded in the ‘normal’ functions of laws and social relations” [@RN4760, p. 1143], whereby processes viewed as neutral or common-sense systematically advantage dominant groups and disadvantage marginalized groups [@RN4814]. The sociology of race is influenced by historical scholarship from @RN4782 and @RN4773, which defines capitalism as a system whereby the source of profit is exploitation based on the social construction of race (in contrast to @RN1025, who argues that capitalism is defined by exploitation of the working class. Analyses of racial capitalism that build on @RN4773 tend to focus on structural racism in the production side of the economy (labor), for example, the "gig economy" [@RN4774]. By contrast, this article is concerned with structural racism on the consumer side of the economy, whereby people of color experience systematic discrimination in credit market, housing markets, and education markets -- including products that help universities identify prospective students.
+
+### Algorithms, Actuarialism, and Micro-targeting
+
+YOU MIGHT SET UP MICRO-TARGETING/MARKET SEGMENTATION AS A HOOK PART OF THE LIT REVIEW; LIKE UP TO THEN YOU REVIEW WHAT SOCIOLOGY HAS DONE W/ ADMIRATION, AND THEN YOU SAY THEY HAVEN'T DEALT WITH THIS TOPIC BUT HERE IS WHAT OTHER FIELDS HAVE FOUND ON IT.
+
+
+
+# References
+
+<div id="refs"></div>
+
+
+
