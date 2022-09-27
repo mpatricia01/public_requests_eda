@@ -120,7 +120,7 @@ To summarize, student list products exhibit systematic racial and socioeconomic 
 
 ### Geographic filters
 
-Geographic search filters (e.g., state, zip code, "geomarket," CBSA, geodemographic market segment) enable universities to target prospects based on where they live. 
+Geographic search filters (e.g., state, zip code, "geomarket," CBSA, geodemographic market segment) enable universities to target prospects based on where they live.
 
 The concepts of "space" and "place" from critical geography [@RN4754; @RN4755] describe two alternative approaches to conceptualizing geographic location. Place refers to a holistic understanding of a geographic location that incorporates the “history, peoples, and purposes within the political, social, and economic landscape” [@RN4755, p. 317]. By contrast, space simply refers to a physical location which can be described in terms of quantifiable spatial features (e.g., distance, demographics, economic activity) and geospatial research adopts a view of space “as a location on a surface where things ‘just happen’” [@RN4754, p. 318].
 
