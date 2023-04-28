@@ -46,13 +46,13 @@ research_univs <- c(
   '110653',  # University of California-Irvine
   '110680',  # University of California-San Diego
   '145600',  # University of Illinois at Chicago
-  '145637'   # University of Illinois at Urbana-Champaign
+  '145637',   # University of Illinois at Urbana-Champaign
+  '105330'  # Northern Arizona University
 )
 
 regional_univs <- c(
   '145813',  # Illinois State University
   '147776',  # Northeastern Illinois University
-  '105330',  # Northern Arizona University
   '228431',  # Stephen F Austin State University
   '228529',  # Tarleton State University
   '224545',  # Texas A&M University-Texarkana
@@ -1241,5 +1241,6 @@ rq3 <- c('stu_in_us', 'filter_gpa', 'filter_psat', 'filter_sat', 'filter_rank', 
 # Save datasets
 # --------------
 
-save(orders_df, lists_df_summary, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race_full, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_full, asu_la, ucsd_all_race_full, ucsd_all_race, ucsd_all_income, ucsd_race_full, ucsd_race, ucsd_income, uiuc_race_full, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+#save(orders_df, lists_df_summary, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race_full, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_full, asu_la, ucsd_all_race_full, ucsd_all_race, ucsd_all_income, ucsd_race_full, ucsd_race, ucsd_income, uiuc_race_full, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final.RData'))
+save(orders_df, lists_df_summary, orders_prospects_purchased, orders_filters, orders_gpa, orders_sat, orders_psat, orders_state_research, orders_race, orders_filters_combo, rq2_counts, rq2_race_full, rq2_race, rq2_income, rq2_locale, rq2_school, rq3, asu_la_full, asu_la, ucsd_all_race_full, ucsd_all_race, ucsd_all_income, ucsd_race_full, ucsd_race, ucsd_income, uiuc_race_full, uiuc_race, uiuc_income, poc_cb, poc_common, poc_hs, poc_race, poc_income, file = file.path(data_dir, 'tbl_fig_data_final_v2.RData'))
 save(acs_zip, ccd, pss, uiuc, poc, file = file.path(data_dir, 'map_data_final.RData'))

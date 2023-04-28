@@ -141,11 +141,9 @@ list.files(path = scripts_dir)
     #acs_race_zipcodev2 %>% filter(is.na(pop_white_15_19_pct)) %>% count(pop_total_15_19)
   
   # check what race/ethnicity variables add up to [**** basically, always = 100!*****]
-  acs_race_zipcodev2 %>% select(-pop_native_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
-    select(state_code,zip_code,contains('pct')) %>% count(tot_pct)
+  #acs_race_zipcodev2 %>% select(-pop_native_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>% select(state_code,zip_code,contains('pct')) %>% count(tot_pct)
   
-  acs_race_zipcodev2 %>% select(-pop_amerindian_15_19_pct,-pop_nativehawaii_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>%
-    select(state_code,zip_code,contains('pct')) %>% count(tot_pct)  
+  #acs_race_zipcodev2 %>% select(-pop_amerindian_15_19_pct,-pop_nativehawaii_15_19_pct) %>% mutate(tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))) %>% select(state_code,zip_code,contains('pct')) %>% count(tot_pct)  
   
   #acs_race_zipcodev2 %>% glimpse()
 
@@ -335,20 +333,20 @@ privhs_data_1718 <- readRDS(file.path(data_dir, 'pss_1718.RDS'))
     # check that enrollment count race vars sum to total enrollment both public and private; looks good
     #pubhs_privhs_data %>% select(contains('total')) %>% glimpse()  
     
-    pubhs_privhs_data %>% mutate(
-      total_unknown = if_else(school_control=='public',total_unknown,0L, missing = NULL),
-      total_generated = rowSums(dplyr::across(.cols = c(contains('total'),-total_09,-total_10,-total_11,-total_12,-total_students), na.rm = TRUE))
-    ) %>% select(ncessch,name,school_control,state_code,zip_code,total_generated,contains('total'),-total_09,-total_10,-total_11,-total_12) %>%
-      mutate(gen_eq_tot = if_else(total_generated == total_students,1,0,missing = NULL)) %>% count(school_control,gen_eq_tot)
+    #pubhs_privhs_data %>% mutate(
+    #  total_unknown = if_else(school_control=='public',total_unknown,0L, missing = NULL),
+    #  total_generated = rowSums(dplyr::across(.cols = c(contains('total'),-total_09,-total_10,-total_11,-total_12,-total_students), na.rm = TRUE))
+    #) %>% select(ncessch,name,school_control,state_code,zip_code,total_generated,contains('total'),-total_09,-total_10,-total_11,-total_12) %>%
+    #  mutate(gen_eq_tot = if_else(total_generated == total_students,1,0,missing = NULL)) %>% count(school_control,gen_eq_tot)
       #%>% count(school_control,tot_pct) %>% print(n=100)
     
     
     # check that pct race vars sum to 100 for both public and private; looks good
-    pubhs_privhs_data %>% select(contains('pct')) %>% glimpse()  
-    pubhs_privhs_data %>% select(-pct_native) %>% mutate(
-      pct_unknown = if_else(school_control=='public',pct_unknown,0, missing = NULL),
-      tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))
-    ) %>% select(ncessch,name,school_control,state_code,zip_code,contains('pct')) %>% count(school_control,tot_pct) %>% print(n=100)
+    #pubhs_privhs_data %>% select(contains('pct')) %>% glimpse()  
+    #pubhs_privhs_data %>% select(-pct_native) %>% mutate(
+    #  pct_unknown = if_else(school_control=='public',pct_unknown,0, missing = NULL),
+    #  tot_pct = rowSums(dplyr::across(.cols = contains('pct'), na.rm = TRUE))
+    #) %>% select(ncessch,name,school_control,state_code,zip_code,contains('pct')) %>% count(school_control,tot_pct) %>% print(n=100)
       # %>% filter(school_control == 'private') %>% View()
       # %>% count(school_control,tot_pct)
     

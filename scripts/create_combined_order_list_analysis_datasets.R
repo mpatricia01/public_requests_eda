@@ -76,8 +76,8 @@ list.files(path = scripts_dir)
     #VI – U.S. Virgin Islands
     #UM – U.S. Minor Outlying Island
 
-load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combined_data.RData'))
-
+#load(url('https://github.com/mpatricia01/public_requests_eda/raw/main/data/combined_data.RData'))
+load(file = "data/combined_data.RData")
 
 
 # variables names in orders_df and in lists_df
@@ -743,7 +743,8 @@ lists_df %>% filter(univ_id == '148654') %>% select(race, is_hisp_common) %>% di
       univ_id %in% c('145637','174358','228723','110644')==0 & is.na(other) & is.na(race_no_response) ~ 0,
     ),
     # create measure that counts number of race groups
-    ct_race_groups_common = rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common), na.rm = TRUE)),
+    ct_race_groups_common = rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common))),
+      #ct_race_groups_common = rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common), na.rm = TRUE)),
       # case_when(univ_id %in% c('228431','224545') ~ rowSums(dplyr::across(c(american_indian_common,asian_common,black_common,native_hawaiian_common,white_common,other_common), na.rm = TRUE)))
       # note: for urbanna, this variable is exactly the same as ct_race_groups_urbana, so can just use this one
         # %>% filter(univ_id == '145637') %>% count(ct_race_groups,ct_race_groups_urbana)
