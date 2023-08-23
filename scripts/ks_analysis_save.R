@@ -47,11 +47,12 @@ research_univs <- c(
   '110680',  # University of California-San Diego
   '145600',  # University of Illinois at Chicago
   '145637',   # University of Illinois at Urbana-Champaign
-  '105330'  # Northern Arizona University
+  '105330',  # Northern Arizona University
+  '145813'  # Illinois State University  
 )
 
 regional_univs <- c(
-  '145813',  # Illinois State University
+
   '147776',  # Northeastern Illinois University
   '228431',  # Stephen F Austin State University
   '228529',  # Tarleton State University
